@@ -36,11 +36,21 @@ export interface DockerSandboxOptions {
 }
 
 type DockerInspect = {
-  Config?: { User?: unknown; Image?: unknown };
+  Id?: unknown;
+  Config?: { User?: unknown; Image?: unknown; Labels?: Record<string, unknown> };
   HostConfig?: Record<string, unknown>;
   Mounts?: { Type?: unknown; Name?: unknown; Source?: unknown; Destination?: unknown; RW?: unknown }[];
   State?: { ExitCode?: unknown; Status?: unknown; StartedAt?: unknown; FinishedAt?: unknown };
 };
+
+export interface SandboxExecutionControl {
+  readonly jobId: string;
+  readonly onReady: (containerId: string) => Promise<void>;
+  readonly onStartPermitted: (containerId: string) => Promise<void>;
+  readonly onStarted: (containerId: string) => Promise<void>;
+  readonly onWatchdogTick: (containerId: string) => Promise<void>;
+  readonly onStopped: (containerId: string) => Promise<void>;
+}
 
 function ownedPrivateDirectory(path: string): string {
   const resolved = resolve(path);
@@ -63,7 +73,7 @@ function inputDirectory(root: string, attemptId: string): string {
 }
 
 function verifyEffectiveContainer(raw: unknown, plan: OfflineSandboxPlan, input: string,
-  outputVolume?: string): void {
+  outputVolume?: string, control?: { jobId: string; attemptId: string }): void {
   if (!Array.isArray(raw) || raw.length !== 1 || !raw[0] || typeof raw[0] !== 'object') {
     throw new DockerSandboxError('POLICY_MISMATCH');
   }
@@ -79,6 +89,8 @@ function verifyEffectiveContainer(raw: unknown, plan: OfflineSandboxPlan, input:
     host?.Privileged === false && host?.IpcMode === 'none' &&
     (host?.PidMode === '' || host?.PidMode === 'private') &&
     container.Config?.User === plan.runAs && container.Config.Image === plan.image &&
+    (!control || (container.Config.Labels?.['kivro.job-id'] === control.jobId &&
+      container.Config.Labels?.['kivro.attempt-id'] === control.attemptId)) &&
     Array.isArray(capDrop) && capDrop.length === 1 && capDrop[0] === 'ALL' &&
     Array.isArray(opts) && opts.includes('no-new-privileges:true') && opts.includes('seccomp=builtin') &&
     host?.OomKillDisable === false && host?.PidsLimit === plan.maxPids &&
@@ -136,20 +148,46 @@ async function boundedDockerCommand(executable: string, args: readonly string[])
 }
 
 async function startAttached(executable: string, id: string, timeoutMs: number,
-  outputLimit: number): Promise<{ stdout: string; stderr: string; stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' }> {
+  outputLimit: number, control?: SandboxExecutionControl & { readonly attemptId: string }): Promise<{
+    stdout: string; stderr: string; stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' | 'CONTROL' }> {
   return new Promise((resolveResult, rejectResult) => {
     const child = spawn(executable, ['start', '--attach', id], { stdio: ['ignore', 'pipe', 'pipe'] });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     let size = 0;
-    let stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' = 'NONE';
-    const stop = (reason: 'TIMEOUT' | 'OUTPUT'): void => {
+    let stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' | 'CONTROL' = 'NONE';
+    const stop = (reason: 'TIMEOUT' | 'OUTPUT' | 'CONTROL'): void => {
       if (stoppedFor !== 'NONE') return;
       stoppedFor = reason;
       void boundedDockerCommand(executable, ['kill', id]).catch(() => undefined);
       child.kill('SIGTERM');
     };
-    const timer = setTimeout(() => stop('TIMEOUT'), timeoutMs);
+    let elapsedActiveMs = 0;
+    let lastTick = Date.now();
+    let priorStatus: 'running' | 'paused' | 'created' | 'exited' = 'created';
+    let inspecting = false;
+    let started = false;
+    const timer = control ? setInterval(() => {
+      if (inspecting || stoppedFor !== 'NONE') return;
+      inspecting = true;
+      void (async () => {
+        try {
+          await control.onWatchdogTick(id);
+          const status = await new DockerJobControlAdapter(executable).status(id, control.jobId,
+            control.attemptId);
+          const now = Date.now();
+          if (priorStatus === 'running') elapsedActiveMs += now - lastTick;
+          lastTick = now;
+          priorStatus = status;
+          if (status === 'running' && !started) {
+            await control.onStarted(id);
+            started = true;
+          }
+          if (elapsedActiveMs > timeoutMs) stop('TIMEOUT');
+        } catch { stop('CONTROL'); }
+        finally { inspecting = false; }
+      })();
+    }, 250) : setTimeout(() => stop('TIMEOUT'), timeoutMs);
     const collect = (target: Buffer[], chunk: Buffer): void => {
       size += chunk.byteLength;
       if (size > outputLimit) { stop('OUTPUT'); return; }
@@ -157,9 +195,9 @@ async function startAttached(executable: string, id: string, timeoutMs: number,
     };
     child.stdout.on('data', (chunk: Buffer) => collect(stdout, chunk));
     child.stderr.on('data', (chunk: Buffer) => collect(stderr, chunk));
-    child.on('error', () => { clearTimeout(timer); rejectResult(new DockerSandboxError('START_FAILED')); });
+    child.on('error', () => { clearInterval(timer); rejectResult(new DockerSandboxError('START_FAILED')); });
     child.on('close', () => {
-      clearTimeout(timer);
+      clearInterval(timer);
       resolveResult({ stdout: Buffer.concat(stdout).toString('utf8'),
         stderr: Buffer.concat(stderr).toString('utf8'), stoppedFor });
     });
@@ -216,9 +254,20 @@ export class DockerSandboxAdapter {
     return this.execute(rawPlan, attemptId, trustedArgv, { outputContract, limits, consume });
   }
 
+  /** The job controller durably registers the container before it can start. */
+  async runWithOutputControlled(rawPlan: unknown, attemptId: string, trustedArgv: readonly string[],
+    outputContract: unknown, limits: PlatformFileLimits,
+    consume: (collected: CollectedLocalResult, outputRoot: string) => Promise<void>,
+    control: SandboxExecutionControl): Promise<DockerSandboxResult> {
+    if (!this.collectorImage) throw new DockerSandboxError('COLLECTOR_UNAVAILABLE');
+    uuid.parse(control.jobId);
+    return this.execute(rawPlan, attemptId, trustedArgv, { outputContract, limits, consume }, control);
+  }
+
   private async execute(rawPlan: unknown, attemptId: string, trustedArgv: readonly string[],
     delivery?: { outputContract: unknown; limits: PlatformFileLimits;
-      consume: (collected: CollectedLocalResult, outputRoot: string) => Promise<void> }): Promise<DockerSandboxResult> {
+      consume: (collected: CollectedLocalResult, outputRoot: string) => Promise<void> },
+    control?: SandboxExecutionControl): Promise<DockerSandboxResult> {
     const plan = OfflineSandboxPlanSchema.parse(rawPlan);
     uuid.parse(attemptId);
     if (plan.image !== this.approvedImage) throw new DockerSandboxError('IMAGE_UNAPPROVED');
@@ -240,6 +289,7 @@ export class DockerSandboxAdapter {
     let volumeCreated = false;
     let collectorCreated = false;
     let createAttempted = false;
+    let registeredContainer: string | undefined;
     let result: DockerSandboxResult | undefined;
     let failure: unknown;
     try {
@@ -272,6 +322,7 @@ export class DockerSandboxAdapter {
         await boundedDockerCommand(this.dockerExecutable, ['start', collectorId]);
       }
       const args = ['create', '--name', name, '--pull=never', '--init',
+        ...(control ? [`--label=kivro.job-id=${control.jobId}`, `--label=kivro.attempt-id=${attemptId}`] : []),
         '--network=none', '--ipc=none', '--read-only', '--cap-drop=ALL',
         '--security-opt=no-new-privileges:true', '--security-opt=seccomp=builtin',
         `--user=${plan.runAs}`, `--pids-limit=${plan.maxPids}`,
@@ -292,11 +343,19 @@ export class DockerSandboxAdapter {
       const containerId = created.trim();
       if (!containerIdPattern.test(containerId)) throw new DockerSandboxError('CREATE_FAILED');
       const inspected = await boundedDockerCommand(this.dockerExecutable, ['inspect', containerId]);
-      verifyEffectiveContainer(JSON.parse(inspected) as unknown, plan, input, outputVolume);
+      verifyEffectiveContainer(JSON.parse(inspected) as unknown, plan, input, outputVolume,
+        control ? { jobId: control.jobId, attemptId } : undefined);
+      if (control) {
+        await control.onReady(containerId);
+        registeredContainer = containerId;
+        await control.onStartPermitted(containerId);
+      }
       const attached = await startAttached(this.dockerExecutable, containerId,
-        plan.maxRuntimeSeconds * 1000, Math.min(plan.maxOutputBytes, 1_048_576));
+        plan.maxRuntimeSeconds * 1000, Math.min(plan.maxOutputBytes, 1_048_576),
+        control ? { ...control, attemptId } : undefined);
       if (attached.stoppedFor === 'TIMEOUT') throw new DockerSandboxError('TIMED_OUT');
       if (attached.stoppedFor === 'OUTPUT') throw new DockerSandboxError('OUTPUT_LIMIT');
+      if (attached.stoppedFor === 'CONTROL') throw new DockerSandboxError('POLICY_MISMATCH');
       const after = await boundedDockerCommand(this.dockerExecutable, ['inspect', containerId]);
       const state = JSON.parse(after) as DockerInspect[];
       const finalState = state[0]?.State;
@@ -307,6 +366,9 @@ export class DockerSandboxAdapter {
         typeof exitCode !== 'number' || !Number.isInteger(exitCode)) {
         throw new DockerSandboxError('START_FAILED');
       }
+      // A short successful command may exit between watchdog ticks. Its verified
+      // Docker start still needs a durable local RUNNING transition before output.
+      if (control && exitCode === 0) await control.onStarted(containerId);
       result = Object.freeze({ exitCode, stdout: attached.stdout, stderr: attached.stderr });
       if (delivery && collectorName) {
         if (exitCode !== 0) throw new DockerSandboxError('EXECUTION_FAILED');
@@ -322,6 +384,10 @@ export class DockerSandboxAdapter {
     let cleanupFailed = false;
     if (createAttempted) {
       try { await boundedDockerCommand(this.dockerExecutable, ['rm', '-f', name]); }
+      catch { cleanupFailed = true; }
+    }
+    if (registeredContainer && control) {
+      try { await control.onStopped(registeredContainer); }
       catch { cleanupFailed = true; }
     }
     if (collectorCreated && collectorName) {
@@ -340,5 +406,67 @@ export class DockerSandboxAdapter {
     if (failure) throw failure;
     if (!result) throw new DockerSandboxError('START_FAILED');
     return result;
+  }
+}
+
+/** Seller safety control: Docker pause freezes the entire container, including descendants. */
+export class DockerJobControlAdapter {
+  constructor(private readonly dockerExecutable: string) {
+    if (!isAbsolute(dockerExecutable)) throw new TypeError('Docker executable must be absolute');
+  }
+
+  private async inspect(containerId: string, jobId: string, attemptId: string): Promise<DockerInspect> {
+    uuid.parse(jobId); uuid.parse(attemptId);
+    if (!containerIdPattern.test(containerId)) throw new DockerSandboxError('INSECURE_INPUT');
+    const raw = JSON.parse(await boundedDockerCommand(this.dockerExecutable, ['inspect', containerId])) as unknown;
+    if (!Array.isArray(raw) || raw.length !== 1 || !raw[0] || typeof raw[0] !== 'object') {
+      throw new DockerSandboxError('POLICY_MISMATCH');
+    }
+    const container = raw[0] as DockerInspect;
+    if (container.Id !== containerId || container.Config?.Labels?.['kivro.job-id'] !== jobId ||
+      container.Config?.Labels?.['kivro.attempt-id'] !== attemptId ||
+      container.HostConfig?.NetworkMode !== 'none' || container.HostConfig.ReadonlyRootfs !== true) {
+      throw new DockerSandboxError('POLICY_MISMATCH');
+    }
+    return container;
+  }
+
+  async pause(containerId: string, jobId: string, attemptId: string): Promise<void> {
+    const before = await this.inspect(containerId, jobId, attemptId);
+    if (before.State?.Status === 'paused') return;
+    if (before.State?.Status !== 'running') throw new DockerSandboxError('EXECUTION_FAILED');
+    await boundedDockerCommand(this.dockerExecutable, ['pause', containerId]);
+    const after = await this.inspect(containerId, jobId, attemptId);
+    if (after.State?.Status !== 'paused') throw new DockerSandboxError('POLICY_MISMATCH');
+  }
+
+  async resume(containerId: string, jobId: string, attemptId: string): Promise<void> {
+    const before = await this.inspect(containerId, jobId, attemptId);
+    if (before.State?.Status === 'running') return;
+    if (before.State?.Status !== 'paused') throw new DockerSandboxError('EXECUTION_FAILED');
+    await boundedDockerCommand(this.dockerExecutable, ['unpause', containerId]);
+    const after = await this.inspect(containerId, jobId, attemptId);
+    if (after.State?.Status !== 'running') throw new DockerSandboxError('POLICY_MISMATCH');
+  }
+
+  async stop(containerId: string, jobId: string, attemptId: string): Promise<void> {
+    const before = await this.inspect(containerId, jobId, attemptId);
+    if (before.State?.Status === 'exited') return;
+    // Docker cannot kill a paused container directly. This adapter is only for the offline
+    // sandbox profile; a future brokered profile must revoke all call grants first.
+    if (before.State?.Status === 'paused') {
+      await boundedDockerCommand(this.dockerExecutable, ['unpause', containerId]);
+    }
+    await boundedDockerCommand(this.dockerExecutable, ['kill', containerId]);
+    const after = await this.inspect(containerId, jobId, attemptId);
+    if (after.State?.Status !== 'exited') throw new DockerSandboxError('POLICY_MISMATCH');
+  }
+
+  async status(containerId: string, jobId: string, attemptId: string): Promise<'created' | 'running' | 'paused' | 'exited'> {
+    const status = (await this.inspect(containerId, jobId, attemptId)).State?.Status;
+    if (status !== 'created' && status !== 'running' && status !== 'paused' && status !== 'exited') {
+      throw new DockerSandboxError('POLICY_MISMATCH');
+    }
+    return status;
   }
 }

@@ -31,7 +31,14 @@ test('job offer requires secured payment and a compatible protocol version', () 
   const offer = {
     type: 'JOB_OFFER', protocolVersion: WORKER_PROTOCOL_VERSION, messageId: id,
     controlPlaneId: 'kivro-prod-a', jobId: id, executionId: id, attemptId: id,
-    workerDeviceId: id, capabilityVersionId: id, inputManifestId: id,
+    workerDeviceId: id, capabilityId: id, capabilityVersionId: id, inputManifestId: id,
+    paymentReservationId: id, workerManifestHash: `sha256:${'a'.repeat(64)}`,
+    localPackageHash: `sha256:${'d'.repeat(64)}`,
+    permissionPolicyHash: `sha256:${'e'.repeat(64)}`,
+    policyValidationHash: `sha256:${'b'.repeat(64)}`,
+    inputSchemaHash: `sha256:${'f'.repeat(64)}`,
+    inputManifestHash: `sha256:${'c'.repeat(64)}`, pauseSupport: 'NOT_SUPPORTED',
+    inputTotalBytes: 0, inputFileCount: 0,
     expiresAt: '2026-10-07T12:00:00Z', leaseToken: 'x'.repeat(32), paymentSecured: true,
   };
   assert.equal(parseJobOffer(offer).paymentSecured, true);

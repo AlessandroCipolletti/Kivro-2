@@ -35,10 +35,11 @@ const dependencyGraph = {
     marketplaceSupport: 'UNDETERMINED', confidence: 'CONFIRMED', selected: false, health: 'UNKNOWN' }],
 };
 const localPackage = {
-  packageVersion: 1, capabilityVersionId: nextId, workerDeviceId: id,
+  packageVersion: 1, capabilityId: id, capabilityVersionId: nextId, workerDeviceId: id,
   workerManifest: manifest, dependencyGraph, permissionPolicy: policy,
   sellerInferenceConfigHash: null, ioContract, priceTier: 'USD_999', dependencySnapshot: [],
   concurrencyLimit: 1, exampleRefs: [], testRefs: [],
+  pauseSupport: 'NOT_SUPPORTED',
 };
 const input = {
   id: nextId, capabilityId: id, versionNumber: 1, workerDeviceId: id,

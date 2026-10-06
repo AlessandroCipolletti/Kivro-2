@@ -1,0 +1,9 @@
+{
+  "name": "kivro-openclaw-runtime",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pinned OpenClaw runtime for the Kivro per-job sandbox",
+  "dependencies": {
+    "openclaw": "2026.8.2"
+  }
+}

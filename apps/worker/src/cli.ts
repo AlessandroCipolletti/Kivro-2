@@ -6,6 +6,8 @@ import { LocalOpenClawCommandRunner } from '../../../packages/openclaw-adapter/s
 import { checkOpenClawCompatibility } from '../../../packages/openclaw-adapter/src/compatibility.js';
 import { WorkerLocalState, WorkerStateError } from './local-state.js';
 import { EncryptedDeviceIdentityStore, KeychainDeviceIdentityStore } from './device-identity.js';
+import { WorkerJobControl, newLocalJobCommand } from './job-control.js';
+import { DockerJobControlAdapter } from '../../../packages/sandbox-adapter/src/docker.js';
 
 interface Check {
   readonly name: string;
@@ -57,7 +59,34 @@ async function doctor(): Promise<readonly Check[]> {
 }
 
 function help(): string {
-  return 'Usage: kivro-worker pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | health [--json] | doctor [--json] | device status [--json]';
+  return 'Usage: kivro-worker pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | job pause|resume|cancel|status <job-id> | health [--json] | doctor [--json] | device status [--json]';
+}
+
+async function runJobCommand(args: readonly string[], write: (line: string) => void): Promise<number> {
+  const action = args[0], jobId = args[1];
+  if (!jobId || !['pause', 'resume', 'cancel', 'status'].includes(action ?? '') || args.length !== 2) {
+    write(help()); return 2;
+  }
+  let control: WorkerJobControl | undefined;
+  try {
+    const docker = execFileSync('which', ['docker'], { encoding: 'utf8', timeout: 2_000 }).trim();
+    const seconds = Number(process.env.KIVRO_MAX_PAUSE_DURATION_SECONDS ?? '14400');
+    control = new WorkerJobControl(stateDirectory(), new DockerJobControlAdapter(docker),
+      unmetReadiness, { maxPauseDurationMs: seconds * 1000 });
+    if (action === 'status') {
+      const snapshot = control.snapshot(jobId);
+      write(JSON.stringify(snapshot)); return 0;
+    }
+    const command = newLocalJobCommand(jobId, actorId(), 'CLI');
+    const result = action === 'pause' ? await control.pause(command) :
+      action === 'resume' ? await control.resume(command) : await control.cancel(command);
+    write(`${result.status}; local revision ${result.localRevision}; cloud sync ${result.cloudSyncPending ? 'pending' : 'acknowledged'}`);
+    return 0;
+  } catch (error) {
+    write(error instanceof Error && 'code' in error && typeof error.code === 'string' ?
+      error.code : 'Job control unavailable');
+    return 1;
+  } finally { control?.close(); }
 }
 
 function deviceStatus(): { readonly status: 'METADATA_PRESENT' | 'MISSING' | 'INVALID'; readonly storage: 'OS_KEYCHAIN' | 'ENCRYPTED_FILE' | null; readonly deviceId: string | null; readonly pairing: 'UNKNOWN' } {
@@ -93,6 +122,7 @@ function parseReason(args: readonly string[]): string | undefined {
 /** Host-native CLI; success for pause means the local database committed. */
 export async function runWorkerCli(args: readonly string[], write: (line: string) => void = (line) => process.stdout.write(`${line}\n`)): Promise<number> {
   const command = args[0];
+  if (command === 'job') return runJobCommand(args.slice(1), write);
   if (!['pause', 'resume', 'health', 'doctor', 'device'].includes(command ?? '')) {
     write(help());
     return 2;

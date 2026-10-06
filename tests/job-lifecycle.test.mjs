@@ -56,3 +56,16 @@ test('duplicate event IDs with altered effects are rejected', () => {
   const job = applyJobTransition(initialJobLifecycle(jobId), event('CREATED', 'PAYMENT_RESERVED', 0, 'PAYMENT', { paymentReservationId: reservationId }));
   assert.throws(() => applyJobTransition(job, event('CREATED', 'PAYMENT_RESERVED', 0, 'PAYMENT', { paymentReservationId: resultId })), { code: 'CONFLICT' });
 });
+
+test('an accepted running job needs Worker stop evidence before CANCELLED', () => {
+  let job = initialJobLifecycle(jobId);
+  job = applyJobTransition(job, event('CREATED', 'PAYMENT_RESERVED', 0, 'PAYMENT', { paymentReservationId: reservationId }));
+  job = applyJobTransition(job, event('PAYMENT_RESERVED', 'QUEUED', 1));
+  job = applyJobTransition(job, event('QUEUED', 'DISPATCHED', 2, 'CLOUD', { attemptId }));
+  job = applyJobTransition(job, event('DISPATCHED', 'ACCEPTED', 3, 'WORKER', { attemptId }));
+  job = applyJobTransition(job, event('ACCEPTED', 'CANCEL_REQUESTED', 4, 'BUYER', { attemptId }));
+  assert.throws(() => applyJobTransition(job, event('CANCEL_REQUESTED', 'CANCELLED', 5, 'CLOUD',
+    { attemptId })), { code: 'FORBIDDEN_TRANSITION' });
+  job = applyJobTransition(job, event('CANCEL_REQUESTED', 'CANCELLED', 5, 'WORKER', { attemptId }));
+  assert.equal(job.status, 'CANCELLED');
+});

@@ -4,6 +4,7 @@ import { PublicPermissionManifestSchema } from './permission-policy.js';
 import { PriceSnapshotSchema } from './pricing.js';
 import { WorkerManifestSchema } from './worker-manifest.js';
 import { InternetPolicySchema } from './internet-policy.js';
+import { PauseSupportSchema } from './job-control.js';
 
 export const DigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
@@ -33,6 +34,7 @@ const versionFields = {
   dependencySnapshot: z.array(DependencySnapshotSchema).max(128),
   resourceLimits: WorkerManifestSchema.shape.limits,
   concurrencyLimit: z.number().int().positive().max(64),
+  pauseSupport: PauseSupportSchema,
   exampleRefs: z.array(z.uuid()).max(32),
   testRefs: z.array(z.uuid()).max(32),
 };
@@ -65,6 +67,7 @@ export const JobContractSnapshotSchema = z.strictObject({
   inputContractSnapshot: CapabilityIOContractSchema.shape.input,
   outputContractSnapshot: CapabilityIOContractSchema.shape.output,
   priceSnapshot: PriceSnapshotSchema,
+  pauseSupportSnapshot: PauseSupportSchema,
 });
 
 export type CapabilityVersionCandidate = z.infer<typeof CapabilityVersionCandidateSchema>;

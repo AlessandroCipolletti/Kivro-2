@@ -4,6 +4,7 @@ import { DependencyGraphSchema } from './dependency-graph.js';
 import { InternalPermissionPolicySchema } from './permission-policy.js';
 import { PriceTierSchema } from './pricing.js';
 import { WorkerManifestSchema } from './worker-manifest.js';
+import { PauseSupportSchema } from './job-control.js';
 
 const digest = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
@@ -11,6 +12,7 @@ const digest = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 export const LocalCapabilityPackageSchema = z.strictObject({
   packageVersion: z.literal(1),
   capabilityVersionId: z.uuid(),
+  capabilityId: z.uuid(),
   workerDeviceId: z.uuid(),
   workerManifest: WorkerManifestSchema,
   dependencyGraph: DependencyGraphSchema,
@@ -22,6 +24,7 @@ export const LocalCapabilityPackageSchema = z.strictObject({
     id: z.string().min(1).max(160), version: z.string().min(1).max(120), contentHash: digest,
   })).max(128),
   concurrencyLimit: z.number().int().positive().max(64),
+  pauseSupport: PauseSupportSchema,
   exampleRefs: z.array(z.uuid()).max(32),
   testRefs: z.array(z.uuid()).max(32),
 }).superRefine((value, context) => {

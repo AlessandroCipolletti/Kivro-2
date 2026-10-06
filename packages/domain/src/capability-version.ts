@@ -29,7 +29,8 @@ export interface VersionCandidateInput {
 
 export function buildVersionCandidate(input: VersionCandidateInput): Readonly<CapabilityVersionCandidate> {
   const localPackage = LocalCapabilityPackageSchema.parse(input.localPackage);
-  if (localPackage.capabilityVersionId !== input.id || localPackage.workerDeviceId !== input.workerDeviceId) {
+  if (localPackage.capabilityVersionId !== input.id || localPackage.capabilityId !== input.capabilityId ||
+    localPackage.workerDeviceId !== input.workerDeviceId) {
     throw new TypeError('Local package identity mismatch');
   }
   const manifest = localPackage.workerManifest;
@@ -56,6 +57,7 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
     dependencySnapshot: localPackage.dependencySnapshot,
     resourceLimits: manifest.limits,
     concurrencyLimit: localPackage.concurrencyLimit,
+    pauseSupport: localPackage.pauseSupport,
     exampleRefs: localPackage.exampleRefs,
     testRefs: localPackage.testRefs,
   });
@@ -82,6 +84,7 @@ export function createJobContractSnapshot(
     inputContractSnapshot: version.ioContract.input,
     outputContractSnapshot: version.ioContract.output,
     priceSnapshot: version.price,
+    pauseSupportSnapshot: version.pauseSupport,
   });
   return freezeDeep(snapshot);
 }

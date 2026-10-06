@@ -12,9 +12,13 @@ const allowed: Readonly<Record<JobStatus, readonly JobStatus[]>> = {
   WAITING_FOR_WORKER: ['QUEUED', 'CANCELLED', 'EXPIRED', 'WORKER_OFFLINE'],
   DISPATCHED: ['ACCEPTED', 'QUEUED', 'REJECTED', 'CANCEL_REQUESTED', 'EXPIRED', 'WORKER_OFFLINE'],
   ACCEPTED: ['STARTING', 'CANCEL_REQUESTED', 'FAILED_POLICY', 'WORKER_OFFLINE'],
-  STARTING: ['RUNNING', 'FAILED_STARTUP', 'FAILED_POLICY', 'CANCEL_REQUESTED', 'TIMED_OUT'],
-  RUNNING: ['UPLOADING_RESULT', 'FAILED_EXECUTION', 'FAILED_POLICY', 'CANCEL_REQUESTED', 'TIMED_OUT'],
+  STARTING: ['RUNNING', 'PAUSE_REQUESTED', 'SECURITY_PAUSED', 'FAILED_STARTUP', 'FAILED_POLICY', 'CANCEL_REQUESTED', 'TIMED_OUT'],
+  RUNNING: ['UPLOADING_RESULT', 'PAUSE_REQUESTED', 'SECURITY_PAUSED', 'FAILED_EXECUTION', 'FAILED_POLICY', 'CANCEL_REQUESTED', 'TIMED_OUT'],
   UPLOADING_RESULT: ['COMPLETED', 'RESULT_REJECTED', 'CANCEL_REQUESTED', 'TIMED_OUT'],
+  PAUSE_REQUESTED: ['PAUSED', 'SECURITY_PAUSED', 'RUNNING', 'CANCEL_REQUESTED', 'FAILED_EXECUTION', 'TIMED_OUT'],
+  PAUSED: ['RESUME_REQUESTED', 'CANCEL_REQUESTED', 'TIMED_OUT'],
+  RESUME_REQUESTED: ['RUNNING', 'PAUSED', 'SECURITY_PAUSED', 'CANCEL_REQUESTED', 'TIMED_OUT'],
+  SECURITY_PAUSED: ['RESUME_REQUESTED', 'CANCEL_REQUESTED', 'FAILED_POLICY', 'TIMED_OUT'],
   CANCEL_REQUESTED: ['CANCELLED', 'TIMED_OUT'],
   COMPLETED: [], REJECTED: [], EXPIRED: [], CANCELLED: [], FAILED_STARTUP: [],
   FAILED_POLICY: [], FAILED_EXECUTION: [], TIMED_OUT: [], WORKER_OFFLINE: [], RESULT_REJECTED: [],
@@ -73,6 +77,21 @@ export function applyJobTransition(current: JobLifecycleView, input: unknown): J
     !['BUYER', 'SELLER', 'CLOUD'].includes(transition.actor)) {
     throw new JobTransitionError('FORBIDDEN_TRANSITION');
   }
+  if (transition.from === 'CANCEL_REQUESTED' && transition.to === 'CANCELLED' &&
+    lifecycle.transitions.some((entry) => entry.to === 'ACCEPTED') && transition.actor !== 'WORKER') {
+    throw new JobTransitionError('FORBIDDEN_TRANSITION');
+  }
+  if (transition.to === 'PAUSE_REQUESTED' && !['SELLER', 'CLOUD', 'SYSTEM'].includes(transition.actor)) {
+    throw new JobTransitionError('FORBIDDEN_TRANSITION');
+  }
+  if (transition.to === 'RESUME_REQUESTED' && transition.actor !== 'SELLER') {
+    throw new JobTransitionError('FORBIDDEN_TRANSITION');
+  }
+  if (['PAUSED', 'SECURITY_PAUSED'].includes(transition.to) && transition.actor !== 'WORKER') {
+    throw new JobTransitionError('FORBIDDEN_TRANSITION');
+  }
+  if (['PAUSE_REQUESTED', 'PAUSED', 'RESUME_REQUESTED', 'SECURITY_PAUSED'].includes(transition.to) &&
+    transition.attemptId === null) throw new JobTransitionError('MISSING_EVIDENCE');
   return Object.freeze({
     jobId: lifecycle.jobId,
     status: transition.to,
