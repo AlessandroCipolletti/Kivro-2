@@ -8,7 +8,7 @@ import { LocalCapabilityPackageSchema } from '../../contracts/src/capability-pac
 import { hashCanonicalJson } from '../../contracts/src/canonical-json.js';
 import { buildPublicPermissionManifest } from '../../policy-engine/src/public-manifest.js';
 import { hashWorkerManifest } from '../../contracts/src/worker-manifest.js';
-import { priceForTier } from './pricing.js';
+import { PriceSnapshotSchema, type PriceSnapshot } from '../../contracts/src/pricing.js';
 
 function freezeDeep<T>(value: T): Readonly<T> {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -25,6 +25,8 @@ export interface VersionCandidateInput {
   readonly workerDeviceId: string;
   readonly requestedAt: string;
   readonly localPackage: unknown;
+  /** Server-validated enabled catalog price; required by the publication service. */
+  readonly selectedPrice: PriceSnapshot;
 }
 
 export function buildVersionCandidate(input: VersionCandidateInput): Readonly<CapabilityVersionCandidate> {
@@ -53,7 +55,11 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
     sellerInferenceConfigHash: localPackage.sellerInferenceConfigHash === null ? null : DigestSchema.parse(localPackage.sellerInferenceConfigHash),
     ioContract,
     publicPermissionManifest: buildPublicPermissionManifest(permissionPolicy),
-    price: priceForTier(localPackage.priceTier),
+    price: PriceSnapshotSchema.parse({ tier: input.selectedPrice.tier,
+      currency: input.selectedPrice.currency,
+      buyerAmountMinor: input.selectedPrice.buyerAmountMinor,
+      platformFeeMinor: input.selectedPrice.platformFeeMinor,
+      sellerEarningMinor: input.selectedPrice.sellerEarningMinor }),
     dependencySnapshot: localPackage.dependencySnapshot,
     resourceLimits: manifest.limits,
     concurrencyLimit: localPackage.concurrencyLimit,
@@ -61,6 +67,7 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
     exampleRefs: localPackage.exampleRefs,
     testRefs: localPackage.testRefs,
   });
+  if (version.price.tier !== localPackage.priceTier) throw new TypeError('Selected tier mismatch');
   return freezeDeep(version);
 }
 

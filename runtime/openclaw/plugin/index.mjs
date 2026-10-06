@@ -4,6 +4,7 @@ import { defineToolPlugin } from 'openclaw/plugin-sdk/tool-plugin';
 import { registerSandboxBackend } from 'openclaw/plugin-sdk/sandbox';
 import { constants } from 'node:fs';
 import { open, readFile, writeFile } from 'node:fs/promises';
+import { makeToolBudget } from './tool-budget.mjs';
 
 // The Worker has already created and inspected the one per-job Docker container.
 // OpenClaw's mandatory sandbox mode uses that verified container as its backend;
@@ -72,12 +73,16 @@ async function allowedFiles() {
   if (Buffer.byteLength(raw) > 32_768) throw new Error('KIVRO_FILE_POLICY_INVALID');
   const parsed = JSON.parse(raw);
   if (parsed?.version !== 1 || !Array.isArray(parsed.inputs) ||
-    !Number.isSafeInteger(parsed.maxOutputFileBytes) || parsed.maxOutputFileBytes < 1) {
+    !Number.isSafeInteger(parsed.maxOutputFileBytes) || parsed.maxOutputFileBytes < 1 ||
+    !Number.isSafeInteger(parsed.maxToolCalls) || parsed.maxToolCalls < 1 ||
+    parsed.maxToolCalls > 10_000) {
     throw new Error('KIVRO_FILE_POLICY_INVALID');
   }
   filePolicy = parsed;
   return parsed;
 }
+
+const requireToolBudget = makeToolBudget(allowedFiles);
 
 function outputName(value) {
   if (typeof value !== 'string' || value === 'result.json' ||
@@ -129,11 +134,15 @@ export default defineToolPlugin({
   tools: (tool) => [
     ...routes.map(([name, path, parameters]) => tool({ name, label: name,
       description: 'Use the seller-approved Kivro operation',
-      parameters, async execute(params) { return invoke(path, params); } })),
+      parameters, async execute(params) {
+        await requireToolBudget();
+        return invoke(path, params);
+      } })),
     tool({ name: 'kivro_submit_result', label: 'Submit Kivro result',
       description: 'Submit the final result against the published output contract',
       parameters: Type.Object({ fields: Type.Record(Type.String(), Type.Unknown()) }),
       async execute(params) {
+        await requireToolBudget();
         if (!params.fields || typeof params.fields !== 'object' || Array.isArray(params.fields) ||
           Object.keys(params.fields).length > 64 ||
           Object.keys(params.fields).some((key) => !/^[A-Za-z][A-Za-z0-9_]*$/.test(key))) {
@@ -150,6 +159,7 @@ export default defineToolPlugin({
       parameters: Type.Object({ fieldKey: Type.String(), assetId: Type.String(),
         offset: Type.Integer({ minimum: 0 }), length: Type.Integer({ minimum: 1, maximum: 65_536 }) }),
       async execute(params) {
+        await requireToolBudget();
         const policy = await allowedFiles();
         const file = policy.inputs.find((item) => item.fieldKey === params.fieldKey &&
           item.assetId === params.assetId);
@@ -175,7 +185,10 @@ export default defineToolPlugin({
       description: 'Append a bounded byte chunk to a named output file',
       parameters: Type.Object({ name: Type.String(), offset: Type.Integer({ minimum: 0 }),
         bytesBase64: Type.String() }),
-      async execute(params) { return appendOutput(params); },
+      async execute(params) {
+        await requireToolBudget();
+        return appendOutput(params);
+      },
     }),
   ],
 });

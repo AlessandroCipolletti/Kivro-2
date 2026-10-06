@@ -1,17 +1,16 @@
 import { z } from 'zod';
 
-export const PriceTierSchema = z.enum([
-  'USD_099', 'USD_299', 'USD_499', 'USD_999', 'USD_1499',
-  'USD_1999', 'USD_2999', 'USD_4999', 'USD_9999',
-]);
+/** Platform-owned IDs. The nine launch tiers are seeded in the shared database. */
+export const PriceTierSchema = z.string().regex(/^USD_[0-9]{2,8}$/);
 
 export const PriceSnapshotSchema = z.strictObject({
   tier: PriceTierSchema,
   currency: z.literal('USD'),
-  buyerAmountMinor: z.number().int().positive(),
-  platformFeeMinor: z.number().int().nonnegative(),
-  sellerEarningMinor: z.number().int().nonnegative(),
-});
+  buyerAmountMinor: z.number().int().safe().positive(),
+  platformFeeMinor: z.number().int().safe().nonnegative(),
+  sellerEarningMinor: z.number().int().safe().nonnegative(),
+}).refine((value) => value.buyerAmountMinor === value.platformFeeMinor + value.sellerEarningMinor,
+  'Price split must balance');
 
 export type PriceTier = z.infer<typeof PriceTierSchema>;
 export type PriceSnapshot = z.infer<typeof PriceSnapshotSchema>;

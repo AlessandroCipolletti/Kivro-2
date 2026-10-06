@@ -37,7 +37,7 @@ test('approved OpenClaw tool policy writes only a validated bounded deliverable'
     writeFileSync(join(input, 'kivro-files.json'), JSON.stringify({ version: 1, inputs: [{
       fieldKey: 'source', assetId, path: `/job/input/source/${assetId}.txt`, sizeBytes: 16,
     }],
-      maxOutputFileBytes: 65536 }));
+      maxOutputFileBytes: 65536, maxToolCalls: 64 }));
     let inferenceCalls = 0;
     const completion = new SellerCompletionBroker({ async resolve() { return 'synthetic-key'; } },
       { providerId: 'synthetic', async complete(request, credential) {

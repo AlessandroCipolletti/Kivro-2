@@ -78,6 +78,8 @@ if (!process.env.M06_DATABASE_URL) {
     const providerOutcomes = await Promise.allSettled(providerIds.map((requestId) => provider.reserve({
       requestId, jobId: job, capabilityVersionId: version, providerId: 'example', modelId: 'small',
       reserveMicroUsd: 60, maxRequestsPerJob: 3, maxSpendMicroUsdPerJob: 120,
+      reservedInputTokens: 20, reservedOutputTokens: 10, maxTokensPerJob: 90,
+      maxDailyJobs: 1, maxDailySpendMicroUsd: 120,
     })));
     assert.equal(providerOutcomes.filter((item) => item.status === 'fulfilled').length, 2);
     for (const [index, outcome] of providerOutcomes.entries()) if (outcome.status === 'fulfilled') {
@@ -86,10 +88,37 @@ if (!process.env.M06_DATABASE_URL) {
     }
     await assert.rejects(provider.reserve({ requestId: randomUUID(), jobId: job, capabilityVersionId: randomUUID(),
       providerId: 'example', modelId: 'small', reserveMicroUsd: 1, maxRequestsPerJob: 3,
-      maxSpendMicroUsdPerJob: 120 }), /NETWORK_POLICY_DENIED/);
+      maxSpendMicroUsdPerJob: 120, reservedInputTokens: 20, reservedOutputTokens: 10,
+      maxTokensPerJob: 90, maxDailyJobs: 1, maxDailySpendMicroUsd: 120 }), /NETWORK_POLICY_DENIED/);
     const rows = await admin.query('SELECT provider_id,model_id,accounted_micro_usd FROM seller_provider_calls WHERE job_id=$1', [job]);
     assert.equal(rows.rowCount, 2);
     assert.doesNotMatch(JSON.stringify(rows.rows), /provider-secret|prompt|Acme/);
+  });
+
+  test('M08 daily seller cost, job and token ceilings serialize across jobs', async () => {
+    const secondJob=randomUUID();
+    await admin.query(`INSERT INTO jobs(id,buyer_account_id,capability_version_id,worker_device_id,
+      status,contract_snapshot,payment_reservation_id)
+      VALUES($1,$2,$3,$4,'RUNNING','{}',$5)`,
+    [secondJob,buyer,version,worker,randomUUID()]);
+    const usage=new PostgresProviderUsage(admin);
+    const base={requestId:randomUUID(),jobId:secondJob,capabilityVersionId:version,
+      providerId:'example',modelId:'small',reserveMicroUsd:1,maxRequestsPerJob:3,
+      maxSpendMicroUsdPerJob:120,reservedInputTokens:20,reservedOutputTokens:10,
+      maxTokensPerJob:29,maxDailyJobs:1,maxDailySpendMicroUsd:1000};
+    await assert.rejects(usage.reserve(base),/NETWORK_BUDGET_EXCEEDED/);
+    await assert.rejects(usage.reserve({...base,maxDailyJobs:2,maxDailySpendMicroUsd:100}),
+      /NETWORK_BUDGET_EXCEEDED/);
+    await assert.rejects(usage.reserve({...base,maxDailyJobs:2,maxDailySpendMicroUsd:1000}),
+      /NETWORK_BUDGET_EXCEEDED/); // maxTokensPerJob 29 < 20+10.
+    await usage.reserve({...base,maxTokensPerJob:30,maxDailyJobs:2,
+      maxDailySpendMicroUsd:1000});
+    await usage.settle({requestId:base.requestId,accountedMicroUsd:1,
+      inputTokens:10,outputTokens:5,status:'SUCCEEDED'});
+    await usage.settle({requestId:base.requestId,accountedMicroUsd:1,
+      inputTokens:10,outputTokens:5,status:'SUCCEEDED'});
+    await assert.rejects(usage.settle({requestId:base.requestId,accountedMicroUsd:2,
+      inputTokens:10,outputTokens:5,status:'SUCCEEDED'}),/NETWORK_POLICY_DENIED/);
   });
 
   test('global destination rate ceiling rejects a new call despite a permissive per-job limit', async () => {

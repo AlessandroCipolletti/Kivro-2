@@ -37,7 +37,12 @@ export class SellerProviderBroker {
     }
     await this.usage.reserve({ requestId, jobId: binding.jobId, capabilityVersionId: binding.capabilityVersionId,
       providerId: policy.providerId, modelId: policy.modelId, reserveMicroUsd,
-      maxRequestsPerJob: policy.maxRequestsPerJob, maxSpendMicroUsdPerJob: policy.maxEstimatedSpendMicroUsdPerJob });
+      maxRequestsPerJob: policy.maxRequestsPerJob, maxSpendMicroUsdPerJob: policy.maxEstimatedSpendMicroUsdPerJob,
+      reservedInputTokens: input.estimatedInputTokens, reservedOutputTokens: input.maxOutputTokens,
+      maxTokensPerJob: policy.maxTokensPerJob ??
+        (policy.maxInputTokensPerRequest + policy.maxOutputTokensPerRequest) * policy.maxRequestsPerJob,
+      maxDailyJobs: policy.maxDailyJobs ?? 1,
+      maxDailySpendMicroUsd: policy.maxDailyProviderSpendMicroUsd ?? policy.maxEstimatedSpendMicroUsdPerJob });
     let accountedMicroUsd = reserveMicroUsd, inputTokens = 0, outputTokens = 0;
     let status: 'SUCCEEDED' | 'FAILED' = 'FAILED';
     try {

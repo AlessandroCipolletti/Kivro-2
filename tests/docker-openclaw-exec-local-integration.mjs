@@ -31,6 +31,8 @@ test('pinned OpenClaw runs an isolated headless job through the Worker bridge', 
   writeFileSync(join(input, 'message.txt'), 'Submit answer "ready" using kivro_submit_result.', { mode: 0o600 });
   writeFileSync(join(input, 'kivro-run.json'), JSON.stringify({ version: 1, modelRef: 'kivro/broker',
     timeoutSeconds: 40 }), { mode: 0o600 });
+  writeFileSync(join(input, 'kivro-files.json'), JSON.stringify({version:1,inputs:[],
+    maxOutputFileBytes:65536,maxToolCalls:64}), {mode:0o600});
   let inferenceCalls = 0;
   const versionId = randomUUID();
   const completion = new SellerCompletionBroker({ async resolve() { return 'synthetic-key'; } },

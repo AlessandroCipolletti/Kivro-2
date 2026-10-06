@@ -27,7 +27,7 @@ const terminalStates = new Set<JobStatus>([
   'FAILED_EXECUTION', 'TIMED_OUT', 'WORKER_OFFLINE', 'RESULT_REJECTED',
 ]);
 
-/** M08 must implement this from authoritative ledger state. No Worker message can implement it. */
+/** Bound to the Core financial ledger by the cloud composition root. Worker messages cannot implement it. */
 export interface PaymentReservationVerifier {
   isSecured(client: PoolClient, jobId: string, reservationId: string): Promise<boolean>;
 }
@@ -165,8 +165,11 @@ export class PostgresJobExecutionRepository {
   async createJob(snapshotInput: unknown): Promise<DurableJobView> {
     const snapshot = JobContractSnapshotSchema.parse(snapshotInput);
     return this.transaction(async (client) => {
-      const version = await client.query<{ id: string; version_snapshot: unknown; version_number: number }>(
-        "SELECT id, version_snapshot, version_number FROM capability_versions WHERE id=$1 AND publication_state='PUBLISHED' FOR SHARE",
+      const version = await client.query<{ id: string; version_snapshot: unknown; version_number: number;
+        seller_profile_id: string }>(
+        `SELECT v.id,v.version_snapshot,v.version_number,c.seller_profile_id
+         FROM capability_versions v JOIN capabilities c ON c.id=v.capability_id
+         WHERE v.id=$1 AND v.publication_state='PUBLISHED' FOR SHARE OF v,c`,
         [snapshot.capabilityVersionId]);
       const row = version.rows[0];
       if (!row) throw new JobExecutionError('NOT_ELIGIBLE');
@@ -177,6 +180,12 @@ export class PostgresJobExecutionRepository {
       }
       await client.query('INSERT INTO jobs(id,buyer_account_id,capability_version_id,worker_device_id,status,contract_snapshot) VALUES($1,$2,$3,$4,\'CREATED\',$5)',
         [snapshot.jobId, snapshot.buyerAccountId, snapshot.capabilityVersionId, snapshot.workerDeviceId, snapshot]);
+      const price = snapshot.priceSnapshot;
+      await client.query(`INSERT INTO job_financial_snapshots(job_id,seller_profile_id,price_tier_id,
+        currency,buyer_price_minor,platform_fee_minor,seller_earning_minor,
+        tax_minor,buyer_total_minor) VALUES($1,$2,$3,'USD',$4,$5,$6,0,$4)`,
+      [snapshot.jobId, row.seller_profile_id, price.tier,
+        price.buyerAmountMinor, price.platformFeeMinor, price.sellerEarningMinor]);
       return { jobId: snapshot.jobId, status: 'CREATED', paymentReservationId: null, transitions: [] };
     });
   }

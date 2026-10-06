@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildVersionCandidate, createJobContractSnapshot } from '../dist/packages/domain/src/capability-version.js';
 import { PublishedCapabilityVersionSchema } from '../dist/packages/contracts/src/capability-version.js';
-import { priceForTier } from '../dist/packages/domain/src/pricing.js';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 
@@ -44,17 +43,16 @@ const localPackage = {
 const input = {
   id: nextId, capabilityId: id, versionNumber: 1, workerDeviceId: id,
   requestedAt: '2026-10-06T12:00:00Z', localPackage,
+  selectedPrice: { tier:'USD_999',currency:'USD',buyerAmountMinor:999,
+    platformFeeMinor:199,sellerEarningMinor:800 },
 };
 
-test('canonical USD tiers have exact integer buyer, fee and seller amounts', () => {
-  const expected = [[99, 19, 80], [299, 59, 240], [499, 99, 400], [999, 199, 800],
-    [1499, 299, 1200], [1999, 399, 1600], [2999, 599, 2400], [4999, 999, 4000], [9999, 1999, 8000]];
-  const names = ['USD_099', 'USD_299', 'USD_499', 'USD_999', 'USD_1499', 'USD_1999', 'USD_2999', 'USD_4999', 'USD_9999'];
-  for (let index = 0; index < names.length; index++) {
-    const price = priceForTier(names[index]);
-    assert.deepEqual([price.buyerAmountMinor, price.platformFeeMinor, price.sellerEarningMinor], expected[index]);
-  }
-  assert.throws(() => priceForTier('USD_1234'));
+test('publication candidate requires a catalog-selected split and matching tier', () => {
+  assert.throws(() => buildVersionCandidate({ ...input,selectedPrice:undefined }));
+  assert.throws(() => buildVersionCandidate({ ...input,
+    selectedPrice:{...input.selectedPrice,platformFeeMinor:200} }));
+  assert.throws(() => buildVersionCandidate({ ...input,
+    selectedPrice:{...input.selectedPrice,tier:'USD_299'} }));
 });
 
 test('version candidate is immutable and cannot be used for a job', () => {

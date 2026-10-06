@@ -50,7 +50,9 @@ export interface DeclaredApiUsagePort {
 
 export interface ProviderUsagePort {
   reserve(input: { requestId: string; jobId: string; capabilityVersionId: string; providerId: string;
-    modelId: string; reserveMicroUsd: number; maxRequestsPerJob: number; maxSpendMicroUsdPerJob: number }): Promise<void>;
+    modelId: string; reserveMicroUsd: number; maxRequestsPerJob: number; maxSpendMicroUsdPerJob: number;
+    reservedInputTokens: number; reservedOutputTokens: number; maxTokensPerJob: number;
+    maxDailyJobs: number; maxDailySpendMicroUsd: number }): Promise<void>;
   settle(input: { requestId: string; accountedMicroUsd: number; inputTokens: number; outputTokens: number;
-    status: 'SUCCEEDED' | 'FAILED' }): Promise<void>;
+    status: 'SUCCEEDED' | 'FAILED'; measuredCostMicroUsd?: number | null }): Promise<void>;
 }

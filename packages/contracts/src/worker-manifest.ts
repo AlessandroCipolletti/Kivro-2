@@ -41,6 +41,7 @@ export const WorkerManifestSchema = z.strictObject({
     maxPids: z.number().int().positive(),
     maxInputBytes: z.number().int().nonnegative(),
     maxOutputBytes: z.number().int().nonnegative(),
+    maxToolCalls: z.number().int().min(1).max(10_000).optional(),
   }),
 });
 

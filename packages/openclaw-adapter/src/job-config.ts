@@ -155,7 +155,8 @@ export async function prepareOpenClawJobInput(raw: {
     throw new OpenClawJobConfigError('LIMIT_EXCEEDED');
   }
   const filePolicy = { version: 1, inputs: raw.envelope.files,
-    maxOutputFileBytes: raw.maxOutputFileBytes };
+    maxOutputFileBytes: raw.maxOutputFileBytes,
+    maxToolCalls: pkg.workerManifest.limits.maxToolCalls ?? 64 };
   await writeReadableNew(join(root, 'config.json'), JSON.stringify(config));
   await writeReadableNew(join(root, 'message.txt'), message);
   await writeReadableNew(join(root, 'kivro-files.json'), JSON.stringify(filePolicy));

@@ -88,7 +88,12 @@ export class SellerCompletionBroker {
       capabilityVersionId: binding.capabilityVersionId, providerId: policy.providerId,
       modelId: policy.modelId, reserveMicroUsd: reserved,
       maxRequestsPerJob: policy.maxRequestsPerJob,
-      maxSpendMicroUsdPerJob: policy.maxEstimatedSpendMicroUsdPerJob });
+      maxSpendMicroUsdPerJob: policy.maxEstimatedSpendMicroUsdPerJob,
+      reservedInputTokens: policy.maxInputTokensPerRequest, reservedOutputTokens: maxOutput,
+      maxTokensPerJob: policy.maxTokensPerJob ??
+        (policy.maxInputTokensPerRequest + policy.maxOutputTokensPerRequest) * policy.maxRequestsPerJob,
+      maxDailyJobs: policy.maxDailyJobs ?? 1,
+      maxDailySpendMicroUsd: policy.maxDailyProviderSpendMicroUsd ?? policy.maxEstimatedSpendMicroUsdPerJob });
     let accounted = reserved, inputTokens = 0, outputTokens = 0;
     let status: 'SUCCEEDED' | 'FAILED' = 'FAILED';
     try {

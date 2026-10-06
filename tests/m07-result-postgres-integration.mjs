@@ -5,6 +5,7 @@ import process from 'node:process';
 import test from 'node:test';
 import pg from 'pg';
 import { buildVersionCandidate, createJobContractSnapshot } from '../dist/packages/domain/src/capability-version.js';
+import { PostgresPriceTierCatalog } from '../dist/packages/persistence/src/price-tiers.js';
 import { PublishedCapabilityVersionSchema } from '../dist/packages/contracts/src/capability-version.js';
 import { PostgresJobExecutionRepository } from '../dist/packages/persistence/src/job-execution.js';
 import { HmacLeaseTokenIssuer } from '../dist/packages/application/src/lease-token.js';
@@ -72,7 +73,8 @@ if (!process.env.M07_DATABASE_URL) {
         exampleRefs: [], testRefs: [], pauseSupport: 'FULL_RESUME',
       };
       const candidate = buildVersionCandidate({ id: versionId, capabilityId: capability,
-        versionNumber: 1, workerDeviceId: worker, requestedAt: new Date().toISOString(), localPackage });
+        versionNumber: 1, workerDeviceId: worker, requestedAt: new Date().toISOString(), localPackage,
+        selectedPrice: await new PostgresPriceTierCatalog(pool).selected(localPackage.priceTier) });
       const fields = { ...candidate }; delete fields.requestedAt;
       const published = PublishedCapabilityVersionSchema.parse({ ...fields,
         publicationState: 'PUBLISHED', publishedAt: new Date().toISOString(), policyValidationHash: hash });

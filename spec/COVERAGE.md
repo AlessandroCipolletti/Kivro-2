@@ -73,7 +73,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0014`    P2         §4       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0014
 
-  `PRD-0015`    P2         §4       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0015
+  `PRD-0015`    P2         §4       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0015 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0016`    P1         §5       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0016
 
@@ -139,21 +139,21 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0026`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0026
 
-  `PRD-0027`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0027
+  `PRD-0027`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0027 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0027
 
-  `PRD-0028`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0028
+  `PRD-0028`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0028 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0028
 
-  `PRD-0029`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0029
+  `PRD-0029`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0029 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0029
 
-  `PRD-0030`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0030
+  `PRD-0030`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0030 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0030
 
-  `JOB-0001`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0001
+  `JOB-0001`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0001 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0001
 
-  `JOB-0002`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0002
+  `JOB-0002`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0002 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0002
 
-  `JOB-0003`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0003
+  `JOB-0003`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0003 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0003
 
-  `JOB-0004`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0004
+  `JOB-0004`    P1         §9       `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts,packages/persistence/migrations/0014_job_execution.sql   tests/job-lifecycle.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0004 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0004
 
   `WRK-0031`    P1         §10      `DEFERRED_VERIFICATION`   apps/worker/src/device-identity.ts,packages/worker-protocol/src/auth.ts,packages/worker-protocol/src/transport.ts,packages/infrastructure/netsons/src/https-polling.ts,packages/persistence/src/worker-auth.ts,packages/persistence/src/worker-heartbeat.ts,packages/persistence/src/worker-pairing.ts   tests/worker-transport.test.mjs,tests/worker-https-polling.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:WRK-0031
 
@@ -165,23 +165,23 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0035`    P1         §10      `DEFERRED_VERIFICATION`   apps/worker/src/device-identity.ts,packages/worker-protocol/src/auth.ts,packages/worker-protocol/src/transport.ts,packages/infrastructure/netsons/src/https-polling.ts,packages/persistence/src/worker-auth.ts,packages/persistence/src/worker-heartbeat.ts,packages/persistence/src/worker-pairing.ts   tests/worker-transport.test.mjs,tests/worker-https-polling.test.mjs,tests/m07-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:WRK-0035
 
-  `JOB-0005`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0005
+  `JOB-0005`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0005 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0005
 
-  `JOB-0006`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0006
+  `JOB-0006`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0006 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0006
 
-  `JOB-0007`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0007
+  `JOB-0007`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0007 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0007
 
-  `IO-0001`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0001
+  `IO-0001`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0001 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0001
 
-  `IO-0002`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0002
+  `IO-0002`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0002 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0002
 
-  `IO-0003`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0003
+  `IO-0003`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0003 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0003
 
-  `IO-0004`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0004
+  `IO-0004`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0004 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0004
 
-  `IO-0005`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0005
+  `IO-0005`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0005 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0005
 
-  `IO-0006`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0006
+  `IO-0006`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0006 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0006
 
   `SEC-0001`    P1         §13      `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/job-config.ts,apps/worker/src/broker-sidecar.ts,packages/application/src/completion-broker.ts   tests/openclaw-job-config.test.mjs,tests/openclaw-completion-broker.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0001
 
@@ -199,19 +199,19 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0008`    P0         §13      `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/job-config.ts,apps/worker/src/broker-sidecar.ts,packages/application/src/completion-broker.ts   tests/openclaw-job-config.test.mjs,tests/openclaw-completion-broker.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0008
 
-  `SEC-0009`    P1         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0009
+  `SEC-0009`    P1         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0009 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0009
 
-  `SEC-0010`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0010
+  `SEC-0010`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0010 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0010
 
-  `SEC-0011`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0011
+  `SEC-0011`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0011 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0011
 
-  `SEC-0012`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0012
+  `SEC-0012`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0012 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0012
 
-  `SEC-0013`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0013
+  `SEC-0013`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0013 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0013
 
-  `SEC-0014`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0014
+  `SEC-0014`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0014 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0014
 
-  `SEC-0015`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0015
+  `SEC-0015`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts,apps/worker/src/broker-router.ts   tests/m06-postgres-integration.mjs,tests/worker-broker-router.test.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0015 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0015
 
   `WRK-0036`    P1         §15      `DEFERRED_VERIFICATION`   packages/contracts/src/worker-manifest.ts,packages/policy-engine/src/sandbox.ts,packages/openclaw-adapter/src/job-config.ts,runtime/openclaw/Dockerfile   tests/sandbox-policy.test.mjs,tests/openclaw-job-config.test.mjs,tests/docker-openclaw-exec-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:WRK-0036
 
@@ -227,17 +227,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0042`    P1         §15      `DEFERRED_VERIFICATION`   packages/contracts/src/worker-manifest.ts,packages/policy-engine/src/sandbox.ts,packages/openclaw-adapter/src/job-config.ts,runtime/openclaw/Dockerfile   tests/sandbox-policy.test.mjs,tests/openclaw-job-config.test.mjs,tests/docker-openclaw-exec-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:WRK-0042
 
-  `SEC-0016`    P1         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0016
+  `SEC-0016`    P1         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0016 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0016
 
-  `SEC-0017`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0017
+  `SEC-0017`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0017 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0017
 
-  `SEC-0018`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0018
+  `SEC-0018`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0018 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0018
 
-  `SEC-0019`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0019
+  `SEC-0019`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0019 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0019
 
-  `SEC-0020`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0020
+  `SEC-0020`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0020 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0020
 
-  `SEC-0021`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0021
+  `SEC-0021`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0021 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0021
 
   `SEC-0022`    P1         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0022
 
@@ -247,57 +247,57 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0025`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0025
 
-  `PRD-0031`    P1         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0031 M06 component review:docs/milestones/M06.md
+  `PRD-0031`    P1         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0031 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0032`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0032 M06 component review:docs/milestones/M06.md
+  `PRD-0032`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0032 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0033`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0033 M06 component review:docs/milestones/M06.md
+  `PRD-0033`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0033 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0034`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0034 M06 component review:docs/milestones/M06.md
+  `PRD-0034`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0034 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0035`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0035 M06 component review:docs/milestones/M06.md
+  `PRD-0035`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0035 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0036`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0036 M06 component review:docs/milestones/M06.md
+  `PRD-0036`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0036 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0037`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0037 M06 component review:docs/milestones/M06.md
+  `PRD-0037`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0037 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0038`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0038 M06 component review:docs/milestones/M06.md
+  `PRD-0038`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0038 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0008`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0008 M06 component review:docs/milestones/M06.md
+  `JOB-0008`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0008 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0009`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0009 M06 component review:docs/milestones/M06.md
+  `JOB-0009`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0009 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0010`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0010 M06 component review:docs/milestones/M06.md
+  `JOB-0010`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0010 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0011`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0011 M06 component review:docs/milestones/M06.md
+  `JOB-0011`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0011 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0012`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0012 M06 component review:docs/milestones/M06.md
+  `JOB-0012`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0012 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0013`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0013 M06 component review:docs/milestones/M06.md
+  `JOB-0013`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0013 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0014`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0014 M06 component review:docs/milestones/M06.md
+  `JOB-0014`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0014 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0015`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0015 M06 component review:docs/milestones/M06.md
+  `JOB-0015`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0015 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0016`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0016 M06 component review:docs/milestones/M06.md
+  `JOB-0016`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0016 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0017`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0017 M06 component review:docs/milestones/M06.md
+  `JOB-0017`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0017 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0018`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0018 M06 component review:docs/milestones/M06.md
+  `JOB-0018`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0018 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0019`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0019 M06 component review:docs/milestones/M06.md
+  `JOB-0019`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0019 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0020`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0020 M06 component review:docs/milestones/M06.md
+  `JOB-0020`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0020 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0021`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0021 M06 component review:docs/milestones/M06.md
+  `JOB-0021`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0021 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0022`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0022 M06 component review:docs/milestones/M06.md
+  `JOB-0022`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0022 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0023`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0023 M06 component review:docs/milestones/M06.md
+  `JOB-0023`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0023 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0024`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0024 M06 component review:docs/milestones/M06.md
+  `JOB-0024`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0024 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0025`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0025 M06 component review:docs/milestones/M06.md
+  `JOB-0025`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0025 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `SEC-0026`    P1         §20      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0026
 
@@ -321,161 +321,161 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0047`    P1         §22      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0047
 
-  `CAP-0001`    P1         §23      `DEFERRED_VERIFICATION`   packages/persistence/migrations/0001_foundation.sql tests/sql/m01_foundation.sql baseline only;  backlog:CAP-0001
+  `CAP-0001`    P1         §23      `DEFERRED_VERIFICATION`   packages/persistence/migrations/0001_foundation.sql tests/sql/m01_foundation.sql baseline only;  backlog:CAP-0001 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PAY-0001`    P1         §24      `TODO`   ---              ---        ---
+  `PAY-0001`    P1         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0001
 
-  `PAY-0002`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0002`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0002
 
-  `PAY-0003`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0003`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0004`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0004`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0004
 
-  `PAY-0005`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0005`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0006`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0006`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0006
 
-  `PAY-0007`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0007`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0008`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0008`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0008
 
-  `PAY-0009`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0009`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0009
 
-  `PAY-0010`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0010`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0011`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0011`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0012`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0012`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0012
 
-  `PAY-0013`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0013`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0014`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0014`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0015`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0015`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0015
 
-  `PAY-0016`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0016`    P0         §24      `DEFERRED`   ---   ---   OPEN later-owned implementation: §24.25 P5 future direct-payment option after prepaid-credit MVP; docs/milestones/M08.md
 
-  `PAY-0017`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0017`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M09 availability and authorization-window policy; docs/milestones/M08.md
 
-  `PAY-0018`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0018`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0018
 
-  `PAY-0019`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0019`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0019
 
-  `PAY-0020`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0020`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0021`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0021`    P0         §24      `DEFERRED`   ---   ---   OPEN later-owned implementation: §24.25 P5 future direct-payment option after prepaid-credit MVP; docs/milestones/M08.md
 
-  `PAY-0022`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0022`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PAY-0023`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0023`    P0         §24      `DEFERRED`   ---   ---   OPEN implementation for §24.5 direct per-job PaymentIntent authorization/capture flow after prepaid-credit MVP; a credit reservation does not verify this direct-payment step. docs/milestones/M08.md
 
-  `PAY-0024`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0024`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PAY-0025`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0025`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0026`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0026`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PAY-0027`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0027`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0027
 
-  `PAY-0028`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0028`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0028
 
-  `PAY-0029`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0029`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0030`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0030`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0031`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0031`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0032`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0032`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0032
 
-  `PAY-0033`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0033`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0033
 
-  `PAY-0034`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0034`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0034
 
-  `PAY-0035`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0035`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0035
 
-  `PAY-0036`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0036`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0036
 
-  `PAY-0037`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0037`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0037
 
-  `PAY-0038`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0038`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0039`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0039`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0040`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0040`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0041`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0041`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0042`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0042`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0042
 
-  `PAY-0043`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0043`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0044`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0044`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0045`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0045`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PAY-0046`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0046`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PAY-0047`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0047`    P0         §24      `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0048`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0048`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0049`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0049`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0050`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0050`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0051`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0051`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0052`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0052`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0053`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0053`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0054`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0054`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0055`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0055`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0056`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0056`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0057`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0057`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0058`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0058`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0059`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0059`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0060`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0060`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0060
 
-  `PAY-0061`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0061`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0061
 
-  `PAY-0062`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0062`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0062
 
-  `PAY-0063`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0063`    P0         §24      `DEFERRED`   ---   ---   OPEN later-owned implementation: §24.25 P5 future direct-payment option after prepaid-credit MVP; docs/milestones/M08.md
 
-  `PAY-0064`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0064`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0065`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0065`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0066`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0066`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0066
 
-  `PAY-0067`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0067`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0068`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0068`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0069`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0069`    P0         §24      `DEFERRED_VERIFICATION`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 component evidence only; backlog:PAY-0069
 
-  `PAY-0070`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0070`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0071`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0071`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0072`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0072`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0073`    P0         §24      `TODO`   ---              ---        ---
+  `PAY-0073`    P0         §24      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs,tests/stripe-gateway.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0039`    P1         §25      `TODO`   ---              ---        ---
+  `PRD-0039`    P1         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0039
 
-  `PRD-0040`    P2         §25      `TODO`   ---              ---        ---
+  `PRD-0040`    P2         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0040
 
-  `PRD-0041`    P2         §25      `TODO`   ---              ---        ---
+  `PRD-0041`    P2         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0041
 
-  `PRD-0042`    P2         §25      `TODO`   ---              ---        ---
+  `PRD-0042`    P2         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0042
 
   `AVL-0001`    P1         §26      `TODO`   ---              ---        ---
 
@@ -543,7 +543,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0048`    P1         §39      `TODO`   ---              ---        ---
 
-  `WRK-0053`    P1         §40      `DEFERRED_VERIFICATION` README.md,packages/ tests/architecture.test.mjs skeleton only backlog:WRK-0053
+  `WRK-0053`    P1         §40      `DEFERRED_VERIFICATION` README.md,packages/ tests/architecture.test.mjs skeleton only backlog:WRK-0053 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0049`    P1         §41      `TODO`   ---              ---        ---
 
@@ -593,13 +593,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0054`    P1         §49      `DEFERRED_VERIFICATION` packages/openclaw-adapter/src tests/openclaw-discovery.test.mjs Steps 1–4 only; execution and security proof pending backlog:WRK-0054
 
-  `WRK-0055`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0055
+  `WRK-0055`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0055 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:WRK-0055
 
   `WRK-0056`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0056
 
-  `WRK-0057`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0057
+  `WRK-0057`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0057 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:WRK-0057
 
-  `WRK-0058`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0058
+  `WRK-0058`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0058 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:WRK-0058
 
   `WRK-0059`    P1         §50      `TODO`   ---              ---        ---
 
@@ -609,17 +609,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0045`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0045
 
-  `SEC-0046`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0046
+  `SEC-0046`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0046 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `SEC-0047`    P0         §51      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0047
+  `SEC-0047`    P0         §51      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0047 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0047
 
-  `SEC-0048`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0048
+  `SEC-0048`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0048 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0048
 
   `SEC-0049`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0049
 
   `SEC-0050`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0050
 
-  `SEC-0051`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0051
+  `SEC-0051`    P0         §51      `VERIFIED`   packages/persistence/src/finance.ts,packages/persistence/migrations/0015_finance.sql   tests/m08-finance-postgres-integration.mjs,tests/stripe-webhook.test.mjs   M08 concurrent reserve, signed replay, cancel/claim, immutable settlement/refund and transfer retry evidence; docs/milestones/M08.md
 
   `SEC-0052`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0052
 
@@ -633,11 +633,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0063`    P1         §52      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0063
 
-  `IO-0010`     P1         §53      `DEFERRED_VERIFICATION` packages/contracts/src/worker-manifest.ts tests/contracts.test.mjs boundary subset backlog:IO-0010 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs
+  `IO-0010`     P1         §53      `DEFERRED_VERIFICATION` packages/contracts/src/worker-manifest.ts tests/contracts.test.mjs boundary subset backlog:IO-0010 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0011`     P1         §53      `DEFERRED_VERIFICATION` packages/worker-protocol/src/messages.ts tests/contracts.test.mjs boundary subset backlog:IO-0011 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs
+  `IO-0011`     P1         §53      `DEFERRED_VERIFICATION` packages/worker-protocol/src/messages.ts tests/contracts.test.mjs boundary subset backlog:IO-0011 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0012`     P1         §53      `DEFERRED_VERIFICATION` packages/contracts/src/worker-manifest.ts tests/contracts.test.mjs other boundaries pending backlog:IO-0012 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs
+  `IO-0012`     P1         §53      `DEFERRED_VERIFICATION` packages/contracts/src/worker-manifest.ts tests/contracts.test.mjs other boundaries pending backlog:IO-0012 added:packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts;tests/capability-io.test.mjs M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `CAP-0008`    P1         §54      `DEFERRED_VERIFICATION` packages/contracts/src/worker-manifest.ts tests/contracts.test.mjs storage/publish pending backlog:CAP-0008 added:packages/contracts/src/worker-manifest.ts,packages/domain/src/capability-version.ts;tests/contracts.test.mjs,tests/capability-version.test.mjs
 
@@ -679,17 +679,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0081`    P1         §59      `VERIFIED`   packages/openclaw-adapter/src/job-config.ts,packages/openclaw-adapter/src/image-approval.ts,apps/worker/src/execution-supervisor.ts,runtime/openclaw/runner.mjs,runtime/openclaw/plugin/index.mjs   tests/openclaw-job-config.test.mjs,tests/docker-openclaw-exec-local-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs,tests/docker-openclaw-image-local-integration.mjs   OpenClaw 2026.8.2 pinned; effective mode all, contained backend, exact image and tool policy preflight before agent exec
 
-  `JOB-0032`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0032
+  `JOB-0032`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0032 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0032
 
-  `JOB-0033`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0033
+  `JOB-0033`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0033 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0033
 
-  `JOB-0034`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0034
+  `JOB-0034`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0034 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0034
 
-  `JOB-0035`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0035
+  `JOB-0035`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0035 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0035
 
-  `JOB-0036`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0036
+  `JOB-0036`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0036 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0036
 
-  `JOB-0037`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0037
+  `JOB-0037`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0037 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0037
 
   `IO-0013`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0013
 
@@ -747,39 +747,39 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0062`    P2         §65      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0062
 
-  `WRK-0082`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0082
+  `WRK-0082`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0082 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0083`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0083
+  `WRK-0083`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0084`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0084
+  `WRK-0084`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0084 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0085`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0085
+  `WRK-0085`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0085 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0086`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0086
+  `WRK-0086`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0087`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0087
+  `WRK-0087`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0087 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0088`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0088
+  `WRK-0088`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0088 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0089`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0089
+  `WRK-0089`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0089 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0090`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0090
+  `WRK-0090`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0090 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `WRK-0091`    P1         §67      `DEFERRED_VERIFICATION`   apps/worker/src/device-identity.ts   tests/device-identity.test.mjs   Persistent Ed25519 keychain primary plus explicit encrypted fallback; cloud pairing/revoke/rotation absent backlog:WRK-0091
 
   `WRK-0092`    P1         §67      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0092
 
-  `CAP-0010`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0010
+  `CAP-0010`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0010 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0011`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0011
+  `CAP-0011`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0011 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0012`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0012
+  `CAP-0012`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0012 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0013`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0013
+  `CAP-0013`    P1         §68      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0013 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0042`    P1         §69      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0042
+  `JOB-0042`    P1         §69      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0042 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0043`    P1         §69      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0043
+  `JOB-0043`    P1         §69      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0043 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `JOB-0044`    P1         §70     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0044
 
@@ -803,17 +803,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0061`    P0         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0061
 
-  `API-0001`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0001
+  `API-0001`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0001 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0002`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0002
+  `API-0002`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0002 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0003`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0003
+  `API-0003`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0003 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0004`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0004
+  `API-0004`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0004 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0014`    P1         §74     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:CAP-0014
+  `CAP-0014`    P1         §74     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:CAP-0014 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0015`    P1         §74     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:CAP-0015
+  `CAP-0015`    P1         §74     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:CAP-0015 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `SEC-0062`    P1         §75     `DEFERRED_VERIFICATION`   packages/policy-engine/src/permission-diff.ts tests/permission-diff.test.mjs baseline only; backlog:SEC-0062
 
@@ -827,13 +827,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0017`    P1         §77     `DEFERRED_VERIFICATION`   packages/policy-engine/src/permission-diff.ts tests/permission-diff.test.mjs baseline only; backlog:CAP-0017
 
-  `JOB-0048`    P1         §78     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:JOB-0048
+  `JOB-0048`    P1         §78     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:JOB-0048 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0049`    P1         §78     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:JOB-0049
+  `JOB-0049`    P1         §78     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:JOB-0049 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `SEC-0063`    P1         §79     `DEFERRED_VERIFICATION`   docs/INCIDENT_RESPONSE.md --- runbook only; backlog:SEC-0063
+  `SEC-0063`    P1         §79     `DEFERRED_VERIFICATION`   docs/INCIDENT_RESPONSE.md --- runbook only; backlog:SEC-0063 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `SEC-0064`    P0         §79     `DEFERRED_VERIFICATION`   docs/INCIDENT_RESPONSE.md --- runbook only; backlog:SEC-0064
+  `SEC-0064`    P0         §79     `DEFERRED_VERIFICATION`   docs/INCIDENT_RESPONSE.md --- runbook only; backlog:SEC-0064 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `TST-0001`    P1         §80     `DEFERRED_VERIFICATION`   .github/workflows/ci.yml --- workflow not yet run; backlog:TST-0001
 
@@ -849,17 +849,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0067`    P2         §81     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0067
 
-  `OPS-0001`    P1         §82     `DEFERRED_VERIFICATION`   tools/run-local-migrations.mjs tests/sql/m03_visibility.sql local baseline only; backlog:OPS-0001
+  `OPS-0001`    P1         §82     `DEFERRED_VERIFICATION`   tools/run-local-migrations.mjs tests/sql/m03_visibility.sql local baseline only; backlog:OPS-0001 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `OPS-0002`    P2         §82     `DEFERRED_VERIFICATION`   tools/run-local-migrations.mjs tests/sql/m03_visibility.sql local baseline only; backlog:OPS-0002
+  `OPS-0002`    P2         §82     `DEFERRED_VERIFICATION`   tools/run-local-migrations.mjs tests/sql/m03_visibility.sql local baseline only; backlog:OPS-0002 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0093`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0093
+  `WRK-0093`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0093 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0094`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0094
+  `WRK-0094`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0094 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0095`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0095
+  `WRK-0095`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0095 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0096`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0096
+  `WRK-0096`    P1         §83     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:WRK-0096 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `OBS-0005`    P1         §84      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:OBS-0005
 
@@ -869,21 +869,21 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0069`    P2         §85      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0069
 
-  `PRD-0070`    P1         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0070
+  `PRD-0070`    P1         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0070 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0070
 
-  `PRD-0071`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0071
+  `PRD-0071`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0071 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0071
 
   `PRD-0072`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0072
 
-  `PAY-0074`    P1         §87      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PAY-0074
+  `PAY-0074`    P1         §87      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PAY-0074 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0074
 
   `IO-0035`     P1         §88      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0035
 
   `IO-0036`     P1         §88      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0036
 
-  `WRK-0097`    P1         §89      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0097
+  `WRK-0097`    P1         §89      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0097 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0098`    P1         §89      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0098
+  `WRK-0098`    P1         §89      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0098 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `IO-0037`     P1         §90      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0037
 
@@ -909,11 +909,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0041`     P1         §93      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0041
 
-  `TST-0013`    P1         §94      `DEFERRED_VERIFICATION` tsconfig.json,package.json tests/*.test.mjs DB/financial gates pending backlog:TST-0013
+  `TST-0013`    P1         §94      `DEFERRED_VERIFICATION` tsconfig.json,package.json tests/*.test.mjs DB/financial gates pending backlog:TST-0013 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `TST-0014`    P2         §94      `VERIFIED` .env.example     tests/env.test.mjs no values in template
 
-  `TST-0015`    P2         §94      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0015
+  `TST-0015`    P2         §94      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0015 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0073`    P1         §95      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0073
 
@@ -929,13 +929,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0079`    P2         §96     `DEFERRED_VERIFICATION`   packages/domain/src/dependency-graph.ts,apps/worker/src/import-drafts.ts   tests/dependency-graph.test.mjs,tests/import-drafts.test.mjs   Seller-local suggestions start unselected and require explicit action; authenticated wizard/publication enforcement pending baseline/open; backlog:PRD-0079
 
-  `AGT-0001`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry explains local execution, seller costs, draft status and explicit selection; full wizard/runtime proof pending baseline/open; backlog:AGT-0001
+  `AGT-0001`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry explains local execution, seller costs, draft status and explicit selection; full wizard/runtime proof pending baseline/open; backlog:AGT-0001 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AGT-0002`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry explains local execution; complete first-publication journey pending baseline/open; backlog:AGT-0002
+  `AGT-0002`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry explains local execution; complete first-publication journey pending baseline/open; backlog:AGT-0002 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AGT-0003`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry states only explicitly approved resources; actual permission enforcement pending baseline/open; backlog:AGT-0003
+  `AGT-0003`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry states only explicitly approved resources; actual permission enforcement pending baseline/open; backlog:AGT-0003 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AGT-0004`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry states model/provider usage is the seller's operating cost; economics and guardrails pending baseline/open; backlog:AGT-0004
+  `AGT-0004`    P1         §97     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   Seller entry states model/provider usage is the seller's operating cost; economics and guardrails pending baseline/open; backlog:AGT-0004 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `AGT-0005`    P1         §98     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §98 Inference dependency schema and mandatory-inference graph blocker; health/publishing flow pending baseline/open; backlog:AGT-0005
 
@@ -967,11 +967,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AGT-0019`    P1         §100     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0019
 
-  `AGT-0020`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0020
+  `AGT-0020`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0020 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:AGT-0020
 
-  `AGT-0021`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0021
+  `AGT-0021`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0021 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:AGT-0021
 
-  `AGT-0022`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0022
+  `AGT-0022`    P1         §101     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0022 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:AGT-0022
 
   `CAP-0018`    P1         §102     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §102–103 Strict graph nodes/edges and explicit selection; persistence/runtime graph pending baseline/open; backlog:CAP-0018
 
@@ -1061,17 +1061,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0036`    P1         §110     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0036
 
-  `CAP-0037`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx,packages/persistence/migrations/0009_seller_execution_ack.sql   tests/browser/auth-email.spec.ts,tests/sql/m03_visibility.sql   Step 1 seller execution model requires an explicit durable acknowledgement; later wizard steps pending baseline/open; backlog:CAP-0037
+  `CAP-0037`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx,packages/persistence/migrations/0009_seller_execution_ack.sql   tests/browser/auth-email.spec.ts,tests/sql/m03_visibility.sql   Step 1 seller execution model requires an explicit durable acknowledgement; later wizard steps pending baseline/open; backlog:CAP-0037 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0038`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   First-publication entry and ordered steps exist; Worker pairing/discovery/review/publish pending baseline/open; backlog:CAP-0038
+  `CAP-0038`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/page.tsx   tests/browser/auth-email.spec.ts   First-publication entry and ordered steps exist; Worker pairing/discovery/review/publish pending baseline/open; backlog:CAP-0038 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0039`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/seller-profile-form.tsx,packages/persistence/src/seller-profiles.ts,packages/persistence/migrations/0009_seller_execution_ack.sql   tests/browser/auth-email.spec.ts,tests/seller-profile-local-integration.mjs,tests/sql/m03_visibility.sql   Unchecked by default, authenticated explicit acknowledgement persisted append-only; complete wizard confirmation matrix pending baseline/open; backlog:CAP-0039
+  `CAP-0039`    P1         §111     `DEFERRED_VERIFICATION`   apps/web/app/seller/seller-profile-form.tsx,packages/persistence/src/seller-profiles.ts,packages/persistence/migrations/0009_seller_execution_ack.sql   tests/browser/auth-email.spec.ts,tests/seller-profile-local-integration.mjs,tests/sql/m03_visibility.sql   Unchecked by default, authenticated explicit acknowledgement persisted append-only; complete wizard confirmation matrix pending baseline/open; backlog:CAP-0039 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0040`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0040
+  `CAP-0040`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0040 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0041`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0041
+  `CAP-0041`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0041 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0042`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0042
+  `CAP-0042`    P1         §111     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0042 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `CAP-0043`    P1         §112     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts,apps/worker/src/import-drafts.ts   tests/dependency-graph.test.mjs,tests/import-drafts.test.mjs   §112 Consent records bind seller/Worker/version/dependency/manifest hash in private append-only local SQLite; authenticated publication enforcement pending baseline/open; backlog:CAP-0043
 
@@ -1085,43 +1085,43 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0048`    P1         §114     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0048
 
-  `SEC-0065`    P1         §115     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:SEC-0065
+  `SEC-0065`    P1         §115     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:SEC-0065 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0050`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0050
+  `JOB-0050`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0050 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0051`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0051
+  `JOB-0051`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0051 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0052`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0052
+  `JOB-0052`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0052 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0053`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0053
+  `JOB-0053`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0053 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0054`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0054
+  `JOB-0054`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0054 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0055`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0055
+  `JOB-0055`    P1         §116     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0055 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AGT-0033`    P1         §117     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0033
+  `AGT-0033`    P1         §117     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0033 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AGT-0034`    P1         §117     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0034
+  `AGT-0034`    P1         §117     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0034 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0049`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0049 M06 component review:docs/milestones/M06.md
+  `CAP-0049`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0049 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0050`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0050 M06 component review:docs/milestones/M06.md
+  `CAP-0050`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0050 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0051`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0051 M06 component review:docs/milestones/M06.md
+  `CAP-0051`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0051 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0080`    P1         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0080
+  `PRD-0080`    P1         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0080 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0081`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0081
+  `PRD-0081`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0081 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0082`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0082
+  `PRD-0082`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0082 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0083`    P1         §120     `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0083
+  `PRD-0083`    P1         §120     `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0084`    P2         §120     `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/persistence/migrations/0001_foundation.sql tests/account.test.mjs,tests/sql/m01_foundation.sql baseline only;  backlog:PRD-0084
 
-  `PRD-0085`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0085
+  `PRD-0085`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0085 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0086`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0086
+  `PRD-0086`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0087`    P2         §120     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0087
 
@@ -1553,11 +1553,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `UI-0019`     P1         §196     `DEFERRED_VERIFICATION`   ---              ---        backlog:UI-0019
 
-  `IO-0068`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0068
+  `IO-0068`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0068 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0069`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0069
+  `IO-0069`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0069 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0070`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0070
+  `IO-0070`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0070 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `UI-0020`     P1         §198     `DEFERRED_VERIFICATION`   packages/contracts/src/media-presets.ts,packages/contracts/src/file-types.ts tests/media-presets.test.mjs preset compiler exists; seller UI OPEN backlog:UI-0020
 
@@ -1591,7 +1591,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0186`    P1         §206     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0186
 
-  `CAP-0056`    P1         §207     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0056
+  `CAP-0056`    P1         §207     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0056 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0187`    P1         §208     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0187
 
@@ -1725,11 +1725,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `TST-0019`    P1         §231     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/output-collector.ts,apps/worker/src/output-upload.ts tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs technical validity only; quality/review OPEN backlog:TST-0019
 
-  `PAY-0078`    P1         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0078
+  `PAY-0078`    P1         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PAY-0079`    P0         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0079
+  `PAY-0079`    P0         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0079 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PAY-0080`    P0         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0080
+  `PAY-0080`    P0         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0080 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0198`    P1         §233     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0198
 
@@ -1741,9 +1741,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0130`     P1         §234     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0130
 
-  `IO-0131`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0131
+  `IO-0131`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0131 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0132`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0132
+  `IO-0132`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0132 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0202`    P1         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0202
 
@@ -1849,7 +1849,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0235`    P1         §255     `DEFERRED_VERIFICATION`   packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0235
 
-  `PRD-0236`    P1         §256     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0013_research_broker.sql,packages/application/src/provider-broker.ts   tests/m06-postgres-integration.mjs,tests/provider-broker.test.mjs   partial M06 evidence; backlog:PRD-0236
+  `PRD-0236`    P1         §256     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0013_research_broker.sql,packages/application/src/provider-broker.ts   tests/m06-postgres-integration.mjs,tests/provider-broker.test.mjs   partial M06 evidence; backlog:PRD-0236 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0237`    P1         §257     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0237
 
@@ -1861,11 +1861,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0241`    P2         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0241
 
-  `PRD-0242`    P1         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0242
+  `PRD-0242`    P1         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0242 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0243`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0243
+  `PRD-0243`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0243 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0244`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0244
+  `PRD-0244`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0244 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0245`    P1         §261     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0245
 
@@ -1949,137 +1949,137 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0272`    P2         §275     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0272
 
-  `PRD-0273`    P1         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0273
+  `PRD-0273`    P1         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0273 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0274`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0274
+  `PRD-0274`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0274 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0275`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0275
+  `PRD-0275`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0275 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0276`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0276
+  `PRD-0276`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0276 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `SEC-0090`    P1         §277     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0090
 
   `SEC-0091`    P0         §277     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0091
 
-  `PRD-0277`    P1         §278     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0277
+  `PRD-0277`    P1         §278     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0277
 
-  `PRD-0278`    P2         §278     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0278
+  `PRD-0278`    P2         §278     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0278
 
-  `PRD-0279`    P2         §278     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0279
+  `PRD-0279`    P2         §278     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0279
 
-  `PRD-0280`    P1         §279     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0280
+  `PRD-0280`    P1         §279     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0281`    P2         §279     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0281
+  `PRD-0281`    P2         §279     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0282`    P2         §279     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0282
+  `PRD-0282`    P2         §279     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0282
 
-  `PRD-0283`    P2         §279     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0283
+  `PRD-0283`    P2         §279     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0284`    P1         §280     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0284
+  `PRD-0284`    P1         §280     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0285`    P2         §280     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0285
+  `PRD-0285`    P2         §280     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0286`    P2         §280     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0286
+  `PRD-0286`    P2         §280     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0287`    P1         §281     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0287
+  `PRD-0287`    P1         §281     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0288`    P2         §281     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0288
+  `PRD-0288`    P2         §281     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0289`    P2         §281     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0289
+  `PRD-0289`    P2         §281     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0081`    P1         §282     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0081
+  `PAY-0081`    P1         §282     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PAY-0081
 
-  `PAY-0082`    P0         §282     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0082
+  `PAY-0082`    P0         §282     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0083`    P0         §282     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0083
+  `PAY-0083`    P0         §282     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0290`    P1         §283     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0290
+  `PRD-0290`    P1         §283     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0291`    P2         §283     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0291
+  `PRD-0291`    P2         §283     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0292`    P1         §284     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0292
+  `PRD-0292`    P1         §284     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0292
 
-  `PRD-0293`    P1         §285     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0293
+  `PRD-0293`    P1         §285     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0294`    P2         §285     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0294
+  `PRD-0294`    P2         §285     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0295`    P1         §286     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0295 M06 component review:docs/milestones/M06.md
+  `PRD-0295`    P1         §286     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0295
 
-  `PRD-0296`    P1         §287     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0296
+  `PRD-0296`    P1         §287     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0296
 
-  `PRD-0297`    P2         §287     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0297
+  `PRD-0297`    P2         §287     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0298`    P2         §287     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0298
+  `PRD-0298`    P2         §287     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0298
 
-  `PRD-0299`    P2         §287     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0299
+  `PRD-0299`    P2         §287     `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0084`    P1         §288     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0084
+  `PAY-0084`    P1         §288     `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0085`    P0         §288     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0085
+  `PAY-0085`    P0         §288     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0086`    P0         §288     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0086
+  `PAY-0086`    P0         §288     `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0087`    P0         §288     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0087
+  `PAY-0087`    P0         §288     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0088`    P0         §288     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0088
+  `PAY-0088`    P0         §288     `TODO`   ---   ---   OPEN later-owned implementation: M23/M28 legal, tax, accounting and release decisions; docs/milestones/M08.md
 
-  `PAY-0089`    P1         §289     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0089
+  `PAY-0089`    P1         §289     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0090`    P0         §289     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0090
+  `PAY-0090`    P0         §289     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0091`    P0         §289     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0091
+  `PAY-0091`    P0         §289     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0092`    P1         §290     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0092
+  `PAY-0092`    P1         §290     `TODO`   ---   ---   OPEN later-owned implementation: M13/M14 capability repricing and discovery publication; docs/milestones/M08.md
 
-  `PAY-0093`    P0         §290     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0093
+  `PAY-0093`    P0         §290     `TODO`   ---   ---   OPEN later-owned implementation: M13/M14 capability repricing and discovery publication; docs/milestones/M08.md
 
-  `PAY-0094`    P0         §290     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0094
+  `PAY-0094`    P0         §290     `TODO`   ---   ---   OPEN later-owned implementation: M13/M14 capability repricing and discovery publication; docs/milestones/M08.md
 
-  `PAY-0095`    P0         §290     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0095
+  `PAY-0095`    P0         §290     `TODO`   ---   ---   OPEN later-owned implementation: M13/M14 capability repricing and discovery publication; docs/milestones/M08.md
 
-  `PRD-0300`    P1         §291     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0300
+  `PRD-0300`    P1         §291     `TODO`   ---   ---   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; docs/milestones/M08.md
 
-  `PRD-0301`    P2         §291     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0301
+  `PRD-0301`    P2         §291     `TODO`   ---   ---   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; docs/milestones/M08.md
 
-  `PRD-0302`    P1         §292     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0302
+  `PRD-0302`    P1         §292     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0303`    P2         §292     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0303
+  `PRD-0303`    P2         §292     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0096`    P1         §293     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0096
+  `PAY-0096`    P1         §293     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0097`    P0         §293     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0097
+  `PAY-0097`    P0         §293     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0304`    P1         §294     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0304
+  `PRD-0304`    P1         §294     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0305`    P2         §294     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0305
+  `PRD-0305`    P2         §294     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `PRD-0306`    P1         §295     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0306
+  `PRD-0306`    P1         §295     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0307`    P2         §295     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0307
+  `PRD-0307`    P2         §295     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PAY-0098`    P1         §296     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0098
+  `PAY-0098`    P1         §296     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PAY-0098
 
-  `PAY-0099`    P0         §296     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0099
+  `PAY-0099`    P0         §296     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PAY-0100`    P0         §296     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0100
+  `PAY-0100`    P0         §296     `DEFERRED`   ---   ---   OPEN later-owned implementation: §296 future multi-currency and experiment operation; docs/milestones/M08.md
 
-  `PAY-0101`    P0         §296     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PAY-0101
+  `PAY-0101`    P0         §296     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0308`    P1         §297     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0308
+  `PRD-0308`    P1         §297     `TODO`   ---   ---   OPEN later-owned implementation: M10/M14 product copy and full UI acceptance; docs/milestones/M08.md
 
-  `PRD-0309`    P2         §297     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0309
+  `PRD-0309`    P2         §297     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0309
 
-  `PRD-0310`    P2         §297     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0310
+  `PRD-0310`    P2         §297     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0311`    P2         §297     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0311
+  `PRD-0311`    P2         §297     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0312`    P2         §297     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0312
+  `PRD-0312`    P2         §297     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
-  `PRD-0313`    P1         §298     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0313
+  `PRD-0313`    P1         §298     `TODO`   ---   ---   OPEN later-owned implementation: M10/M14 product copy and full UI acceptance; docs/milestones/M08.md
 
-  `PRD-0314`    P2         §298     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0314
+  `PRD-0314`    P2         §298     `TODO`   ---   ---   OPEN later-owned implementation: M10/M14 product copy and full UI acceptance; docs/milestones/M08.md
 
-  `PRD-0315`    P2         §298     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0315
+  `PRD-0315`    P2         §298     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
   `SEC-0092`    P1         §299     `DEFERRED_VERIFICATION`   packages/contracts/src/permission-policy.ts,packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0092
 
@@ -2123,9 +2123,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0072`    P1         §305     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts,packages/persistence/migrations/0001_foundation.sql tests/capability-version.test.mjs,tests/sql/m01_foundation.sql baseline only;  backlog:CAP-0072
 
-  `CAP-0073`    P1         §306     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts,packages/contracts/src/capability-package.ts tests/capability-version.test.mjs local package/hash baseline only;  backlog:CAP-0073
+  `CAP-0073`    P1         §306     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts,packages/contracts/src/capability-package.ts tests/capability-version.test.mjs local package/hash baseline only;  backlog:CAP-0073 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0074`    P1         §306     `DEFERRED_VERIFICATION`   packages/domain/src/capability-version.ts,packages/contracts/src/capability-package.ts tests/capability-version.test.mjs local package/hash baseline only;  backlog:CAP-0074
+  `CAP-0074`    P1         §306     `DEFERRED_VERIFICATION`   packages/domain/src/capability-version.ts,packages/contracts/src/capability-package.ts tests/capability-version.test.mjs local package/hash baseline only;  backlog:CAP-0074 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `CAP-0075`    P1         §306     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts tests/capability-version.test.mjs baseline only;  backlog:CAP-0075
 
@@ -2161,17 +2161,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0319`    P2         §315     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0319
 
-  `CAP-0086`    P1         §316     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0086
+  `CAP-0086`    P1         §316     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `JOB-0066`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0066
 
   `JOB-0067`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0067
 
-  `PRD-0320`    P1         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0320
+  `PRD-0320`    P1         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0320 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0321`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0321
+  `PRD-0321`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0321 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0322`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0322
+  `PRD-0322`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0322 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `API-0008`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0008
 
@@ -2191,29 +2191,29 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `API-0016`    P1         §321     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0016
 
-  `IO-0136`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0136
+  `IO-0136`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0136 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `IO-0137`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0137
+  `IO-0137`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0137 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0087`    P1         §323     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0087
+  `CAP-0087`    P1         §323     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0087 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PAY-0102`    P1         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0102
+  `PAY-0102`    P1         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0102 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0102
 
-  `PAY-0103`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0103
+  `PAY-0103`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0103 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0103
 
-  `PAY-0104`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0104
+  `PAY-0104`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0104 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0104
 
-  `PAY-0105`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0105
+  `PAY-0105`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0105 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0105
 
-  `API-0017`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0017
+  `API-0017`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0017 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0018`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0018
+  `API-0018`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0018 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0019`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0019
+  `API-0019`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0019 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0020`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0020
+  `API-0020`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0020 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `API-0021`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0021
+  `API-0021`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0021 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0323`    P1         §327     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0323
 
@@ -2249,13 +2249,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `API-0027`    P1         §335     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0027
 
-  `JOB-0072`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0072
+  `JOB-0072`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0072 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0073`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0073
+  `JOB-0073`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0073 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AVL-0004`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0004
+  `AVL-0004`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0004 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AVL-0005`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0005
+  `AVL-0005`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0005 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `JOB-0074`    P1         §338     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0074
 
@@ -2263,11 +2263,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0076`    P1         §338     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0076
 
-  `JOB-0077`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0077
+  `JOB-0077`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0077 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0078`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0078
+  `JOB-0078`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0079`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0079
+  `JOB-0079`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0079 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `AVL-0006`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0006
 
@@ -2287,15 +2287,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0330`    P2         §343     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0330
 
-  `JOB-0083`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0083
+  `JOB-0083`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0084`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0084
+  `JOB-0084`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0084 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PAY-0106`    P1         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0106
+  `PAY-0106`    P1         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0106 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0106
 
-  `PAY-0107`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0107
+  `PAY-0107`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0107 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0107
 
-  `PAY-0108`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0108
+  `PAY-0108`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0108 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0108
 
   `WRK-0099`    P1         §346     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:WRK-0099
 
@@ -2323,13 +2323,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0018`    P1         §350     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0018
 
-  `CAP-0088`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0088
+  `CAP-0088`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0088 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `CAP-0089`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0089
+  `CAP-0089`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0089 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0085`    P1         §352     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0085
+  `JOB-0085`    P1         §352     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0085 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0086`    P1         §352     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0086
+  `JOB-0086`    P1         §352     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `JOB-0087`    P1         §353     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0087
 
@@ -2505,17 +2505,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0105`    P1         §387     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
 
-  `JOB-0106`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0106`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0107`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0107`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0108`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0108`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0109`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0109`    P1         §388     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0110`    P1         §389     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0110`    P1         §389     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0111`    P1         §389     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
+  `JOB-0111`    P1         §389     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `JOB-0112`    P1         §390     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
 
@@ -2535,11 +2535,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0118`    P0         §393     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
 
-  `JOB-0115`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
+  `JOB-0115`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0116`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
+  `JOB-0116`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0117`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog
+  `JOB-0117`    P1         §394     `DEFERRED_VERIFICATION`   apps/worker/src/local-state.ts   tests/worker-local-state.test.mjs   OPEN; see backlog M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `PRD-0345`    P1         §395     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts   tests/worker-cli.test.mjs   OPEN; see backlog
 
@@ -2701,7 +2701,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0137`    P1         §426     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:JOB-0137
 
-  `JOB-0138`    P1         §427     `DEFERRED_VERIFICATION`   packages/contracts/src/job-control.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/broker-sidecar.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0138
+  `JOB-0138`    P1         §427     `DEFERRED_VERIFICATION`   packages/contracts/src/job-control.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/broker-sidecar.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0138 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0138
 
   `JOB-0139`    P1         §428     `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/dispatch-loop.ts,apps/worker/src/job-control.ts,apps/worker/src/broker-sidecar.ts   tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs,tests/docker-job-control-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0139
 
@@ -2735,13 +2735,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0154`    P1         §431     `DEFERRED_VERIFICATION`   runtime/openclaw/Dockerfile,apps/worker/src/broker-sidecar.ts,packages/sandbox-adapter/src/docker.ts   tests/docker-openclaw-exec-local-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0154
 
-  `JOB-0155`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0155
+  `JOB-0155`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0155 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0155
 
-  `JOB-0156`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0156
+  `JOB-0156`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0156 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0156
 
-  `JOB-0157`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0157
+  `JOB-0157`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0157 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0157
 
-  `JOB-0158`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0158
+  `JOB-0158`    P1         §432     `DEFERRED_VERIFICATION`   apps/worker/src/broker-sidecar.ts,apps/worker/src/job-control.ts,packages/application/src/completion-broker.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/openclaw-completion-broker.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0158 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0158
 
   `JOB-0159`    P1         §433     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts,apps/worker/src/job-control.ts   tests/docker-worker-supervisor-local-integration.mjs,tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0159
 
@@ -2779,15 +2779,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0367`    P2         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0367
 
-  `JOB-0174`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0174
+  `JOB-0174`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0174 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0174
 
-  `JOB-0175`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0175
+  `JOB-0175`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0175 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0175
 
-  `JOB-0176`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0176
+  `JOB-0176`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0176 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0176
 
-  `JOB-0177`    P1         §439     `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts   tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0177
+  `JOB-0177`    P1         §439     `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts   tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0177 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0177
 
-  `JOB-0178`    P1         §439     `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts   tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0178
+  `JOB-0178`    P1         §439     `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts   tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0178 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0178
 
   `JOB-0179`    P1         §440     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0179
 
@@ -2837,21 +2837,21 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0202`    P1         §448     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/persistence/migrations/0014_job_execution.sql   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0202
 
-  `JOB-0203`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0203
+  `JOB-0203`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0203 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0203
 
-  `JOB-0204`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0204
+  `JOB-0204`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0204 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0204
 
-  `JOB-0205`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0205
+  `JOB-0205`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0205 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0205
 
-  `JOB-0206`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0206
+  `JOB-0206`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0206 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0207`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0207
+  `JOB-0207`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0207 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0208`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0208
+  `JOB-0208`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0208 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0209`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0209
+  `JOB-0209`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0209 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0210`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0210
+  `JOB-0210`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0210 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
   `AVL-0059`    P1         §451     `TODO`   ---              ---        ---
 

@@ -62,6 +62,8 @@ test('job config materializes only exact reviewed skill bytes and fixed broker t
       allowedToolNames: ['kivro_submit_result'], reviewedSkills: approved,
       maxOutputFileBytes: 65536 });
     const config = JSON.parse(readFileSync(join(inputRoot, 'config.json'), 'utf8'));
+    const filePolicy = JSON.parse(readFileSync(join(inputRoot, 'kivro-files.json'), 'utf8'));
+    assert.equal(filePolicy.maxToolCalls, 64);
     assert.deepEqual(config.tools.allow, ['kivro_submit_result']);
     assert.deepEqual(config.tools.sandbox.tools.allow, config.tools.allow);
     assert.ok(config.tools.deny.includes('exec'));

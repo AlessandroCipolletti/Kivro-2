@@ -10,6 +10,9 @@ export const ProviderBudgetPolicySchema = z.strictObject({
   maxEstimatedSpendMicroUsdPerJob: z.number().int().min(1).max(100_000_000),
   inputPriceMicroUsdPerMillionTokens: z.number().int().min(0).max(1_000_000_000),
   outputPriceMicroUsdPerMillionTokens: z.number().int().min(0).max(1_000_000_000),
+  maxTokensPerJob: z.number().int().min(1).max(10_000_000).optional(),
+  maxDailyJobs: z.number().int().min(1).max(10_000).optional(),
+  maxDailyProviderSpendMicroUsd: z.number().int().min(1).max(1_000_000_000).optional(),
 });
 
 export type ProviderBudgetPolicy = z.infer<typeof ProviderBudgetPolicySchema>;

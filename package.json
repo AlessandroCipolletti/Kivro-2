@@ -17,6 +17,7 @@
     "test:postgres:m05": "sh tools/test-m05-postgres.sh",
     "test:postgres:m06": "pnpm build && sh tools/test-m06-postgres.sh",
     "test:postgres:m07": "pnpm build && sh tools/test-m07-postgres.sh",
+    "test:postgres:m08": "pnpm build && sh tools/test-m08-postgres.sh",
     "test:research:live": "pnpm build && node tools/test-m06-public-fetch.mjs",
     "test:storage:minio": "pnpm build && node --test tests/s3-storage-local-integration.mjs",
     "test:storage:seaweedfs": "pnpm build && node --test tests/s3-storage-seaweedfs-local-integration.mjs",
