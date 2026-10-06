@@ -33,7 +33,8 @@ if (!process.env.M07_DATABASE_URL) {
     };
     const repo = new PostgresJobExecutionRepository(pool, {
       async isSecured(_client, id, reservationId) { return id === jobId && reservationId === reservation; },
-    }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7) }, 'v1'));
+    }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7) }, 'v1'),
+    { async assertEligible() {} });
     const event = (from, to, actor, attemptId = null, extra = {}) => ({
       id: randomUUID(), jobId, from, to, actor, reason: to, attemptId,
       correlationId: randomUUID(), paymentReservationId: null, resultManifestId: null, ...extra,
@@ -106,14 +107,16 @@ if (!process.env.M07_DATABASE_URL) {
       const offerMessage = await repo.materializeOffer(offered.executionId);
       const restarted = new PostgresJobExecutionRepository(pool, {
         async isSecured(_client, id, reservationId) { return id === jobId && reservationId === reservation; },
-      }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7), v2: Buffer.alloc(32, 8) }, 'v2'));
+      }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7), v2: Buffer.alloc(32, 8) }, 'v2'),
+      { async assertEligible() {} });
       const pending = await restarted.pendingOffers(worker, 'plane-a');
       assert.equal(pending.length, 1);
       assert.equal(pending[0].leaseToken, offered.leaseToken);
       assert.deepEqual(await restarted.pendingOffers(worker, 'other-plane'), []);
       const missingOldKey = new PostgresJobExecutionRepository(pool, {
         async isSecured() { return true; },
-      }, new HmacLeaseTokenIssuer({ v2: Buffer.alloc(32, 8) }, 'v2'));
+      }, new HmacLeaseTokenIssuer({ v2: Buffer.alloc(32, 8) }, 'v2'),
+      { async assertEligible() {} });
       await assert.rejects(missingOldKey.pendingOffers(worker, 'plane-a'), /LEASE_KEY_UNAVAILABLE/);
       assert.equal(offerMessage.inputManifestId, input.id);
       assert.equal(offerMessage.paymentReservationId, reservation);

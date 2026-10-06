@@ -25,7 +25,7 @@ if (!process.env.M07_DATABASE_URL) {
     async isSecured(_client, jobId, reservationId) {
       return secured && jobId === job && reservationId === reservation;
     },
-  }, leaseIssuer);
+  }, leaseIssuer, { async assertEligible() {} });
   const event = (from, to, actor, attemptId = null, extra = {}) => ({
     id: randomUUID(), jobId: job, from, to, actor, reason: `M07_${to}`,
     attemptId, correlationId: randomUUID(), paymentReservationId: null,
@@ -83,7 +83,8 @@ if (!process.env.M07_DATABASE_URL) {
       async isSecured(_client, jobId, reservationId) {
         return secured && jobId === job && reservationId === reservation;
       },
-    }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7), v2: Buffer.alloc(32, 8) }, 'v2'));
+    }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7), v2: Buffer.alloc(32, 8) }, 'v2'),
+    { async assertEligible() {} });
     assert.deepEqual(await restarted.reconcileWorkerExecutions(worker, plane, [offer.executionId]), [{
       executionId: offer.executionId, action: 'CONTINUE', jobId: job,
       attemptId: offer.attemptId, status: 'ACCEPTED', leaseToken: offer.leaseToken,

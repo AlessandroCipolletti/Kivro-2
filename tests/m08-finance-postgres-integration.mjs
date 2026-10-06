@@ -21,7 +21,8 @@ if (!process.env.M08_DATABASE_URL) {
     const pool = new pg.Pool({ connectionString: process.env.M08_DATABASE_URL, max: 12 });
     const finance = new PostgresFinanceRepository(pool, 'test');
     const repo = new PostgresJobExecutionRepository(pool, finance,
-      new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 4) }, 'v1'));
+      new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 4) }, 'v1'),
+      { async assertEligible() {} });
     const buyer = randomUUID(), sellerAccount = randomUUID(), seller = randomUUID();
     const worker = randomUUID(), capability = randomUUID(), versionId = randomUUID();
     const hash = `sha256:${'a'.repeat(64)}`;

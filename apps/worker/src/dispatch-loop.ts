@@ -9,6 +9,7 @@ import type { WorkerCapabilityPackageStore } from './capability-package-store.js
 import type { WorkerExecutionSupervisor } from './execution-supervisor.js';
 import { WorkerJobControl } from './job-control.js';
 import { WorkerLocalState } from './local-state.js';
+import type { WorkerAvailabilityReporter } from './availability-reporter.js';
 
 export interface WorkerInboundPollingPort {
   readonly controlPlaneId: string;
@@ -22,7 +23,7 @@ export interface WorkerInboundPollingPort {
 
 export class WorkerDispatchError extends Error {
   constructor(readonly code: 'WRONG_WORKER' | 'WRONG_CONTROL_PLANE' |
-    'CONTROL_NOT_OWNED' | 'DRAINING') { super(code); this.name = 'WorkerDispatchError'; }
+    'CONTROL_NOT_OWNED' | 'DRAINING' | 'CAPACITY_FULL') { super(code); this.name = 'WorkerDispatchError'; }
 }
 
 /** Provider-neutral orchestration; callers compose a transport and a real job supervisor. */
@@ -36,7 +37,10 @@ export class WorkerDispatchLoop {
     private readonly deviceId: string, private readonly packages: WorkerCapabilityPackageStore,
     private readonly localState: WorkerLocalState, private readonly jobControl: WorkerJobControl,
     private readonly supervisor: WorkerExecutionSupervisor,
-    private readonly onExecutionError: (offer: JobOffer, error: unknown) => void) {
+    private readonly onExecutionError: (offer: JobOffer, error: unknown) => void,
+    private readonly availabilityReporting?: { reporter: WorkerAvailabilityReporter;
+      capacity: number; workerRelease: string; openClawVersion: string | null;
+      policyVersion: number }) {
     z.uuid().parse(deviceId);
     this.router.connect(transport, 'ACTIVE');
   }
@@ -52,6 +56,14 @@ export class WorkerDispatchLoop {
 
   async pollOnce(): Promise<void> {
     if (!this.started) await this.startup();
+    if (this.availabilityReporting) {
+      await this.transport.send(await this.availabilityReporting.reporter.heartbeat({
+        controlPlaneId:this.transport.controlPlaneId,
+        workerRelease:this.availabilityReporting.workerRelease,
+        openClawVersion:this.availabilityReporting.openClawVersion,
+        runningJobs:this.active.size,capacity:this.availabilityReporting.capacity,
+        policyVersion:this.availabilityReporting.policyVersion }));
+    }
     const messages = await this.transport.poll({ type: 'WORKER_HELLO', messageId: randomUUID(),
       workerDeviceId: this.deviceId, controlPlaneId: this.transport.controlPlaneId,
       supportedProtocolVersions: [WORKER_PROTOCOL_VERSION], workerRelease: '0.0.0-dev',
@@ -70,6 +82,9 @@ export class WorkerDispatchLoop {
       if (message.type === 'JOB_OFFER') {
         if (message.workerDeviceId !== this.deviceId) throw new WorkerDispatchError('WRONG_WORKER');
         if (this.state !== 'ACTIVE') throw new WorkerDispatchError('DRAINING');
+        if (this.availabilityReporting && this.active.size >= this.availabilityReporting.capacity) {
+          this.onExecutionError(message,new WorkerDispatchError('CAPACITY_FULL')); continue;
+        }
         if (this.active.has(message.executionId) || this.jobControl.snapshots().some((item) =>
           item.executionId === message.executionId)) continue;
         this.router.ownExecution(message.executionId, this.transport.controlPlaneId);

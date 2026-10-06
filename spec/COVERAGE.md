@@ -477,9 +477,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0042`    P2         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0042
 
-  `AVL-0001`    P1         §26      `TODO`   ---              ---        ---
+  `AVL-0001`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0001
 
-  `AVL-0002`    P1         §26      `TODO`   ---              ---        ---
+  `AVL-0002`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0002
 
   `WRK-0048`    P1         §27      `TODO`   ---              ---        ---
 
@@ -691,37 +691,37 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0037`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0037 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0037
 
-  `IO-0013`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0013
+  `IO-0013`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0013
 
-  `IO-0014`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0014
+  `IO-0014`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0014
 
-  `IO-0015`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0015
+  `IO-0015`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0015
 
-  `IO-0016`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0016
+  `IO-0016`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0016
 
-  `IO-0017`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0017
+  `IO-0017`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0017
 
-  `IO-0018`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0018
+  `IO-0018`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0018
 
-  `IO-0019`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0019
+  `IO-0019`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0019
 
-  `IO-0020`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0020
+  `IO-0020`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0020
 
-  `IO-0021`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0021
+  `IO-0021`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0021
 
-  `IO-0022`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0022
+  `IO-0022`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0022
 
-  `IO-0023`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0023
+  `IO-0023`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0023
 
-  `IO-0024`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0024
+  `IO-0024`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0024
 
-  `IO-0025`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0025
+  `IO-0025`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0025
 
-  `IO-0026`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0026
+  `IO-0026`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0026
 
-  `IO-0027`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0027
+  `IO-0027`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0027
 
-  `IO-0028`     P1         §61      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0028
+  `IO-0028`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0028
 
   `IO-0029`     P1         §62      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0029
 
@@ -2267,13 +2267,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0078`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0079`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0079 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `JOB-0079`    P1         §339      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
   `AVL-0006`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0006
 
   `AVL-0007`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0007
 
-  `AVL-0008`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0008
+  `AVL-0008`    P1         §340      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
   `AVL-0009`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0009
 
@@ -2289,13 +2289,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0083`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `JOB-0084`    P1         §344     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0084 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `JOB-0084`    P1         §344      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `PAY-0106`    P1         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0106 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0106
+  `PAY-0106`    P1         §345      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `PAY-0107`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0107 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0107
+  `PAY-0107`    P1         §345      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `PAY-0108`    P0         §345     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0108 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0108
+  `PAY-0108`    P1         §345      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
   `WRK-0099`    P1         §346     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:WRK-0099
 
@@ -2307,9 +2307,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0012`    P1         §347     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0012
 
-  `AVL-0013`    P1         §347     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0013
+  `AVL-0013`    P1         §347      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `AVL-0014`    P1         §347     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0014
+  `AVL-0014`    P1         §347      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
   `AVL-0015`    P1         §348     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0015
 
@@ -2333,9 +2333,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0087`    P1         §353     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0087
 
-  `JOB-0088`    P1         §353     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0088
+  `JOB-0088`    P1         §353      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `JOB-0089`    P1         §353     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0089
+  `JOB-0089`    P1         §353      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
   `AVL-0019`    P1         §354     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0019
 
@@ -2549,151 +2549,151 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0348`    P2         §395     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts   tests/worker-cli.test.mjs   OPEN; see backlog
 
-  `PRD-0349`    P1         §396     `TODO`   ---              ---        ---
+  `PRD-0349`    P1         §396      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0349
 
-  `PRD-0350`    P2         §396     `TODO`   ---              ---        ---
+  `PRD-0350`    P2         §396      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0350
 
-  `AVL-0021`    P1         §397     `TODO`   ---              ---        ---
+  `AVL-0021`    P1         §397      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0021
 
-  `AVL-0022`    P1         §398     `TODO`   ---              ---        ---
+  `AVL-0022`    P1         §398      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0022
 
-  `AVL-0023`    P1         §398     `TODO`   ---              ---        ---
+  `AVL-0023`    P1         §398      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 overnight editor; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0024`    P1         §399     `TODO`   ---              ---        ---
+  `AVL-0024`    P1         §399      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0025`    P1         §399     `TODO`   ---              ---        ---
+  `AVL-0025`    P1         §399      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0026`    P1         §399     `TODO`   ---              ---        ---
+  `AVL-0026`    P1         §399      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `UI-0026`     P1         §400     `TODO`   ---              ---        ---
+  `UI-0026`    P1         §400      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller UI; M09 Core evidence in docs/milestones/M09.md
 
-  `UI-0027`     P2         §400     `TODO`   ---              ---        ---
+  `UI-0027`    P2         §400      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller UI; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0027`    P1         §401     `TODO`   ---              ---        ---
+  `AVL-0027`    P1         §401      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0028`    P1         §401     `TODO`   ---              ---        ---
+  `AVL-0028`    P1         §401      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0029`    P1         §402     `TODO`   ---              ---        ---
+  `AVL-0029`    P1         §402      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0030`    P1         §402     `TODO`   ---              ---        ---
+  `AVL-0030`    P1         §402      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0031`    P1         §402     `TODO`   ---              ---        ---
+  `AVL-0031`    P1         §402      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0032`    P1         §403     `TODO`   ---              ---        ---
+  `AVL-0032`    P1         §403      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0032
 
-  `AVL-0033`    P1         §404     `TODO`   ---              ---        ---
+  `AVL-0033`    P1         §404      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0033
 
-  `AVL-0034`    P1         §404     `TODO`   ---              ---        ---
+  `AVL-0034`    P1         §404      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0034
 
-  `AVL-0035`    P1         §405     `TODO`   ---              ---        ---
+  `AVL-0035`    P1         §405      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Marketplace Agent; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0036`    P1         §405     `TODO`   ---              ---        ---
+  `AVL-0036`    P1         §405      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0036
 
-  `AVL-0037`    P1         §406     `TODO`   ---              ---        ---
+  `AVL-0037`    P1         §406      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M13 REST API; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0038`    P1         §406     `TODO`   ---              ---        ---
+  `AVL-0038`    P1         §406      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0038
 
-  `JOB-0118`    P1         §407     `TODO`   ---              ---        ---
+  `JOB-0118`    P1         §407      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0119`    P1         §407     `TODO`   ---              ---        ---
+  `JOB-0119`    P1         §407      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0120`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0120`    P1         §408      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0121`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0121`    P1         §408      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0122`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0122`    P1         §408      `DEFERRED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   Explicitly optional later stricter queued-job mode in Master Spec §408; MVP roll-forward policy verified
 
-  `JOB-0123`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0123`    P1         §408      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0124`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0124`    P1         §408      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0125`    P1         §408     `TODO`   ---              ---        ---
+  `JOB-0125`    P1         §408      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0126`    P1         §409     `TODO`   ---              ---        ---
+  `JOB-0126`    P1         §409      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0127`    P1         §409     `TODO`   ---              ---        ---
+  `JOB-0127`    P1         §409      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0128`    P1         §409     `TODO`   ---              ---        ---
+  `JOB-0128`    P1         §409      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0039`    P1         §410     `TODO`   ---              ---        ---
+  `AVL-0039`    P1         §410      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0040`    P1         §410     `TODO`   ---              ---        ---
+  `AVL-0040`    P1         §410      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0041`    P1         §410     `TODO`   ---              ---        ---
+  `AVL-0041`    P1         §410      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0129`    P1         §411     `TODO`   ---              ---        ---
+  `JOB-0129`    P1         §411      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0130`    P1         §411     `TODO`   ---              ---        ---
+  `JOB-0130`    P1         §411      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0131`    P1         §412     `TODO`   ---              ---        ---
+  `JOB-0131`    P1         §412      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0132`    P1         §412     `TODO`   ---              ---        ---
+  `JOB-0132`    P1         §412      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0042`    P1         §413     `TODO`   ---              ---        ---
+  `AVL-0042`    P1         §413      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0043`    P1         §413     `TODO`   ---              ---        ---
+  `AVL-0043`    P1         §413      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0044`    P1         §413     `TODO`   ---              ---        ---
+  `AVL-0044`    P1         §413      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0351`    P1         §414     `TODO`   ---              ---        ---
+  `PRD-0351`    P1         §414      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0351
 
-  `PRD-0352`    P2         §414     `TODO`   ---              ---        ---
+  `PRD-0352`    P2         §414      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0352
 
-  `AVL-0045`    P1         §415     `TODO`   ---              ---        ---
+  `AVL-0045`    P1         §415      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0045
 
-  `AVL-0046`    P1         §415     `TODO`   ---              ---        ---
+  `AVL-0046`    P1         §415      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0047`    P1         §415     `TODO`   ---              ---        ---
+  `AVL-0047`    P1         §415      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0353`    P1         §416     `TODO`   ---              ---        ---
+  `PRD-0353`    P1         §416      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller guidance; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0354`    P2         §416     `TODO`   ---              ---        ---
+  `PRD-0354`    P2         §416      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller guidance; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0355`    P2         §416     `TODO`   ---              ---        ---
+  `PRD-0355`    P2         §416      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller guidance; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0048`    P1         §417     `TODO`   ---              ---        ---
+  `AVL-0048`    P1         §417      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0049`    P1         §418     `TODO`   ---              ---        ---
+  `AVL-0049`    P1         §418      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 seller UI; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0050`    P1         §418     `TODO`   ---              ---        ---
+  `AVL-0050`    P1         §418      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M12 schedule preview UI; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0356`    P1         §419     `TODO`   ---              ---        ---
+  `PRD-0356`    P1         §419      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer UI; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0357`    P2         §419     `TODO`   ---              ---        ---
+  `PRD-0357`    P2         §419      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer-local time UI; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0358`    P2         §419     `TODO`   ---              ---        ---
+  `PRD-0358`    P2         §419      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer-local time UI; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0051`    P1         §420     `TODO`   ---              ---        ---
+  `AVL-0051`    P1         §420      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0051
 
-  `AVL-0052`    P1         §420     `TODO`   ---              ---        ---
+  `AVL-0052`    P1         §420      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0052
 
-  `PRD-0359`    P1         §421     `TODO`   ---              ---        ---
+  `PRD-0359`    P1         §421      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0359
 
-  `JOB-0133`    P1         §422     `TODO`   ---              ---        ---
+  `JOB-0133`    P1         §422      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0133
 
-  `JOB-0134`    P1         §422     `TODO`   ---              ---        ---
+  `JOB-0134`    P1         §422      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0134
 
-  `AVL-0053`    P1         §423     `TODO`   ---              ---        ---
+  `AVL-0053`    P1         §423      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0054`    P1         §424     `TODO`   ---              ---        ---
+  `AVL-0054`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0054
 
-  `AVL-0055`    P1         §424     `TODO`   ---              ---        ---
+  `AVL-0055`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0055
 
-  `AVL-0056`    P1         §424     `TODO`   ---              ---        ---
+  `AVL-0056`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0056
 
-  `AVL-0057`    P1         §424     `TODO`   ---              ---        ---
+  `AVL-0057`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0057
 
-  `AVL-0058`    P1         §424     `TODO`   ---              ---        ---
+  `AVL-0058`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0058
 
-  `PRD-0360`    P1         §425     `TODO`   ---              ---        ---
+  `PRD-0360`    P1         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0360
 
-  `PRD-0361`    P2         §425     `TODO`   ---              ---        ---
+  `PRD-0361`    P2         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0361
 
-  `PRD-0362`    P2         §425     `TODO`   ---              ---        ---
+  `PRD-0362`    P2         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0362
 
-  `PRD-0363`    P2         §425     `TODO`   ---              ---        ---
+  `PRD-0363`    P2         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0363
 
-  `PRD-0364`    P2         §425     `TODO`   ---              ---        ---
+  `PRD-0364`    P2         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0364
 
   `JOB-0135`    P1         §426     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:JOB-0135
 
@@ -2853,155 +2853,155 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0210`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0210 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AVL-0059`    P1         §451     `TODO`   ---              ---        ---
+  `AVL-0059`    P1         §451      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0059
 
-  `AVL-0060`    P1         §451     `TODO`   ---              ---        ---
+  `AVL-0060`    P1         §451      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0061`    P1         §451     `TODO`   ---              ---        ---
+  `AVL-0061`    P1         §451      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer checkout; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0062`    P1         §452     `TODO`   ---              ---        ---
+  `AVL-0062`    P1         §452      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer CTA; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0063`    P1         §452     `TODO`   ---              ---        ---
+  `AVL-0063`    P1         §452      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 CTA wording; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0211`    P1         §453     `TODO`   ---              ---        ---
+  `JOB-0211`    P1         §453      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer checkout; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0212`    P1         §453     `TODO`   ---              ---        ---
+  `JOB-0212`    P1         §453      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer checkout; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0213`    P1         §454     `TODO`   ---              ---        ---
+  `JOB-0213`    P1         §454      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer timing UI; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0214`    P1         §454     `TODO`   ---              ---        ---
+  `JOB-0214`    P1         §454      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer timing UI; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0215`    P1         §455     `TODO`   ---              ---        ---
+  `JOB-0215`    P1         §455      `DEFERRED_VERIFICATION`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0215
 
-  `JOB-0216`    P1         §455     `TODO`   ---              ---        ---
+  `JOB-0216`    P1         §455      `DEFERRED_VERIFICATION`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0216
 
-  `JOB-0217`    P1         §456     `TODO`   ---              ---        ---
+  `JOB-0217`    P1         §456      `VERIFIED`   packages/domain/src/availability-schedule.ts,packages/contracts/src/availability.ts   tests/availability-schedule.test.mjs,tests/scheduled-job-metrics.test.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0218`    P1         §457     `TODO`   ---              ---        ---
+  `JOB-0218`    P1         §457      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0219`    P1         §457     `TODO`   ---              ---        ---
+  `JOB-0219`    P1         §457      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0219
 
-  `JOB-0220`    P1         §458     `TODO`   ---              ---        ---
+  `JOB-0220`    P1         §458      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer copy; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0221`    P1         §459     `TODO`   ---              ---        ---
+  `JOB-0221`    P1         §459      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0221
 
-  `JOB-0222`    P1         §459     `TODO`   ---              ---        ---
+  `JOB-0222`    P1         §459      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0222
 
-  `PAY-0109`    P1         §460     `TODO`   ---              ---        ---
+  `PAY-0109`    P1         §460      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PAY-0109
 
-  `PAY-0110`    P0         §460     `TODO`   ---              ---        ---
+  `PAY-0110`    P0         §460      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 checkout disclosure; M09 Core evidence in docs/milestones/M09.md
 
-  `UI-0028`     P1         §461     `TODO`   ---              ---        ---
+  `UI-0028`    P1         §461      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M08 direct-card option and legal/payment review before use; M09 Core evidence in docs/milestones/M09.md
 
-  `UI-0029`     P2         §461     `TODO`   ---              ---        ---
+  `UI-0029`    P2         §461      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M08 direct-card option and legal/payment review before use; M09 Core evidence in docs/milestones/M09.md
 
-  `UI-0030`     P2         §461     `TODO`   ---              ---        ---
+  `UI-0030`    P2         §461      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M08 direct-card option and legal/payment review before use; M09 Core evidence in docs/milestones/M09.md
 
-  `UI-0031`     P2         §461     `TODO`   ---              ---        ---
+  `UI-0031`    P2         §461      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M08 direct-card option and legal/payment review before use; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0368`    P1         §462     `TODO`   ---              ---        ---
+  `PRD-0368`    P1         §462      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0369`    P2         §462     `TODO`   ---              ---        ---
+  `PRD-0369`    P2         §462      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0064`    P1         §463     `TODO`   ---              ---        ---
+  `AVL-0064`    P1         §463      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0065`    P1         §463     `TODO`   ---              ---        ---
+  `AVL-0065`    P1         §463      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0223`    P1         §464     `TODO`   ---              ---        ---
+  `JOB-0223`    P1         §464      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0223
 
-  `JOB-0224`    P1         §464     `TODO`   ---              ---        ---
+  `JOB-0224`    P1         §464      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 job page; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0225`    P1         §465     `TODO`   ---              ---        ---
+  `JOB-0225`    P1         §465      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer job page; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0226`    P1         §466     `TODO`   ---              ---        ---
+  `JOB-0226`    P1         §466      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0227`    P1         §466     `TODO`   ---              ---        ---
+  `JOB-0227`    P1         §466      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0370`    P1         §467     `TODO`   ---              ---        ---
+  `PRD-0370`    P1         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0370
 
-  `PRD-0371`    P2         §467     `TODO`   ---              ---        ---
+  `PRD-0371`    P2         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0371
 
-  `PRD-0372`    P1         §468     `TODO`   ---              ---        ---
+  `PRD-0372`    P1         §468      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0373`    P2         §468     `TODO`   ---              ---        ---
+  `PRD-0373`    P2         §468      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0066`    P1         §469     `TODO`   ---              ---        ---
+  `AVL-0066`    P1         §469      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0066
 
-  `PRD-0374`    P1         §470     `TODO`   ---              ---        ---
+  `PRD-0374`    P1         §470      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0374
 
-  `PRD-0375`    P2         §470     `TODO`   ---              ---        ---
+  `PRD-0375`    P2         §470      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0228`    P1         §471     `TODO`   ---              ---        ---
+  `JOB-0228`    P1         §471      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0229`    P1         §471     `TODO`   ---              ---        ---
+  `JOB-0229`    P1         §471      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0230`    P1         §471     `TODO`   ---              ---        ---
+  `JOB-0230`    P1         §471      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0067`    P1         §472     `TODO`   ---              ---        ---
+  `AVL-0067`    P1         §472      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0068`    P1         §472     `TODO`   ---              ---        ---
+  `AVL-0068`    P1         §472      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0069`    P1         §472     `TODO`   ---              ---        ---
+  `AVL-0069`    P1         §472      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0231`    P1         §473     `TODO`   ---              ---        ---
+  `JOB-0231`    P1         §473      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0231
 
-  `CAP-0114`    P1         §474     `TODO`   ---              ---        ---
+  `CAP-0114`    P1         §474      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0070`    P1         §475     `TODO`   ---              ---        ---
+  `AVL-0070`    P1         §475      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0070
 
-  `AVL-0071`    P1         §475     `TODO`   ---              ---        ---
+  `AVL-0071`    P1         §475      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0376`    P1         §476     `TODO`   ---              ---        ---
+  `PRD-0376`    P1         §476      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer locale UI; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0072`    P1         §477     `TODO`   ---              ---        ---
+  `AVL-0072`    P1         §477      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 marketplace cards; M09 Core evidence in docs/milestones/M09.md
 
-  `AVL-0073`    P1         §478     `TODO`   ---              ---        ---
+  `AVL-0073`    P1         §478      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 capability detail; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0377`    P1         §479     `TODO`   ---              ---        ---
+  `PRD-0377`    P1         §479      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Marketplace Agent; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0378`    P2         §479     `TODO`   ---              ---        ---
+  `PRD-0378`    P2         §479      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Marketplace Agent; M09 Core evidence in docs/milestones/M09.md
 
-  `AGT-0098`    P1         §480     `TODO`   ---              ---        ---
+  `AGT-0098`    P1         §480      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Agent orchestration; M09 Core evidence in docs/milestones/M09.md
 
-  `AGT-0099`    P1         §480     `TODO`   ---              ---        ---
+  `AGT-0099`    P1         §480      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Agent orchestration; M09 Core evidence in docs/milestones/M09.md
 
-  `AGT-0100`    P1         §480     `TODO`   ---              ---        ---
+  `AGT-0100`    P1         §480      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Agent orchestration; M09 Core evidence in docs/milestones/M09.md
 
-  `AGT-0101`    P1         §480     `TODO`   ---              ---        ---
+  `AGT-0101`    P1         §480      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0232`    P1         §481     `TODO`   ---              ---        ---
+  `JOB-0232`    P1         §481      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M13 REST API; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0233`    P1         §481     `TODO`   ---              ---        ---
+  `JOB-0233`    P1         §481      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M13 REST API; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0234`    P1         §481     `TODO`   ---              ---        ---
+  `JOB-0234`    P1         §481      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M13 REST API; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0235`    P1         §482     `TODO`   ---              ---        ---
+  `JOB-0235`    P1         §482      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0235
 
-  `JOB-0236`    P1         §483     `TODO`   ---              ---        ---
+  `JOB-0236`    P1         §483      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer notices and M13 notification delivery; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0237`    P1         §483     `TODO`   ---              ---        ---
+  `JOB-0237`    P1         §483      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer notices and M13 notification delivery; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0238`    P1         §483     `TODO`   ---              ---        ---
+  `JOB-0238`    P1         §483      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer notices and M13 notification delivery; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0239`    P1         §483     `TODO`   ---              ---        ---
+  `JOB-0239`    P1         §483      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer notices and M13 notification delivery; M09 Core evidence in docs/milestones/M09.md
 
-  `PRD-0379`    P1         §484     `TODO`   ---              ---        ---
+  `PRD-0379`    P1         §484      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0379
 
-  `PRD-0380`    P2         §484     `TODO`   ---              ---        ---
+  `PRD-0380`    P2         §484      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0380
 
-  `PRD-0381`    P2         §484     `TODO`   ---              ---        ---
+  `PRD-0381`    P2         §484      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0381
 
-  `JOB-0240`    P1         §485     `TODO`   ---              ---        ---
+  `JOB-0240`    P1         §485      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0240
 
-  `JOB-0241`    P1         §486     `TODO`   ---              ---        ---
+  `JOB-0241`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0241
 
-  `JOB-0242`    P1         §486     `TODO`   ---              ---        ---
+  `JOB-0242`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0242
 
-  `JOB-0243`    P1         §486     `TODO`   ---              ---        ---
+  `JOB-0243`    P1         §486      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0382`    P1         §487     `TODO`   ---              ---        ---
+  `PRD-0382`    P1         §487      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0382
 
-  `PRD-0383`    P2         §487     `TODO`   ---              ---        ---
+  `PRD-0383`    P2         §487      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0383
 
   `AVL-0074`    P1         §488     `TODO`   ---              ---        ---
 

@@ -31,12 +31,18 @@ export const WorkerHeartbeatSchema = z.strictObject({
   controlPlaneId: z.string().min(1).max(160),
   workerDeviceId: z.uuid(),
   workerRelease: z.string().min(1).max(80),
+  sentAt: z.iso.datetime().optional(),
   openClawVersion: z.string().min(1).max(80).nullable(),
   status: z.enum(['ONLINE', 'PAUSED', 'NOT_READY']),
   runningJobs: z.number().int().nonnegative().max(64),
   capacity: z.number().int().nonnegative().max(64),
   policyVersion: z.number().int().positive(),
   localRevision: z.number().int().nonnegative(),
+  capabilityReadiness: z.array(z.strictObject({
+    capabilityVersionId: z.uuid(),
+    policyValidationHash: DigestSchema.nullable(),
+    state: z.enum(['READY','NOT_READY','DEPENDENCY_BLOCKED']),
+  }).refine((value) => value.state !== 'READY' || value.policyValidationHash !== null)).max(64).optional(),
 });
 
 export const JobOfferSchema = z.strictObject({

@@ -5,6 +5,7 @@ import { parseJobOffer, type JobOffer } from '../../../packages/worker-protocol/
 import type { WorkerLocalState } from './local-state.js';
 
 export interface CapabilityAdmissionReadiness {
+  /** Security/runtime readiness is independent of the separately reported slot capacity. */
   readonly ready: boolean;
   readonly checkedAt: string;
   readonly policyValidationHash: string | null;

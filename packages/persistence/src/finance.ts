@@ -21,7 +21,7 @@ const terminalFailure = new Set(['REJECTED','EXPIRED','CANCELLED','FAILED_STARTU
   'FAILED_POLICY','FAILED_EXECUTION','TIMED_OUT','WORKER_OFFLINE','RESULT_REJECTED']);
 type LockedJob = { id: string; buyer_account_id: string; capability_version_id: string;
   status: string; contract_snapshot: unknown; payment_reservation_id: string | null;
-  result_manifest_id: string | null };
+  result_manifest_id: string | null; started_at: Date | null };
 type ReservationRow = { id: string; job_id: string; buyer_account_id: string;
   amount_minor: string; state: ReservationState; reserve_journal_id: string;
   terminal_journal_id: string | null };
@@ -855,7 +855,13 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
 
   async reserveJob(jobId: string, buyerId: string, reservationId: string): Promise<string> {
     uuid.parse(jobId); uuid.parse(buyerId); uuid.parse(reservationId);
-    return this.transaction(async (client) => {
+    return this.transaction((client) => this.reserveJobInTransaction(client, jobId, buyerId, reservationId));
+  }
+
+  /** Availability owns admission; finance owns this ledger mutation in the same database transaction. */
+  async reserveJobInTransaction(client: PoolClient, jobId: string, buyerId: string,
+    reservationId: string): Promise<string> {
+      uuid.parse(jobId); uuid.parse(buyerId); uuid.parse(reservationId);
       const job = await this.job(client, jobId);
       if (job.buyer_account_id !== buyerId) throw new FinanceError('NOT_ELIGIBLE');
       const buyer = await client.query<{ status: string; email_verified_at: Date | null;
@@ -930,7 +936,6 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
       await client.query(`UPDATE jobs SET status='PAYMENT_RESERVED',payment_reservation_id=$2
         WHERE id=$1`, [jobId, reservationId]);
       return reservationId;
-    });
   }
 
   private async loadReservation(client: PoolClient, jobId: string): Promise<ReservationRow> {
@@ -962,6 +967,12 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
     });
   }
 
+  async releaseFailedJobInTransaction(client: PoolClient, jobId: string): Promise<void> {
+    const job = await this.job(client, jobId);
+    if (!terminalFailure.has(job.status)) throw new FinanceError('NOT_ELIGIBLE');
+    await this.releaseLocked(client, jobId);
+  }
+
   private async releaseLocked(client: PoolClient, jobId: string): Promise<void> {
     const reservation = await this.loadReservation(client, jobId);
     if (reservation.state === 'RELEASED') return;
@@ -974,10 +985,15 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
       WHERE job_id=$1`, [jobId]);
   }
 
-  /** Buyer identity is authenticated by the future API route; offer/claim races serialize on job row. */
+  /** Buyer identity is authenticated by the API boundary; cancel/claim/start serialize on the job row. */
   async cancelBeforeDispatch(jobId: string, buyerId: string, requestId: string): Promise<void> {
     uuid.parse(buyerId); uuid.parse(requestId);
-    await this.transaction(async (client) => {
+    await this.transaction((client) => this.cancelBeforeDispatchInTransaction(client, jobId, buyerId, requestId));
+  }
+
+  async cancelBeforeDispatchInTransaction(client: PoolClient, jobId: string,
+    buyerId: string, requestId: string): Promise<void> {
+    uuid.parse(buyerId); uuid.parse(requestId);
       const job = await this.job(client, jobId);
       if (job.buyer_account_id !== buyerId) throw new FinanceError('NOT_ELIGIBLE');
       if (job.status === 'CANCELLED') {
@@ -988,12 +1004,19 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
         await this.releaseLocked(client, jobId);
         return;
       }
-      if (!['PAYMENT_RESERVED','QUEUED','WAITING_FOR_WORKER'].includes(job.status)) {
+      if (!['PAYMENT_RESERVED','WAITING_FOR_AVAILABILITY','QUEUED','WAITING_FOR_WORKER',
+        'DISPATCHED','ACCEPTED'].includes(job.status) || job.started_at) {
         throw new FinanceError('NOT_ELIGIBLE');
       }
-      const active = await client.query('SELECT id FROM job_executions WHERE job_id=$1 AND completed_at IS NULL',
+      const active = await client.query('SELECT id FROM job_executions WHERE job_id=$1 AND completed_at IS NULL FOR UPDATE',
         [jobId]);
-      if (active.rowCount) throw new FinanceError('NOT_ELIGIBLE');
+      if (active.rowCount && !['DISPATCHED','ACCEPTED'].includes(job.status)) {
+        throw new FinanceError('NOT_ELIGIBLE');
+      }
+      if (active.rowCount) {
+        await client.query(`UPDATE job_executions SET completed_at=now()
+          WHERE job_id=$1 AND completed_at IS NULL`,[jobId]);
+      }
       const sequence = await client.query<{ next: number }>(
         'SELECT coalesce(max(sequence),0)::int+1 AS next FROM job_transitions WHERE job_id=$1', [jobId]);
       await client.query(`INSERT INTO job_transitions(id,job_id,sequence,from_status,to_status,at,
@@ -1002,7 +1025,6 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
       [randomUUID(), jobId, sequence.rows[0]?.next, job.status, requestId]);
       await client.query("UPDATE jobs SET status='CANCELLED' WHERE id=$1", [jobId]);
       await this.releaseLocked(client, jobId);
-    });
   }
 
   /** Bounded repair after process restart: persisted terminal job state drives finance. */

@@ -33,6 +33,12 @@ export class WorkerCapabilityPackageStore {
 
   close(): void { this.db.close(); }
 
+  listInstalled(): readonly LocalCapabilityPackage[] {
+    const rows = this.db.prepare('SELECT capability_version_id FROM local_capability_package ORDER BY capability_version_id')
+      .all() as { capability_version_id: string }[];
+    return rows.map((row) => this.load(row.capability_version_id));
+  }
+
   installReviewed(raw: unknown, rawReview: unknown): { capabilityVersionId: string; packageHash: string } {
     const pkg = LocalCapabilityPackageSchema.parse(raw);
     const consent = review.parse(rawReview);

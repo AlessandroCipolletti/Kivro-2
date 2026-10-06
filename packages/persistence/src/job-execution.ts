@@ -14,11 +14,12 @@ import { JobControlCommandSchema, type PauseSupport } from '../../contracts/src/
 import { JobOfferSchema, WORKER_PROTOCOL_VERSION, type JobOffer } from '../../worker-protocol/src/messages.js';
 import type { LeaseTokenIssuer } from '../../application/src/lease-token.js';
 import { SUPPORTED_FILE_TYPES } from '../../contracts/src/file-types.js';
+import { AvailabilityError } from './availability.js';
 
 const uuid = z.uuid();
 const controlPlane = z.string().min(1).max(160);
 const executionStates = new Set<JobStatus>([
-  'PAYMENT_RESERVED', 'QUEUED', 'WAITING_FOR_WORKER', 'DISPATCHED', 'ACCEPTED', 'STARTING',
+  'PAYMENT_RESERVED', 'WAITING_FOR_AVAILABILITY', 'QUEUED', 'WAITING_FOR_WORKER', 'DISPATCHED', 'ACCEPTED', 'STARTING',
   'RUNNING', 'UPLOADING_RESULT', 'PAUSE_REQUESTED', 'PAUSED', 'RESUME_REQUESTED',
   'SECURITY_PAUSED', 'CANCEL_REQUESTED', 'COMPLETED',
 ]);
@@ -30,6 +31,11 @@ const terminalStates = new Set<JobStatus>([
 /** Bound to the Core financial ledger by the cloud composition root. Worker messages cannot implement it. */
 export interface PaymentReservationVerifier {
   isSecured(client: PoolClient, jobId: string, reservationId: string): Promise<boolean>;
+}
+
+/** M09 controls eligibility; M07 retains the offer, lease and Worker transition authority. */
+export interface JobAvailabilityVerifier {
+  assertEligible(client: PoolClient, jobId: string, stage: 'OFFER' | 'ACCEPT' | 'START'): Promise<void>;
 }
 
 export class JobExecutionError extends Error {
@@ -147,7 +153,18 @@ const submittedResultSchema = z.strictObject({
 /** One shared transaction boundary for both provider composition roots. */
 export class PostgresJobExecutionRepository {
   constructor(private readonly pool: Pool, private readonly payment: PaymentReservationVerifier,
-    private readonly leaseIssuer: LeaseTokenIssuer) {}
+    private readonly leaseIssuer: LeaseTokenIssuer,
+    private readonly availability?: JobAvailabilityVerifier) {}
+
+  private async mustBeEligible(client: PoolClient, jobId: string,
+    stage: 'OFFER' | 'ACCEPT' | 'START'): Promise<void> {
+    if (!this.availability) throw new JobExecutionError('NOT_ELIGIBLE');
+    try { await this.availability.assertEligible(client, jobId, stage); }
+    catch (error) {
+      if (error instanceof AvailabilityError) throw new JobExecutionError('NOT_ELIGIBLE');
+      throw error;
+    }
+  }
 
   private async transaction<T>(operation: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
@@ -197,7 +214,10 @@ export class PostgresJobExecutionRepository {
     uuid.parse(jobId); uuid.parse(manifestId);
     return this.transaction(async (client) => {
       const job = await this.lockJob(client, jobId);
-      if (!['CREATED', 'PAYMENT_RESERVED'].includes(job.status)) throw new JobExecutionError('NOT_ELIGIBLE');
+      // Buyers may secure a scheduled job before its inputs finish uploading. The
+      // manifest is immutable once an offer can leave the control plane.
+      if (!['CREATED', 'PAYMENT_RESERVED', 'WAITING_FOR_AVAILABILITY', 'QUEUED',
+        'WAITING_FOR_WORKER'].includes(job.status)) throw new JobExecutionError('NOT_ELIGIBLE');
       const snapshot = JobContractSnapshotSchema.parse(job.contract_snapshot);
       const payload = validateInputPayload(snapshot.inputContractSnapshot, rawPayload);
       const ids = Object.values(payload.assets).flat();
@@ -255,7 +275,8 @@ export class PostgresJobExecutionRepository {
 
   async transition(input: JobEventInput): Promise<DurableJobView> {
     const event = JobTransitionSchema.parse({ ...input, at: new Date().toISOString() });
-    if (event.to === 'COMPLETED' || event.actor === 'WORKER') throw new JobExecutionError('NOT_ELIGIBLE');
+    if (['DISPATCHED','ACCEPTED','STARTING','RUNNING','UPLOADING_RESULT','COMPLETED'].includes(event.to) ||
+      event.actor === 'WORKER') throw new JobExecutionError('NOT_ELIGIBLE');
     return this.transaction(async (client) => this.transitionLocked(client, event));
   }
 
@@ -266,6 +287,11 @@ export class PostgresJobExecutionRepository {
     uuid.parse(executionId); uuid.parse(workerDeviceId); controlPlane.parse(planeId);
     if (event.actor !== 'WORKER' || event.to === 'COMPLETED') throw new JobExecutionError('NOT_ELIGIBLE');
     return this.transaction(async (client) => {
+      if (event.to === 'STARTING') {
+        const prior = await client.query('SELECT id FROM job_transitions WHERE id=$1 AND job_id=$2',
+          [event.id, event.jobId]);
+        if (!prior.rows[0]) await this.mustBeEligible(client, event.jobId, 'START');
+      }
       const job = await this.lockJob(client, event.jobId);
       if (job.worker_device_id !== workerDeviceId) throw new JobExecutionError('WRONG_WORKER');
       const result = await client.query<ExecutionRow>(
@@ -336,6 +362,7 @@ export class PostgresJobExecutionRepository {
     uuid.parse(jobId); uuid.parse(workerDeviceId); controlPlane.parse(planeId);
     if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds < 5 || ttlSeconds > 3600) throw new RangeError('Invalid offer TTL');
     return this.transaction(async (client) => {
+      await this.mustBeEligible(client, jobId, 'OFFER');
       const job = await this.lockJob(client, jobId);
       if (job.status !== 'QUEUED' || job.worker_device_id !== workerDeviceId) throw new JobExecutionError('NOT_ELIGIBLE');
       if (!job.payment_reservation_id || !await this.payment.isSecured(client, jobId, job.payment_reservation_id)) {
@@ -391,6 +418,7 @@ export class PostgresJobExecutionRepository {
       const result = await client.query<ExecutionRow>('SELECT * FROM job_executions WHERE id=$1', [executionId]);
       const execution = result.rows[0];
       if (!execution) throw new JobExecutionError('NOT_FOUND');
+      await this.mustBeEligible(client, execution.job_id, 'ACCEPT');
       const job = await this.lockJob(client, execution.job_id);
       if (job.status !== 'DISPATCHED' || execution.accepted_at || execution.completed_at ||
         execution.offer_expires_at.getTime() <= Date.now()) throw new JobExecutionError('NOT_ELIGIBLE');
@@ -506,6 +534,9 @@ export class PostgresJobExecutionRepository {
     return this.transaction(async (client) => {
       const candidate = await client.query<ExecutionRow>('SELECT * FROM job_executions WHERE id=$1', [executionId]);
       if (!candidate.rows[0]) throw new JobExecutionError('NOT_FOUND');
+      if (!candidate.rows[0].accepted_at) {
+        await this.mustBeEligible(client, candidate.rows[0].job_id, 'ACCEPT');
+      }
       const job = await this.lockJob(client, candidate.rows[0].job_id);
       const result = await client.query<ExecutionRow>('SELECT * FROM job_executions WHERE id=$1 FOR UPDATE', [executionId]);
       const execution = result.rows[0];
@@ -550,6 +581,7 @@ export class PostgresJobExecutionRepository {
         throw new JobExecutionError('NOT_ELIGIBLE');
       }
       const job = await this.lockJob(client, execution.job_id, false);
+      if (job.status === 'ACCEPTED') await this.mustBeEligible(client, job.id, 'START');
       if (!['ACCEPTED', 'STARTING', 'RUNNING'].includes(job.status) ||
         !job.payment_reservation_id ||
         !await this.payment.isSecured(client, job.id, job.payment_reservation_id)) {
