@@ -1,0 +1,35 @@
+{
+  "name": "Competitive Video Ad Generator",
+  "skill": "seller-video-ad",
+  "internetPolicy": {
+    "version": 1,
+    "mode": "PUBLIC_WEB_RESEARCH",
+    "domains": { "mode": "ANY_PUBLIC_DOMAIN" },
+    "search": { "enabled": true, "maxQueriesPerJob": 20, "maxResults": 10 },
+    "fetch": { "enabled": true, "maxPagesPerJob": 30, "maxResponseBytes": 1000000, "maxRedirects": 3,
+      "timeoutMs": 8000, "allowedContentTypes": ["text/html", "text/plain", "application/json"] },
+    "download": { "enabled": true, "maxDownloadsPerJob": 5, "maxFileBytes": 5000000,
+      "maxBytesPerJob": 20000000, "allowedMimeTypes": ["image/jpeg", "image/png", "application/pdf"] },
+    "limits": { "maxNetworkBytesPerJob": 50000000, "maxDurationMs": 600000,
+      "maxConcurrentRequests": 2, "maxRequestsPerHost": 10 }
+  },
+  "ioContract": {
+    "contractVersion": 1,
+    "input": { "schemaVersion": 1, "fields": [
+      { "key": "companyName", "label": "Company name", "order": 0, "required": true, "type": "SHORT_TEXT" },
+      { "key": "companyWebsite", "label": "Company website", "order": 1, "required": false, "type": "URL" },
+      { "key": "productDescription", "label": "Product description", "order": 2, "required": false, "type": "LONG_TEXT" },
+      { "key": "brandAssets", "label": "Brand assets", "order": 3, "required": false, "type": "FILES",
+        "constraints": { "maxFiles": 5, "maxFileSizeBytes": 5000000, "maxTotalSizeBytes": 20000000,
+          "allowedMimeTypes": ["image/jpeg", "image/png"], "allowedExtensions": [".jpg", ".jpeg", ".png"] } },
+      { "key": "targetAudience", "label": "Target audience", "order": 4, "required": false, "type": "SHORT_TEXT" }
+    ] },
+    "output": { "schemaVersion": 1, "fields": [
+      { "key": "videoAd", "label": "60-second video advertisement", "order": 0, "required": true, "type": "FILE",
+        "constraints": { "maxFiles": 1, "maxFileSizeBytes": 100000000, "maxTotalSizeBytes": 100000000,
+          "allowedMimeTypes": ["video/mp4"], "allowedExtensions": [".mp4"] } },
+      { "key": "strategy", "label": "Creative strategy", "order": 1, "required": true, "type": "MARKDOWN" },
+      { "key": "sources", "label": "Research sources", "order": 2, "required": false, "type": "JSON", "maxBytes": 100000 }
+    ] }
+  }
+}

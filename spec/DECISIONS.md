@@ -511,3 +511,12 @@ payout identity.
 
 Core schema/contracts support explicit Worker identity/assignment from
 greenfield.
+
+### DEC-IMPL-010 --- Cloud-owned public research with pinned destination and private-data barrier
+
+Date: 2026-10-06
+Status: Accepted implementation boundary
+Context: M06 needs useful public search/fetch without turning the seller machine into an unrestricted network proxy. Cloud publication and authenticated Worker routing arrive in M07. A URL check before an independent socket connection would allow DNS rebinding and redirect bypasses. GET query strings can also carry private data.
+Decision: Shared Core owns the versioned public-research policy, broker semantics and durable budget/audit ports. A replaceable HTTP adapter resolves every hop, rejects mixed/private answers and pins the vetted public IP at socket creation with the original TLS host. Generic search uses a platform credential; private DB access uses a separate named-operation, dedicated-role adapter. An authoritative per-job private-resource-read flag blocks subsequent public research calls. The published/job contract carries a sanitized immutable public-research policy snapshot so cloud egress can enforce its exact ceilings. The existing Docker job profile stays `network=none`; M07 must provide an authenticated, job-bound broker route and must not give the sandbox raw Internet.
+Consequences: Broker unit, PostgreSQL race and one bounded public HTTPS smoke pass. Live Brave search, declared-service/provider credentials, seller/buyer UI, noexec download staging, full OpenClaw prompt-injection/data-flow tests and both deployment roots remain `DEFERRED_VERIFICATION`. The private-read barrier reduces one exfiltration route; it does not prove arbitrary model knowledge or seller skill contents cannot be encoded into a GET query. No network-enabled paid capability is eligible to run yet.
+Master Spec references: §§14, 16, 71–73, 237–277; DEC-003–DEC-006.

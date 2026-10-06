@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { InternetPolicySchema } from './internet-policy.js';
+import { ReadOnlyResourcePolicySchema } from './local-resource-policy.js';
+import { ProviderBudgetPolicySchema } from './provider-budget-policy.js';
 
 const reference = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/);
 
@@ -6,20 +9,32 @@ const reference = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*
 export const InternalPermissionPolicySchema = z.strictObject({
   policyVersion: z.literal(1),
   aiInference: z.enum(['NONE', 'SELLER']),
+  providerBudget: ProviderBudgetPolicySchema.optional(),
   publicInternet: z.enum(['DENY', 'PUBLIC_RESEARCH_BROKER', 'DECLARED_DOMAINS']),
+  internet: InternetPolicySchema.optional(),
   browser: z.boolean(),
   proprietaryDatabase: z.enum(['NONE', 'READ_ONLY', 'LIMITED']),
   privateApi: z.enum(['NONE', 'READ_ONLY', 'LIMITED']),
   selectedFileResourceIds: z.array(reference).max(64),
   selectedDirectoryResourceIds: z.array(reference).max(64),
+  localResources: z.array(ReadOnlyResourcePolicySchema).max(32).optional(),
   localSoftware: z.boolean(),
   shell: z.boolean(),
   externalSideEffects: z.boolean(),
   buyerFileAccess: z.boolean(),
   sellerCredentialRefs: z.array(z.string().regex(/^seller:[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/)).max(64),
 }).superRefine((policy, context) => {
+  if (policy.internet && ({ NO_NETWORK: 'DENY', PUBLIC_WEB_RESEARCH: 'PUBLIC_RESEARCH_BROKER', DECLARED_API_ACCESS: 'DECLARED_DOMAINS' } as const)[policy.internet.mode] !== policy.publicInternet) {
+    context.addIssue({ code: 'custom', message: 'Detailed Internet mode and public permission disagree' });
+  }
   for (const ids of [policy.selectedFileResourceIds, policy.selectedDirectoryResourceIds, policy.sellerCredentialRefs]) {
     if (new Set(ids).size !== ids.length) context.addIssue({ code: 'custom', message: 'Duplicate permission reference' });
+  }
+  if (policy.localResources && policy.proprietaryDatabase === 'NONE') {
+    context.addIssue({ code: 'custom', message: 'Local database broker requires database permission' });
+  }
+  if (policy.providerBudget && policy.aiInference !== 'SELLER') {
+    context.addIssue({ code: 'custom', message: 'Provider budget requires seller inference consent' });
   }
 });
 

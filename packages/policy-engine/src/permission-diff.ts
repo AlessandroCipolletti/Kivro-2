@@ -44,6 +44,15 @@ export function securitySurfaceExpansion(previous: SecuritySurface, next: Securi
     'localSoftware', 'shell', 'externalSideEffects', 'buyerFileAccess'] as const) {
     if (nextPolicy[field] !== priorPolicy[field]) add('POLICY_FIELD', field);
   }
+  if (canonicalJson(nextPolicy.internet ?? null) !== canonicalJson(priorPolicy.internet ?? null)) {
+    add('POLICY_FIELD', 'internet');
+  }
+  if (canonicalJson(nextPolicy.localResources ?? null) !== canonicalJson(priorPolicy.localResources ?? null)) {
+    add('RESOURCE_PERMISSION', 'localResources');
+  }
+  if (canonicalJson(nextPolicy.providerBudget ?? null) !== canonicalJson(priorPolicy.providerBudget ?? null)) {
+    add('INFERENCE', 'providerBudget');
+  }
   for (const id of newlyPresent(priorPolicy.selectedFileResourceIds, nextPolicy.selectedFileResourceIds)) {
     add('RESOURCE_REFERENCE', `file:${id}`);
   }

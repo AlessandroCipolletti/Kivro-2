@@ -47,6 +47,12 @@ mandatory deferred verification gates.
 This sequencing rule resolves early mapping/dependency conflicts; it
 does not defer product scope or weaken the original acceptance gates.
 
+For implementation runs, follow the product owner's one-milestone rule:
+finish the requested milestone's implementable work and current validation,
+update its open verification backlog, then stop before starting the next
+milestone. An implementation-stage boundary does not assert full closure of
+cross-system acceptance gates.
+
 ## Milestones
 
 ### M00 --- Repository bootstrap & engineering contract

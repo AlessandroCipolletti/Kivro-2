@@ -3,6 +3,7 @@ import { CapabilityIOContractSchema } from './capability-io.js';
 import { PublicPermissionManifestSchema } from './permission-policy.js';
 import { PriceSnapshotSchema } from './pricing.js';
 import { WorkerManifestSchema } from './worker-manifest.js';
+import { InternetPolicySchema } from './internet-policy.js';
 
 export const DigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
 
@@ -24,6 +25,7 @@ const versionFields = {
   localPackageHash: DigestSchema,
   dependencyGraphHash: DigestSchema,
   permissionPolicyHash: DigestSchema,
+  publicResearchPolicy: InternetPolicySchema.refine((value) => value.mode === 'PUBLIC_WEB_RESEARCH').nullable(),
   sellerInferenceConfigHash: DigestSchema.nullable(),
   ioContract: CapabilityIOContractSchema,
   publicPermissionManifest: PublicPermissionManifestSchema,
@@ -59,6 +61,7 @@ export const JobContractSnapshotSchema = z.strictObject({
   workerDeviceId: z.uuid(),
   createdAt: z.iso.datetime(),
   permissionManifestSnapshot: PublicPermissionManifestSchema,
+  publicResearchPolicySnapshot: InternetPolicySchema.refine((value) => value.mode === 'PUBLIC_WEB_RESEARCH').nullable(),
   inputContractSnapshot: CapabilityIOContractSchema.shape.input,
   outputContractSnapshot: CapabilityIOContractSchema.shape.output,
   priceSnapshot: PriceSnapshotSchema,

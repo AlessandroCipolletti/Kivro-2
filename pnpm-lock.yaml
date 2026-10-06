@@ -130,6 +130,8 @@ importers:
 
   packages/infrastructure/contracts: {}
 
+  packages/infrastructure/http: {}
+
   packages/infrastructure/netsons: {}
 
   packages/infrastructure/s3: {}

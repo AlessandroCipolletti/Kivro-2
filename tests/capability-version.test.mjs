@@ -3,6 +3,8 @@ import test from 'node:test';
 import { buildVersionCandidate, createJobContractSnapshot } from '../dist/packages/domain/src/capability-version.js';
 import { PublishedCapabilityVersionSchema } from '../dist/packages/contracts/src/capability-version.js';
 import { priceForTier } from '../dist/packages/domain/src/pricing.js';
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 
 const id = 'b3451661-a538-4907-8acc-b1cf00e04899';
 const nextId = '48ed805a-d11a-4f3a-a601-35014a39e810';
@@ -103,4 +105,32 @@ test('full local graph is frozen by a candidate hash while the cloud candidate s
   assert.notEqual(changed.localPackageHash, before.localPackageHash);
   assert.notEqual(changed.dependencyGraphHash, before.dependencyGraphHash);
   assert.equal(JSON.stringify(before).includes('Document Analyzer'), false);
+});
+
+test('public research policy is pinned in the sanitized published/job snapshot without seller secrets', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/m06-advertising-capability.json', import.meta.url), 'utf8'));
+  const candidate = buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    permissionPolicy: { ...policy, publicInternet: 'PUBLIC_RESEARCH_BROKER', internet: fixture.internetPolicy },
+  } });
+  assert.equal(candidate.publicResearchPolicy.mode, 'PUBLIC_WEB_RESEARCH');
+  const publishedFields = JSON.parse(JSON.stringify(candidate));
+  delete publishedFields.requestedAt;
+  const published = PublishedCapabilityVersionSchema.parse({ ...publishedFields,
+    publicationState: 'PUBLISHED', publishedAt: '2026-10-06T12:30:00Z', policyValidationHash: hash,
+  });
+  const job = createJobContractSnapshot(published, id, id, '2026-10-06T13:00:00Z');
+  assert.deepEqual(job.publicResearchPolicySnapshot, fixture.internetPolicy);
+  assert.doesNotMatch(JSON.stringify(job), /seller:|credentialRef|privateDatabase/);
+});
+
+test('networked package cannot publish from a coarse permission or unselected connector', () => {
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    permissionPolicy: { ...policy, publicInternet: 'PUBLIC_RESEARCH_BROKER' },
+  } }), /Networked capability requires detailed Internet policy/);
+  const connectorPolicy = { version: 1, mode: 'DECLARED_API_ACCESS', connectors: [{ id: 'ads.search',
+    host: 'api.example.com', method: 'POST', path: '/search', maxRequestsPerJob: 2,
+    maxRequestBytes: 100, maxResponseBytes: 1000 }] };
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    permissionPolicy: { ...policy, publicInternet: 'DECLARED_DOMAINS', internet: connectorPolicy },
+  } }), /Declared API connector is not selected/);
 });

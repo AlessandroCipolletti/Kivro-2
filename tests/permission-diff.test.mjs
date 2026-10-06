@@ -61,3 +61,19 @@ test('identical surface has no expansion and changed inference is reviewed', () 
   const diff = securitySurfaceExpansion(base, { ...base, dependencyGraph: nextGraph });
   assert.deepEqual(diff, [{ kind: 'INFERENCE', reference: 'configuration' }]);
 });
+
+test('detailed Internet and local-resource changes require review even when public category is unchanged', () => {
+  const internet = { version: 1, mode: 'DECLARED_API_ACCESS', connectors: [{ id: 'ads.search',
+    host: 'api.example.com', method: 'POST', path: '/search', maxRequestsPerJob: 2,
+    maxRequestBytes: 100, maxResponseBytes: 1000 }] };
+  const current = { ...base, permissionPolicy: { ...basePolicy, internet } };
+  const expanded = { ...base, permissionPolicy: { ...basePolicy,
+    internet: { ...internet, connectors: [{ ...internet.connectors[0], maxRequestsPerJob: 3 }] },
+    proprietaryDatabase: 'READ_ONLY', localResources: [{ resourceId: 'company_db', statementTimeoutMs: 1000,
+      operations: [{ id: 'company_get', schema: 'seller_public', table: 'company',
+        columns: ['id'], lookupColumn: 'id', maxRows: 1 }] }],
+  } };
+  const changes = securitySurfaceExpansion(current, expanded);
+  assert.ok(changes.some((item) => item.reference === 'internet'));
+  assert.ok(changes.some((item) => item.reference === 'localResources'));
+});

@@ -106,7 +106,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0020`    P1         §7       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0020
 
-  `WRK-0021`    P1         §7       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0021
+  `WRK-0021`    P1         §7       `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:WRK-0021
 
   `WRK-0022`    P1         §7       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0022
 
@@ -140,9 +140,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0028`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0028
 
-  `PRD-0029`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0029
+  `PRD-0029`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0029
 
-  `PRD-0030`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0030
+  `PRD-0030`    P2         §8       `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:PRD-0030
 
   `JOB-0001`    P1         §9       `DEFERRED_VERIFICATION`   packages/contracts/src/job-lifecycle.ts,packages/domain/src/job-lifecycle.ts tests/job-lifecycle.test.mjs baseline only;  backlog:JOB-0001
 
@@ -196,19 +196,19 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0008`    P0         §13      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0008
 
-  `SEC-0009`    P1         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0009
+  `SEC-0009`    P1         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0009
 
-  `SEC-0010`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0010
+  `SEC-0010`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0010
 
-  `SEC-0011`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0011
+  `SEC-0011`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0011
 
-  `SEC-0012`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0012
+  `SEC-0012`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0012
 
-  `SEC-0013`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0013
+  `SEC-0013`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0013
 
-  `SEC-0014`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0014
+  `SEC-0014`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0014
 
-  `SEC-0015`    P0         §14      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0015
+  `SEC-0015`    P0         §14      `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0015
 
   `WRK-0036`    P1         §15      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0036
 
@@ -224,17 +224,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0042`    P1         §15      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0042
 
-  `SEC-0016`    P1         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0016
+  `SEC-0016`    P1         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0016
 
-  `SEC-0017`    P0         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0017
+  `SEC-0017`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0017
 
-  `SEC-0018`    P0         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0018
+  `SEC-0018`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0018
 
-  `SEC-0019`    P0         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0019
+  `SEC-0019`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0019
 
-  `SEC-0020`    P0         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0020
+  `SEC-0020`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0020
 
-  `SEC-0021`    P0         §16     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0021
+  `SEC-0021`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0021
 
   `SEC-0022`    P1         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0022
 
@@ -244,57 +244,57 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0025`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0025
 
-  `PRD-0031`    P1         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0031
+  `PRD-0031`    P1         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0031 M06 component review:docs/milestones/M06.md
 
-  `PRD-0032`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0032
+  `PRD-0032`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0032 M06 component review:docs/milestones/M06.md
 
-  `PRD-0033`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0033
+  `PRD-0033`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0033 M06 component review:docs/milestones/M06.md
 
-  `PRD-0034`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0034
+  `PRD-0034`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0034 M06 component review:docs/milestones/M06.md
 
-  `PRD-0035`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0035
+  `PRD-0035`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0035 M06 component review:docs/milestones/M06.md
 
-  `PRD-0036`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0036
+  `PRD-0036`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0036 M06 component review:docs/milestones/M06.md
 
-  `PRD-0037`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0037
+  `PRD-0037`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0037 M06 component review:docs/milestones/M06.md
 
-  `PRD-0038`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0038
+  `PRD-0038`    P2         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0038 M06 component review:docs/milestones/M06.md
 
-  `JOB-0008`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0008
+  `JOB-0008`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0008 M06 component review:docs/milestones/M06.md
 
-  `JOB-0009`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0009
+  `JOB-0009`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0009 M06 component review:docs/milestones/M06.md
 
-  `JOB-0010`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0010
+  `JOB-0010`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0010 M06 component review:docs/milestones/M06.md
 
-  `JOB-0011`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0011
+  `JOB-0011`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0011 M06 component review:docs/milestones/M06.md
 
-  `JOB-0012`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0012
+  `JOB-0012`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0012 M06 component review:docs/milestones/M06.md
 
-  `JOB-0013`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0013
+  `JOB-0013`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0013 M06 component review:docs/milestones/M06.md
 
-  `JOB-0014`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0014
+  `JOB-0014`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0014 M06 component review:docs/milestones/M06.md
 
-  `JOB-0015`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0015
+  `JOB-0015`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0015 M06 component review:docs/milestones/M06.md
 
-  `JOB-0016`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0016
+  `JOB-0016`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0016 M06 component review:docs/milestones/M06.md
 
-  `JOB-0017`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0017
+  `JOB-0017`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0017 M06 component review:docs/milestones/M06.md
 
-  `JOB-0018`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0018
+  `JOB-0018`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0018 M06 component review:docs/milestones/M06.md
 
-  `JOB-0019`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0019
+  `JOB-0019`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0019 M06 component review:docs/milestones/M06.md
 
-  `JOB-0020`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0020
+  `JOB-0020`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0020 M06 component review:docs/milestones/M06.md
 
-  `JOB-0021`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0021
+  `JOB-0021`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0021 M06 component review:docs/milestones/M06.md
 
-  `JOB-0022`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0022
+  `JOB-0022`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0022 M06 component review:docs/milestones/M06.md
 
-  `JOB-0023`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0023
+  `JOB-0023`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0023 M06 component review:docs/milestones/M06.md
 
-  `JOB-0024`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0024
+  `JOB-0024`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0024 M06 component review:docs/milestones/M06.md
 
-  `JOB-0025`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0025
+  `JOB-0025`    P1         §19     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0025 M06 component review:docs/milestones/M06.md
 
   `SEC-0026`    P1         §20      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0026
 
@@ -590,13 +590,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0054`    P1         §49      `DEFERRED_VERIFICATION` packages/openclaw-adapter/src tests/openclaw-discovery.test.mjs Steps 1–4 only; execution and security proof pending backlog:WRK-0054
 
-  `WRK-0055`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0055
+  `WRK-0055`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0055
 
   `WRK-0056`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0056
 
   `WRK-0057`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0057
 
-  `WRK-0058`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0058
+  `WRK-0058`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0058
 
   `WRK-0059`    P1         §50      `TODO`   ---              ---        ---
 
@@ -608,7 +608,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0046`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0046
 
-  `SEC-0047`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0047
+  `SEC-0047`    P0         §51      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0047
 
   `SEC-0048`    P0         §51      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0048
 
@@ -786,27 +786,27 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0047`    P1         §70     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:JOB-0047
 
-  `SEC-0055`    P1         §71     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:SEC-0055
+  `SEC-0055`    P1         §71     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0055
 
-  `SEC-0056`    P0         §71     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:SEC-0056
+  `SEC-0056`    P0         §71     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/postgres-readonly-resource.ts   tests/m06-postgres-integration.mjs   M06 component evidence; backlog:SEC-0056
 
-  `SEC-0057`    P1         §72     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0057
+  `SEC-0057`    P1         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0057
 
-  `SEC-0058`    P0         §72     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0058
+  `SEC-0058`    P0         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0058
 
-  `SEC-0059`    P0         §72     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0059
+  `SEC-0059`    P0         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0059
 
-  `SEC-0060`    P0         §72     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0060
+  `SEC-0060`    P0         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0060
 
-  `SEC-0061`    P0         §72     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0061
+  `SEC-0061`    P0         §72     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0061
 
-  `API-0001`    P1         §73     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:API-0001
+  `API-0001`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0001
 
-  `API-0002`    P1         §73     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:API-0002
+  `API-0002`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0002
 
-  `API-0003`    P1         §73     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:API-0003
+  `API-0003`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0003
 
-  `API-0004`    P1         §73     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:API-0004
+  `API-0004`    P1         §73     `DEFERRED_VERIFICATION`   packages/application/src/provider-broker.ts,packages/persistence/src/provider-usage.ts   tests/provider-broker.test.mjs,tests/m06-postgres-integration.mjs   M06 component evidence; backlog:API-0004
 
   `CAP-0014`    P1         §74     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:CAP-0014
 
@@ -884,9 +884,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0037`     P1         §90      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0037
 
-  `TST-0006`    P1         §91      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0006
+  `TST-0006`    P1         §91      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0006 M06 component review:docs/milestones/M06.md
 
-  `TST-0007`    P2         §91      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0007
+  `TST-0007`    P2         §91      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0007 M06 component review:docs/milestones/M06.md
 
   `TST-0008`    P1         §92      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:TST-0008
 
@@ -942,17 +942,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AGT-0008`    P1         §98     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §98 Inference dependency schema and mandatory-inference graph blocker; health/publishing flow pending baseline/open; backlog:AGT-0008
 
-  `AGT-0009`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0009
+  `AGT-0009`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0009 M06 component review:docs/milestones/M06.md
 
-  `AGT-0010`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0010
+  `AGT-0010`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0010 M06 component review:docs/milestones/M06.md
 
-  `AGT-0011`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0011
+  `AGT-0011`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0011 M06 component review:docs/milestones/M06.md
 
-  `AGT-0012`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0012
+  `AGT-0012`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0012 M06 component review:docs/milestones/M06.md
 
-  `AGT-0013`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0013
+  `AGT-0013`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0013 M06 component review:docs/milestones/M06.md
 
-  `AGT-0014`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0014
+  `AGT-0014`    P1         §99     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0014 M06 component review:docs/milestones/M06.md
 
   `AGT-0015`    P1         §100     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0015
 
@@ -976,17 +976,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0020`    P1         §102     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §102–103 Strict graph nodes/edges and explicit selection; persistence/runtime graph pending baseline/open; backlog:CAP-0020
 
-  `CAP-0021`    P1         §103     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §102–103 Strict graph nodes/edges and explicit selection; persistence/runtime graph pending baseline/open; backlog:CAP-0021
+  `CAP-0021`    P1         §103     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §102–103 Strict graph nodes/edges and explicit selection; persistence/runtime graph pending baseline/open; backlog:CAP-0021 M06 component review:docs/milestones/M06.md
 
-  `AGT-0023`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0023
+  `AGT-0023`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0023 M06 component review:docs/milestones/M06.md
 
-  `AGT-0024`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0024
+  `AGT-0024`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0024 M06 component review:docs/milestones/M06.md
 
-  `AGT-0025`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0025
+  `AGT-0025`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0025 M06 component review:docs/milestones/M06.md
 
-  `AGT-0026`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0026
+  `AGT-0026`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0026 M06 component review:docs/milestones/M06.md
 
-  `AGT-0027`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0027
+  `AGT-0027`    P1         §104     `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/dependency-candidates.ts,packages/openclaw-adapter/src/read-only-discovery.ts   tests/openclaw-discovery.test.mjs   §104 Static declared skill dependencies become unselected candidates; runtime observation pending baseline/open; backlog:AGT-0027 M06 component review:docs/milestones/M06.md
 
   `CAP-0022`    P1         §105     `DEFERRED_VERIFICATION`   packages/contracts/src/dependency-graph.ts,packages/domain/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §105 Confidence/unknown health represented; seller UI and runtime confirmation pending baseline/open; backlog:CAP-0022
 
@@ -1010,21 +1010,21 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `UI-0007`    P2         §106     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0007
 
-  `UI-0008`    P1         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0008
+  `UI-0008`    P1         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0008 M06 component review:docs/milestones/M06.md
 
-  `UI-0009`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0009
+  `UI-0009`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0009 M06 component review:docs/milestones/M06.md
 
-  `UI-0010`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0010
+  `UI-0010`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0010 M06 component review:docs/milestones/M06.md
 
-  `UI-0011`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0011
+  `UI-0011`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0011 M06 component review:docs/milestones/M06.md
 
-  `UI-0012`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0012
+  `UI-0012`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0012 M06 component review:docs/milestones/M06.md
 
-  `UI-0013`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0013
+  `UI-0013`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0013 M06 component review:docs/milestones/M06.md
 
-  `UI-0014`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0014
+  `UI-0014`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0014 M06 component review:docs/milestones/M06.md
 
-  `UI-0015`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0015
+  `UI-0015`    P2         §107     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0015 M06 component review:docs/milestones/M06.md
 
   `CAP-0026`    P1         §108     `DEFERRED_VERIFICATION`   packages/domain/src/dependency-graph.ts,packages/contracts/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §108 Unsupported/cyclic/alternative dependencies block static readiness; conflict UI/runtime proof pending baseline/open; backlog:CAP-0026
 
@@ -1040,15 +1040,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0032`    P1         §108     `DEFERRED_VERIFICATION`   packages/domain/src/dependency-graph.ts,packages/contracts/src/dependency-graph.ts   tests/dependency-graph.test.mjs   §108 Unsupported/cyclic/alternative dependencies block static readiness; conflict UI/runtime proof pending baseline/open; backlog:CAP-0032
 
-  `AGT-0028`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0028
+  `AGT-0028`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0028 M06 component review:docs/milestones/M06.md
 
-  `AGT-0029`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0029
+  `AGT-0029`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0029 M06 component review:docs/milestones/M06.md
 
-  `AGT-0030`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0030
+  `AGT-0030`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0030 M06 component review:docs/milestones/M06.md
 
-  `AGT-0031`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0031
+  `AGT-0031`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0031 M06 component review:docs/milestones/M06.md
 
-  `AGT-0032`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0032
+  `AGT-0032`    P1         §109     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0032 M06 component review:docs/milestones/M06.md
 
   `CAP-0033`    P1         §110     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-package.ts,packages/domain/src/capability-version.ts   tests/capability-version.test.mjs   Full graph in strict local package and canonical graph/package hashes in cloud candidate; persistence and publication pending baseline/open; backlog:CAP-0033
 
@@ -1100,11 +1100,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AGT-0034`    P1         §117     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AGT-0034
 
-  `CAP-0049`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0049
+  `CAP-0049`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0049 M06 component review:docs/milestones/M06.md
 
-  `CAP-0050`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0050
+  `CAP-0050`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0050 M06 component review:docs/milestones/M06.md
 
-  `CAP-0051`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0051
+  `CAP-0051`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0051 M06 component review:docs/milestones/M06.md
 
   `PRD-0080`    P1         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0080
 
@@ -1746,217 +1746,217 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0203`    P2         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0203
 
-  `PRD-0204`    P1         §237     `TODO`   ---              ---        ---
+  `PRD-0204`    P1         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0204
 
-  `PRD-0205`    P2         §237     `TODO`   ---              ---        ---
+  `PRD-0205`    P2         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0205
 
-  `PRD-0206`    P2         §237     `TODO`   ---              ---        ---
+  `PRD-0206`    P2         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0206
 
-  `PRD-0207`    P2         §237     `TODO`   ---              ---        ---
+  `PRD-0207`    P2         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0207
 
-  `PRD-0208`    P2         §237     `TODO`   ---              ---        ---
+  `PRD-0208`    P2         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0208
 
-  `PRD-0209`    P1         §238     `TODO`   ---              ---        ---
+  `PRD-0209`    P1         §238     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0209
 
-  `PRD-0210`    P2         §238     `TODO`   ---              ---        ---
+  `PRD-0210`    P2         §238     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0210
 
-  `PRD-0211`    P2         §238     `TODO`   ---              ---        ---
+  `PRD-0211`    P2         §238     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0211
 
-  `PRD-0212`    P2         §238     `TODO`   ---              ---        ---
+  `PRD-0212`    P2         §238     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0212
 
-  `SEC-0070`    P1         §239     `TODO`   ---              ---        ---
+  `SEC-0070`    P1         §239     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0070
 
-  `SEC-0071`    P0         §239     `TODO`   ---              ---        ---
+  `SEC-0071`    P0         §239     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0071
 
-  `SEC-0072`    P0         §239     `TODO`   ---              ---        ---
+  `SEC-0072`    P0         §239     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0072
 
-  `PRD-0213`    P1         §240     `TODO`   ---              ---        ---
+  `PRD-0213`    P1         §240     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0213
 
-  `PRD-0214`    P1         §241     `TODO`   ---              ---        ---
+  `PRD-0214`    P1         §241     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0214
 
-  `PRD-0215`    P2         §241     `TODO`   ---              ---        ---
+  `PRD-0215`    P2         §241     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0215
 
-  `PRD-0216`    P2         §241     `TODO`   ---              ---        ---
+  `PRD-0216`    P2         §241     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0216
 
-  `UI-0023`     P1         §242     `TODO`   ---              ---        ---
+  `UI-0023`    P1         §242     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:UI-0023
 
-  `SEC-0073`    P1         §243     `TODO`   ---              ---        ---
+  `SEC-0073`    P1         §243     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0073
 
-  `SEC-0074`    P0         §243     `TODO`   ---              ---        ---
+  `SEC-0074`    P0         §243     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0074
 
-  `SEC-0075`    P0         §243     `TODO`   ---              ---        ---
+  `SEC-0075`    P0         §243     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0075
 
-  `PRD-0217`    P1         §244     `TODO`   ---              ---        ---
+  `PRD-0217`    P1         §244     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0217
 
-  `PRD-0218`    P2         §244     `TODO`   ---              ---        ---
+  `PRD-0218`    P2         §244     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0218
 
-  `PRD-0219`    P2         §244     `TODO`   ---              ---        ---
+  `PRD-0219`    P2         §244     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0219
 
-  `PRD-0220`    P1         §245     `TODO`   ---              ---        ---
+  `PRD-0220`    P1         §245     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0220
 
-  `PRD-0221`    P2         §245     `TODO`   ---              ---        ---
+  `PRD-0221`    P2         §245     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0221
 
-  `PRD-0222`    P2         §245     `TODO`   ---              ---        ---
+  `PRD-0222`    P2         §245     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0222
 
-  `PRD-0223`    P2         §245     `TODO`   ---              ---        ---
+  `PRD-0223`    P2         §245     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts,packages/infrastructure/http/src/pinned-http.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0223
 
-  `PRD-0224`    P1         §246     `TODO`   ---              ---        ---
+  `PRD-0224`    P1         §246     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:PRD-0224
 
-  `CAP-0063`    P1         §247     `TODO`   ---              ---        ---
+  `CAP-0063`    P1         §247     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:CAP-0063
 
-  `CAP-0064`    P1         §247     `TODO`   ---              ---        ---
+  `CAP-0064`    P1         §247     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:CAP-0064
 
-  `SEC-0076`    P1         §248     `TODO`   ---              ---        ---
+  `SEC-0076`    P1         §248     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:SEC-0076
 
-  `SEC-0077`    P0         §248     `TODO`   ---              ---        ---
+  `SEC-0077`    P0         §248     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:SEC-0077
 
-  `PRD-0225`    P1         §249     `TODO`   ---              ---        ---
+  `PRD-0225`    P1         §249     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:PRD-0225
 
-  `PRD-0226`    P2         §249     `TODO`   ---              ---        ---
+  `PRD-0226`    P2         §249     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:PRD-0226
 
-  `PRD-0227`    P2         §249     `TODO`   ---              ---        ---
+  `PRD-0227`    P2         §249     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/contracts/src/permission-policy.ts,packages/policy-engine/src/permission-diff.ts   tests/research-broker.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:PRD-0227
 
-  `IO-0133`     P1         §250     `TODO`   ---              ---        ---
+  `IO-0133`    P1         §250     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:IO-0133
 
-  `IO-0134`     P1         §250     `TODO`   ---              ---        ---
+  `IO-0134`    P1         §250     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:IO-0134
 
-  `IO-0135`     P1         §250     `TODO`   ---              ---        ---
+  `IO-0135`    P1         §250     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:IO-0135
 
-  `PRD-0228`    P1         §251     `TODO`   ---              ---        ---
+  `PRD-0228`    P1         §251     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0228
 
-  `PRD-0229`    P2         §251     `TODO`   ---              ---        ---
+  `PRD-0229`    P2         §251     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0229
 
-  `PRD-0230`    P2         §251     `TODO`   ---              ---        ---
+  `PRD-0230`    P2         §251     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0230
 
-  `SEC-0078`    P1         §252     `TODO`   ---              ---        ---
+  `SEC-0078`    P1         §252     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0078
 
-  `SEC-0079`    P0         §252     `TODO`   ---              ---        ---
+  `SEC-0079`    P0         §252     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0079
 
-  `SEC-0080`    P0         §252     `TODO`   ---              ---        ---
+  `SEC-0080`    P0         §252     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0080
 
-  `SEC-0081`    P0         §252     `TODO`   ---              ---        ---
+  `SEC-0081`    P0         §252     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0081
 
-  `PRD-0231`    P1         §253     `TODO`   ---              ---        ---
+  `PRD-0231`    P1         §253     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0231
 
-  `PRD-0232`    P2         §253     `TODO`   ---              ---        ---
+  `PRD-0232`    P2         §253     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0232
 
-  `PRD-0233`    P1         §254     `TODO`   ---              ---        ---
+  `PRD-0233`    P1         §254     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0013_research_broker.sql,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0233
 
-  `PRD-0234`    P2         §254     `TODO`   ---              ---        ---
+  `PRD-0234`    P2         §254     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0013_research_broker.sql,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0234
 
-  `PRD-0235`    P1         §255     `TODO`   ---              ---        ---
+  `PRD-0235`    P1         §255     `DEFERRED_VERIFICATION`   packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0235
 
-  `PRD-0236`    P1         §256     `TODO`   ---              ---        ---
+  `PRD-0236`    P1         §256     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0013_research_broker.sql,packages/application/src/provider-broker.ts   tests/m06-postgres-integration.mjs,tests/provider-broker.test.mjs   partial M06 evidence; backlog:PRD-0236
 
-  `PRD-0237`    P1         §257     `TODO`   ---              ---        ---
+  `PRD-0237`    P1         §257     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0237
 
-  `PRD-0238`    P2         §257     `TODO`   ---              ---        ---
+  `PRD-0238`    P2         §257     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0238
 
-  `PRD-0239`    P1         §258     `TODO`   ---              ---        ---
+  `PRD-0239`    P1         §258     `DEFERRED_VERIFICATION`   ---   ---   partial M06 evidence; backlog:PRD-0239
 
-  `PRD-0240`    P1         §259     `TODO`   ---              ---        ---
+  `PRD-0240`    P1         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0240
 
-  `PRD-0241`    P2         §259     `TODO`   ---              ---        ---
+  `PRD-0241`    P2         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0241
 
-  `PRD-0242`    P1         §260     `TODO`   ---              ---        ---
+  `PRD-0242`    P1         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0242
 
-  `PRD-0243`    P2         §260     `TODO`   ---              ---        ---
+  `PRD-0243`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0243
 
-  `PRD-0244`    P2         §260     `TODO`   ---              ---        ---
+  `PRD-0244`    P2         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0244
 
-  `PRD-0245`    P1         §261     `TODO`   ---              ---        ---
+  `PRD-0245`    P1         §261     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0245
 
-  `PRD-0246`    P2         §261     `TODO`   ---              ---        ---
+  `PRD-0246`    P2         §261     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0246
 
-  `PRD-0247`    P2         §261     `TODO`   ---              ---        ---
+  `PRD-0247`    P2         §261     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0247
 
-  `PRD-0248`    P1         §262     `TODO`   ---              ---        ---
+  `PRD-0248`    P1         §262     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0248
 
-  `PRD-0249`    P2         §262     `TODO`   ---              ---        ---
+  `PRD-0249`    P2         §262     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0249
 
-  `PRD-0250`    P2         §262     `TODO`   ---              ---        ---
+  `PRD-0250`    P2         §262     `DEFERRED_VERIFICATION`   packages/application/src/local-resource-broker.ts,packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0250
 
-  `API-0005`    P1         §263     `TODO`   ---              ---        ---
+  `API-0005`    P1         §263     `DEFERRED_VERIFICATION`   packages/application/src/declared-api-broker.ts,packages/persistence/src/declared-api-usage.ts   tests/declared-api-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:API-0005
 
-  `API-0006`    P1         §263     `TODO`   ---              ---        ---
+  `API-0006`    P1         §263     `DEFERRED_VERIFICATION`   packages/application/src/declared-api-broker.ts,packages/persistence/src/declared-api-usage.ts   tests/declared-api-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:API-0006
 
-  `API-0007`    P1         §263     `TODO`   ---              ---        ---
+  `API-0007`    P1         §263     `DEFERRED_VERIFICATION`   packages/application/src/declared-api-broker.ts,packages/persistence/src/declared-api-usage.ts   tests/declared-api-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:API-0007
 
-  `PRD-0251`    P1         §264     `TODO`   ---              ---        ---
+  `PRD-0251`    P1         §264     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0251
 
-  `PRD-0252`    P2         §264     `TODO`   ---              ---        ---
+  `PRD-0252`    P2         §264     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0252
 
-  `PRD-0253`    P1         §265     `TODO`   ---              ---        ---
+  `PRD-0253`    P1         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0253
 
-  `PRD-0254`    P2         §265     `TODO`   ---              ---        ---
+  `PRD-0254`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0254
 
-  `PRD-0255`    P2         §265     `TODO`   ---              ---        ---
+  `PRD-0255`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0255
 
-  `PRD-0256`    P2         §265     `TODO`   ---              ---        ---
+  `PRD-0256`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0256
 
-  `PRD-0257`    P2         §265     `TODO`   ---              ---        ---
+  `PRD-0257`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0257
 
-  `SEC-0082`    P1         §266     `TODO`   ---              ---        ---
+  `SEC-0082`    P1         §266     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:SEC-0082
 
-  `SEC-0083`    P0         §266     `TODO`   ---              ---        ---
+  `SEC-0083`    P0         §266     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:SEC-0083
 
-  `SEC-0084`    P0         §266     `TODO`   ---              ---        ---
+  `SEC-0084`    P0         §266     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:SEC-0084
 
-  `PRD-0258`    P1         §267     `TODO`   ---              ---        ---
+  `PRD-0258`    P1         §267     `DEFERRED_VERIFICATION`   packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0258
 
-  `PRD-0259`    P2         §267     `TODO`   ---              ---        ---
+  `PRD-0259`    P2         §267     `DEFERRED_VERIFICATION`   packages/persistence/src/research-usage.ts   tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0259
 
-  `SEC-0085`    P1         §268     `TODO`   ---              ---        ---
+  `SEC-0085`    P1         §268     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/pinned-http.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0085
 
-  `SEC-0086`    P0         §268     `TODO`   ---              ---        ---
+  `SEC-0086`    P0         §268     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/pinned-http.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0086
 
-  `SEC-0087`    P0         §268     `TODO`   ---              ---        ---
+  `SEC-0087`    P0         §268     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/pinned-http.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:SEC-0087
 
-  `PRD-0260`    P1         §269     `TODO`   ---              ---        ---
+  `PRD-0260`    P1         §269     `DEFERRED_VERIFICATION`   packages/infrastructure/contracts/src/research-ports.ts,packages/application/src/research-broker.ts   tests/architecture.test.mjs   partial M06 evidence; backlog:PRD-0260
 
-  `PRD-0261`    P2         §269     `TODO`   ---              ---        ---
+  `PRD-0261`    P2         §269     `DEFERRED_VERIFICATION`   packages/infrastructure/contracts/src/research-ports.ts,packages/application/src/research-broker.ts   tests/architecture.test.mjs   partial M06 evidence; backlog:PRD-0261
 
-  `PRD-0262`    P2         §269     `TODO`   ---              ---        ---
+  `PRD-0262`    P2         §269     `DEFERRED_VERIFICATION`   packages/infrastructure/contracts/src/research-ports.ts,packages/application/src/research-broker.ts   tests/architecture.test.mjs   partial M06 evidence; backlog:PRD-0262
 
-  `PRD-0263`    P2         §269     `TODO`   ---              ---        ---
+  `PRD-0263`    P2         §269     `DEFERRED_VERIFICATION`   packages/infrastructure/contracts/src/research-ports.ts,packages/application/src/research-broker.ts   tests/architecture.test.mjs   partial M06 evidence; backlog:PRD-0263
 
-  `PRD-0264`    P1         §270     `TODO`   ---              ---        ---
+  `PRD-0264`    P1         §270     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0264
 
-  `PRD-0265`    P2         §270     `TODO`   ---              ---        ---
+  `PRD-0265`    P2         §270     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0265
 
-  `PRD-0266`    P1         §271     `TODO`   ---              ---        ---
+  `PRD-0266`    P1         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0266
 
-  `PRD-0267`    P2         §271     `TODO`   ---              ---        ---
+  `PRD-0267`    P2         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0267
 
-  `CAP-0065`    P1         §272     `TODO`   ---              ---        ---
+  `CAP-0065`    P1         §272     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-package.ts,packages/contracts/src/capability-version.ts,packages/domain/src/capability-version.ts,packages/policy-engine/src/permission-diff.ts   tests/capability-version.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:CAP-0065
 
-  `CAP-0066`    P1         §272     `TODO`   ---              ---        ---
+  `CAP-0066`    P1         §272     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-package.ts,packages/contracts/src/capability-version.ts,packages/domain/src/capability-version.ts,packages/policy-engine/src/permission-diff.ts   tests/capability-version.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:CAP-0066
 
-  `SEC-0088`    P1         §273     `TODO`   ---              ---        ---
+  `SEC-0088`    P1         §273     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:SEC-0088
 
-  `SEC-0089`    P0         §273     `TODO`   ---              ---        ---
+  `SEC-0089`    P0         §273     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:SEC-0089
 
-  `PRD-0268`    P1         §274     `TODO`   ---              ---        ---
+  `PRD-0268`    P1         §274     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tools/test-m06-public-fetch.mjs   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0268
 
-  `PRD-0269`    P2         §274     `TODO`   ---              ---        ---
+  `PRD-0269`    P2         §274     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tools/test-m06-public-fetch.mjs   tests/research-broker.test.mjs,tools/test-m06-public-fetch.mjs   partial M06 evidence; backlog:PRD-0269
 
-  `PRD-0270`    P1         §275     `TODO`   ---              ---        ---
+  `PRD-0270`    P1         §275     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0270
 
-  `PRD-0271`    P2         §275     `TODO`   ---              ---        ---
+  `PRD-0271`    P2         §275     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0271
 
-  `PRD-0272`    P2         §275     `TODO`   ---              ---        ---
+  `PRD-0272`    P2         §275     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0272
 
-  `PRD-0273`    P1         §276     `TODO`   ---              ---        ---
+  `PRD-0273`    P1         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0273
 
-  `PRD-0274`    P2         §276     `TODO`   ---              ---        ---
+  `PRD-0274`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0274
 
-  `PRD-0275`    P2         §276     `TODO`   ---              ---        ---
+  `PRD-0275`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0275
 
-  `PRD-0276`    P2         §276     `TODO`   ---              ---        ---
+  `PRD-0276`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0276
 
-  `SEC-0090`    P1         §277     `TODO`   ---              ---        ---
+  `SEC-0090`    P1         §277     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0090
 
-  `SEC-0091`    P0         §277     `TODO`   ---              ---        ---
+  `SEC-0091`    P0         §277     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0091
 
   `PRD-0277`    P1         §278     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0277
 
@@ -2000,7 +2000,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0294`    P2         §285     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0294
 
-  `PRD-0295`    P1         §286     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0295
+  `PRD-0295`    P1         §286     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0295 M06 component review:docs/milestones/M06.md
 
   `PRD-0296`    P1         §287     `DEFERRED_VERIFICATION`   packages/domain/src/pricing.ts tests/pricing.test.mjs pure tier baseline only; backlog:PRD-0296
 

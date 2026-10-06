@@ -21,6 +21,17 @@ Security claims without test/review evidence remain incomplete.
 
 This is evidence for the **offline canary profile only**. It does not prove that OpenClaw's own sandbox wiring, seller resource brokers, payment, a buyer job, or a production host is secure. The Alpine fixture is not an approved Kivro OpenClaw execution image.
 
+## Current M06 broker evidence (2026-10-06)
+
+| Threat | Current enforced component and executed evidence | Remaining mandatory gate |
+| --- | --- | --- |
+| SSRF, seller LAN, metadata, encoded IP, DNS rebinding and private redirects | Shared URL/IP classifier, per-hop DNS validation and vetted-IP pinned Node HTTP/TLS transport; `tests/research-broker.test.mjs` covers blocked forms/mixed answers/redirects, `pnpm test:research:live` fetched only `https://example.com/` (200, 577 bytes). | M07 authenticated OpenClaw tool route and M19 both deployed roots must prove no unmediated socket. |
+| Generic POST, proxy abuse and downloaded script execution | Research broker admits only GET/HEAD on public 80/443, bounded MIME/bytes/redirects and opaque hashed downloads. Unit red-team and the rerun `pnpm test:sandbox:docker` pass. | M07 noexec untrusted download workspace and M16 hostile-model payloads must prove no package install/action/exfiltration. |
+| Runaway cost, duplicate requests and replay | PostgreSQL migration 0013 and adapters lock job rows, reserve bytes/spend, enforce query/page/download/request and cross-job rate ceilings, and preserve sanitized rows. `pnpm test:postgres:m06` passes concurrent budget and duplicate-ID cases. | M07 real job/version/payment binding, M26 crash/reconnect tests, live provider pricing and M08/M33 seller economics. These rows are usage evidence, not financial ledger truth. |
+| Seller DB and provider credentials | Named read-only SELECT with declared columns, fixed row scope, bounded rows/timeout, dedicated nonprivileged role and no raw SQL API; typed declared API/provider brokers inject credentials only in adapter code. PostgreSQL and unit tests pass denied sibling table, write, superuser and key-echo cases. | M07 real Worker/OpenClaw tool binding, credential revocation and secret isolation; M16 combined research/private-data exfiltration tests. |
+
+These tests verify broker components, not the complete paid-job security boundary. No M06 or previously deferred cross-system gate is marked `VERIFIED` from them alone.
+
 ## Current M05 asset-boundary evidence (2026-10-06)
 
 | Threat | Current control/evidence | Remaining mandatory gate |
