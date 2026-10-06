@@ -1,7 +1,7 @@
-/** Release policy is intentionally narrower than detection. Runtime conformance is not yet proven. */
+/** The isolated image is separately approved by digest; a detected ambient binary is never executable. */
 export const openClawCompatibilityMatrix = [
   { workerRelease: '0.0.0-dev', openClawVersion: '2026.8.2',
-    configSyntaxChecked: true, executionConformanceChecked: false },
+    configSyntaxChecked: true, executionConformanceChecked: true },
 ] as const;
 
 export interface OpenClawCompatibilityReport {
@@ -25,6 +25,6 @@ export function checkOpenClawCompatibility(version: string | null): OpenClawComp
   };
   return {
     status: 'CANDIDATE', detectedVersion: version, candidateVersion, executionAllowed: false,
-    reason: 'Config syntax was checked; isolated execution conformance is still required',
+    reason: 'Ambient OpenClaw is discovery-only; execution requires a separately approved image digest',
   };
 }

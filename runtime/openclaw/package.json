@@ -3,7 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "description": "Pinned OpenClaw runtime for the Kivro per-job sandbox",
+  "allowScripts": {
+    "openclaw@2026.8.2": true
+  },
   "dependencies": {
-    "openclaw": "2026.8.2"
+    "openclaw": "2026.8.2",
+    "typebox": "1.3.17"
   }
 }

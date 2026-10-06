@@ -117,14 +117,26 @@ if (!process.env.M07_DATABASE_URL) {
       assert.equal(offerMessage.paymentReservationId, reservation);
       assert.equal(JSON.stringify(offerMessage).includes('Please create a report'), false);
       await repo.accept(offered.executionId, worker, 'plane-a', offered.leaseToken, randomUUID());
+      const acceptedInput = await repo.acceptedInputForWorker(offered.executionId,
+        worker, 'plane-a', offered.leaseToken, storage, 86_400);
+      assert.equal(acceptedInput.inputManifestHash, input.manifestHash);
+      assert.equal(acceptedInput.payload.values.question, 'Please create a report');
+      assert.deepEqual(acceptedInput.downloads, []);
+      await assert.rejects(repo.acceptedInputForWorker(offered.executionId,
+        randomUUID(), 'plane-a', offered.leaseToken, storage, 86_400), { code: 'NOT_ELIGIBLE' });
+      await assert.rejects(repo.acceptedInputForWorker(offered.executionId,
+        worker, 'wrong-plane', offered.leaseToken, storage, 86_400), { code: 'NOT_ELIGIBLE' });
+      await assert.rejects(repo.acceptedInputForWorker(offered.executionId,
+        worker, 'plane-a', 'x'.repeat(32), storage, 86_400), { code: 'NOT_ELIGIBLE' });
       const workerEvent = (input) => repo.workerTransition(input, offered.executionId,
         worker, 'plane-a', offered.leaseToken);
       await workerEvent(event('ACCEPTED', 'STARTING', 'WORKER', offered.attemptId));
-      await workerEvent(event('STARTING', 'RUNNING', 'WORKER', offered.attemptId));
       const pause = { commandId: randomUUID(), jobId, executionId: offered.executionId,
         attemptId: offered.attemptId, controlPlaneId: 'plane-a', action: 'PAUSE',
         source: 'WEB', actorId: sellerAccount, reason: 'seller safety',
         requestedAt: new Date().toISOString() };
+      await assert.rejects(repo.requestJobControl(pause, sellerAccount), { code: 'NOT_ELIGIBLE' });
+      await workerEvent(event('STARTING', 'RUNNING', 'WORKER', offered.attemptId));
       await assert.rejects(repo.requestJobControl({ ...pause, actorId: buyer }, buyer),
         { code: 'NOT_ELIGIBLE' });
       assert.equal((await repo.requestJobControl(pause, sellerAccount)).status, 'PAUSE_REQUESTED');

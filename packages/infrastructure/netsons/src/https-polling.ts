@@ -35,6 +35,16 @@ export class WorkerPollingError extends Error {
   }
 }
 
+export class WorkerJobRpcError extends Error {
+  constructor(readonly code: 'PAYMENT_NOT_SECURED' | 'NOT_ELIGIBLE' | 'WRONG_WORKER' |
+    'WRONG_CONTROL_PLANE' | 'INVALID_LEASE' | 'LEASE_EXPIRED' | 'CONFLICT') {
+    super(code); this.name = 'WorkerJobRpcError';
+  }
+}
+
+const rpcDenial = z.strictObject({ code: z.enum(['PAYMENT_NOT_SECURED', 'NOT_ELIGIBLE',
+  'WRONG_WORKER', 'WRONG_CONTROL_PLANE', 'INVALID_LEASE', 'LEASE_EXPIRED', 'CONFLICT']) });
+
 function safeUrl(raw: string, allowLocalHttp: boolean): URL {
   let url: URL;
   try { url = new URL(raw); }
@@ -48,8 +58,8 @@ function safeUrl(raw: string, allowLocalHttp: boolean): URL {
   return url;
 }
 
-async function boundedJson(response: Response, maxBytes: number): Promise<unknown> {
-  if (!response.ok || !response.body) throw new WorkerPollingError('TRANSPORT_FAILED');
+async function boundedJson(response: Response, maxBytes: number, requireOk = true): Promise<unknown> {
+  if ((requireOk && !response.ok) || !response.body) throw new WorkerPollingError('TRANSPORT_FAILED');
   const length = response.headers.get('content-length');
   if (length !== null && Number(length) > maxBytes) throw new WorkerPollingError('RESPONSE_LIMIT');
   let size = 0;
@@ -140,6 +150,26 @@ export class HttpsPollingWorkerTransport implements WorkerProtocolTransport {
       throw new WorkerPollingError('WRONG_CONTROL_PLANE');
     }
     return parsed.data.messages;
+  }
+
+  /** Fixed authenticated job RPCs; full server routes are composed with the API milestone. */
+  async postJobRpc(kind: 'ACCEPT' | 'ACCEPTED_INPUT' | 'TRANSITION' | 'RENEW_LEASE' |
+    'FINALIZE_RESULT', body: unknown): Promise<unknown> {
+    const path = ({ ACCEPT: '/worker/jobs/accept', ACCEPTED_INPUT: '/worker/jobs/accepted-input',
+      TRANSITION: '/worker/jobs/transition', RENEW_LEASE: '/worker/jobs/renew-lease',
+      FINALIZE_RESULT: '/worker/jobs/finalize-result' } as const)[kind];
+    let response: Response;
+    try { response = await this.fetcher(new URL(path, this.endpoint), {
+      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(30_000),
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: this.signedBody(body),
+    }); } catch { throw new WorkerPollingError('TRANSPORT_FAILED'); }
+    if (!response.ok) {
+      const denied = rpcDenial.safeParse(await boundedJson(response, 4096, false));
+      if (denied.success) throw new WorkerJobRpcError(denied.data.code);
+      throw new WorkerPollingError('TRANSPORT_FAILED');
+    }
+    return boundedJson(response, kind === 'ACCEPTED_INPUT' ? 2_097_152 : 262_144);
   }
 
   async close(): Promise<void> { /* Each poll request is bounded and owns no incoming listener. */ }

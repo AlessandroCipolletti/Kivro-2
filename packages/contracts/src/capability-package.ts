@@ -17,6 +17,7 @@ export const LocalCapabilityPackageSchema = z.strictObject({
   workerManifest: WorkerManifestSchema,
   dependencyGraph: DependencyGraphSchema,
   permissionPolicy: InternalPermissionPolicySchema,
+  sellerInstructions: z.string().max(100_000).optional(),
   sellerInferenceConfigHash: digest.nullable(),
   ioContract: CapabilityIOContractSchema,
   priceTier: PriceTierSchema,

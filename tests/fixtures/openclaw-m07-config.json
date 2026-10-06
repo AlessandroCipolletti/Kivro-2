@@ -1,0 +1,36 @@
+{
+  "models": {
+    "mode": "replace",
+    "providers": {
+      "kivro": {
+        "baseUrl": "http://127.0.0.1:8787/v1",
+        "apiKey": "kivro-broker-only",
+        "api": "openai-completions",
+        "models": [{
+          "id": "broker", "name": "Kivro Broker", "reasoning": false,
+          "input": ["text"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 8192, "maxTokens": 2048
+        }]
+      }
+    }
+  },
+  "agents": { "defaults": { "model": { "primary": "kivro/broker" },
+    "sandbox": { "mode": "all", "backend": "kivro-contained", "scope": "session",
+      "workspaceAccess": "none", "docker": { "image": "kivro-openclaw-runtime@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "readOnlyRoot": true, "network": "none", "capDrop": ["ALL"], "binds": [] } } } },
+  "skills": { "allowBundled": [], "load": { "extraDirs": [] } },
+  "tools": {
+    "profile": "full",
+    "allow": ["kivro_submit_result"],
+    "deny": ["exec", "process", "read", "write", "edit", "apply_patch", "browser", "gateway", "nodes", "cron", "web_search", "web_fetch", "view_image", "group:media", "group:sessions", "group:memory"],
+    "elevated": { "enabled": false },
+    "sandbox": { "tools": { "allow": ["kivro_submit_result"],
+      "deny": ["exec", "process", "read", "write", "edit", "apply_patch", "browser", "gateway", "nodes", "cron", "web_search", "web_fetch", "view_image", "group:media", "group:sessions", "group:memory"] } }
+  },
+  "plugins": {
+    "enabled": true, "allow": ["kivro-broker"],
+    "load": { "paths": ["/opt/kivro/plugin"] },
+    "entries": { "kivro-broker": { "enabled": true } }
+  }
+}

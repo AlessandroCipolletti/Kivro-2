@@ -65,7 +65,16 @@ function ownedPrivateDirectory(path: string): string {
 function inputDirectory(root: string, attemptId: string): string {
   const rootReal = ownedPrivateDirectory(root);
   const attemptReal = ownedPrivateDirectory(join(rootReal, attemptId));
-  const inputReal = ownedPrivateDirectory(join(attemptReal, 'input'));
+  const inputPath = join(attemptReal, 'input');
+  const inputInfo = lstatSync(inputPath);
+  if (!inputInfo.isDirectory() || inputInfo.isSymbolicLink() ||
+    ![0o700, 0o755].includes(inputInfo.mode & 0o777) ||
+    (typeof process.getuid === 'function' && inputInfo.uid !== process.getuid())) {
+    throw new DockerSandboxError('INSECURE_INPUT');
+  }
+  // The private attempt ancestor denies host traversal. 0755 on this bind root
+  // lets the unprivileged container user read selected files on native Linux.
+  const inputReal = realpathSync(inputPath);
   if (relative(rootReal, inputReal).startsWith('..') || relative(rootReal, inputReal) === '') {
     throw new DockerSandboxError('INSECURE_INPUT');
   }
@@ -149,7 +158,7 @@ async function boundedDockerCommand(executable: string, args: readonly string[])
 
 async function startAttached(executable: string, id: string, timeoutMs: number,
   outputLimit: number, control?: SandboxExecutionControl & { readonly attemptId: string }): Promise<{
-    stdout: string; stderr: string; stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' | 'CONTROL' }> {
+    stdout: string; stderr: string; stoppedFor: 'NONE' | 'TIMEOUT' | 'OUTPUT' | 'CONTROL'; startedObserved: boolean }> {
   return new Promise((resolveResult, rejectResult) => {
     const child = spawn(executable, ['start', '--attach', id], { stdio: ['ignore', 'pipe', 'pipe'] });
     const stdout: Buffer[] = [];
@@ -199,7 +208,7 @@ async function startAttached(executable: string, id: string, timeoutMs: number,
     child.on('close', () => {
       clearInterval(timer);
       resolveResult({ stdout: Buffer.concat(stdout).toString('utf8'),
-        stderr: Buffer.concat(stderr).toString('utf8'), stoppedFor });
+        stderr: Buffer.concat(stderr).toString('utf8'), stoppedFor, startedObserved: started });
     });
   });
 }
@@ -330,9 +339,9 @@ export class DockerSandboxAdapter {
         '--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=16m',
         '--tmpfs=/var/tmp:rw,nosuid,nodev,noexec,size=16m',
         '--tmpfs=/run:rw,nosuid,nodev,noexec,size=8m',
-        '--tmpfs=/job/work:rw,nosuid,nodev,size=64m',
+        '--tmpfs=/job/work:rw,nosuid,nodev,uid=65532,gid=65532,mode=0700,size=64m',
         ...(outputVolume ? [`--mount=type=volume,source=${outputVolume},target=/job/output`] :
-          [`--tmpfs=/job/output:rw,nosuid,nodev,noexec,size=${Math.max(1, Math.ceil(plan.maxOutputBytes / 1048576))}m`]),
+          [`--tmpfs=/job/output:rw,nosuid,nodev,noexec,uid=65532,gid=65532,mode=0700,size=${Math.max(1, Math.ceil(plan.maxOutputBytes / 1048576))}m`]),
         `--mount=type=bind,source=${input},target=/job/input,readonly`,
         '--workdir=/job/work', '--env=HOME=/job/work',
         plan.image, ...trustedArgv];
@@ -368,7 +377,7 @@ export class DockerSandboxAdapter {
       }
       // A short successful command may exit between watchdog ticks. Its verified
       // Docker start still needs a durable local RUNNING transition before output.
-      if (control && exitCode === 0) await control.onStarted(containerId);
+      if (control && exitCode === 0 && !attached.startedObserved) await control.onStarted(containerId);
       result = Object.freeze({ exitCode, stdout: attached.stdout, stderr: attached.stderr });
       if (delivery && collectorName) {
         if (exitCode !== 0) throw new DockerSandboxError('EXECUTION_FAILED');

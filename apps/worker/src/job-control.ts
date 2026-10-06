@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 import type { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 import { PauseSupportSchema, type PauseSupport } from '../../../packages/contracts/src/job-control.js';
@@ -72,6 +73,11 @@ CREATE TABLE IF NOT EXISTS local_job_command (
 );
 CREATE TRIGGER IF NOT EXISTS local_job_command_no_delete BEFORE DELETE ON local_job_command
   BEGIN SELECT RAISE(ABORT, 'job command audit is append-only'); END;
+CREATE TABLE IF NOT EXISTS local_broker_activity (
+  request_id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES local_job_execution(job_id),
+  started_at TEXT NOT NULL
+);
 `;
 
 export interface LocalJobSnapshot {
@@ -125,6 +131,32 @@ export class WorkerJobControl {
     };
   }
 
+  snapshots(): readonly LocalJobSnapshot[] {
+    const rows = this.db.prepare('SELECT job_id FROM local_job_execution ORDER BY job_id')
+      .all() as { job_id: string }[];
+    return rows.map(({ job_id }) => this.snapshot(job_id));
+  }
+
+  /** Startup only: the former supervisor and its broker channel died with the Worker process. */
+  async stopOrphanedAtStartup(): Promise<readonly LocalJobSnapshot[]> {
+    const stopped: LocalJobSnapshot[] = [];
+    for (const current of this.snapshots()) {
+      if (['STOPPED', 'CANCELLED', 'TIMED_OUT'].includes(current.status)) continue;
+      const row = this.row(current.jobId);
+      const actual = await this.docker.status(row.container_id, row.job_id, row.attempt_id);
+      if (actual === 'running' || actual === 'paused') {
+        await this.docker.stop(row.container_id, row.job_id, row.attempt_id);
+      }
+      this.transaction(() => {
+        this.db.prepare('DELETE FROM local_broker_activity WHERE job_id=?').run(current.jobId);
+        this.db.prepare("UPDATE local_job_execution SET status='STOPPED',local_revision=local_revision+1 WHERE job_id=?")
+          .run(current.jobId);
+      });
+      stopped.push(this.snapshot(current.jobId));
+    }
+    return stopped;
+  }
+
   register(input: unknown): LocalJobSnapshot {
     const item = registration.parse(input);
     this.transaction(() => {
@@ -157,6 +189,40 @@ export class WorkerJobControl {
       this.db.prepare("UPDATE local_job_execution SET status='RUNNING',local_revision=local_revision+1 WHERE job_id=?").run(jobId);
     });
     return this.snapshot(jobId);
+  }
+
+  /** Transactional barrier with pause: a new host operation starts only while RUNNING. */
+  beginBrokerOperation(jobId: string, requestId: string): void {
+    uuid.parse(requestId);
+    this.transaction(() => {
+      const row = this.row(jobId);
+      if (row.status !== 'RUNNING' || Date.parse(row.lease_expires_at) <= Date.now()) {
+        throw new WorkerJobControlError('NOT_READY');
+      }
+      this.db.prepare('INSERT INTO local_broker_activity(request_id,job_id,started_at) VALUES(?,?,?)')
+        .run(requestId, jobId, new Date().toISOString());
+    });
+  }
+
+  endBrokerOperation(jobId: string, requestId: string): void {
+    uuid.parse(jobId); uuid.parse(requestId);
+    this.db.prepare('DELETE FROM local_broker_activity WHERE request_id=? AND job_id=?')
+      .run(requestId, jobId);
+  }
+
+  activeBrokerOperations(jobId: string): number {
+    this.row(jobId);
+    const result = this.db.prepare('SELECT COUNT(*) AS count FROM local_broker_activity WHERE job_id=?')
+      .get(jobId) as { count: number };
+    return result.count;
+  }
+
+  private async waitBrokerQuiescent(jobId: string): Promise<void> {
+    const deadline = Date.now() + 10_000;
+    while (this.activeBrokerOperations(jobId) > 0) {
+      if (Date.now() >= deadline) throw new WorkerJobControlError('CONTROL_FAILED');
+      await delay(50);
+    }
   }
 
   assertStartPermitted(jobId: string, container: string): void {
@@ -240,11 +306,24 @@ export class WorkerJobControl {
     const current = this.row(input.jobId);
     if (current.pause_support !== 'FULL_RESUME') throw new WorkerJobControlError('PAUSE_NOT_SUPPORTED');
     if (current.status === 'PAUSED' || current.status === 'SECURITY_PAUSED') return this.snapshot(input.jobId);
+    if (current.status === 'RUNNING' &&
+      await this.docker.status(current.container_id, current.job_id, current.attempt_id) === 'exited') {
+      this.markStopped(input.jobId, current.container_id);
+      throw new WorkerJobControlError('INVALID_STATE');
+    }
     this.beginCommand(input, 'PAUSE', ['RUNNING'], 'PAUSE_REQUESTED');
     const row = this.row(input.jobId);
     try {
+      await this.waitBrokerQuiescent(input.jobId);
       await this.docker.pause(row.container_id, row.job_id, row.attempt_id);
-    } catch { throw new WorkerJobControlError('CONTROL_FAILED'); }
+    } catch {
+      try {
+        if (await this.docker.status(row.container_id, row.job_id, row.attempt_id) === 'exited') {
+          this.markStopped(input.jobId, row.container_id);
+        }
+      } catch { /* Preserve the pending request for later reconciliation. */ }
+      throw new WorkerJobControlError('CONTROL_FAILED');
+    }
     return this.confirm(input, input.source === 'PLATFORM_SECURITY' ? 'SECURITY_PAUSED' : 'PAUSED');
   }
 
@@ -282,6 +361,7 @@ export class WorkerJobControl {
     this.beginCommand(input, 'CANCEL', ['READY', 'RUNNING', 'PAUSE_REQUESTED', 'PAUSED',
       'RESUME_REQUESTED', 'SECURITY_PAUSED'], 'CANCEL_REQUESTED');
     try {
+      await this.waitBrokerQuiescent(input.jobId);
       if (await this.docker.status(row.container_id, row.job_id, row.attempt_id) !== 'created') {
         await this.docker.stop(row.container_id, row.job_id, row.attempt_id);
       }
@@ -387,8 +467,12 @@ export class WorkerJobControl {
     } else if (actual === 'running' && (row.status === 'PAUSED' || row.status === 'SECURITY_PAUSED')) {
       try { await this.docker.pause(row.container_id, row.job_id, row.attempt_id); }
       catch { throw new WorkerJobControlError('CONTROL_FAILED'); }
-    } else if (actual !== 'paused' && row.status === 'PAUSE_REQUESTED') {
-      throw new WorkerJobControlError('CONTROL_FAILED');
+    } else if (actual === 'running' && row.status === 'PAUSE_REQUESTED') {
+      if (this.activeBrokerOperations(jobId) > 0) return this.snapshot(jobId);
+      try { await this.docker.pause(row.container_id, row.job_id, row.attempt_id); }
+      catch { throw new WorkerJobControlError('CONTROL_FAILED'); }
+      if (!commandInput || pending?.action !== 'PAUSE') throw new WorkerJobControlError('CONFLICT');
+      return this.confirm(commandInput, pending.source === 'PLATFORM_SECURITY' ? 'SECURITY_PAUSED' : 'PAUSED');
     } else if (row.status === 'RESUME_REQUESTED' && commandInput && pending?.action === 'RESUME') {
       if (actual === 'running') {
         const readiness = await this.readiness.check();

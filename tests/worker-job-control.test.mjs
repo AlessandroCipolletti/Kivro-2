@@ -70,6 +70,23 @@ test('pause is not acknowledged when process-tree control fails', async () => {
   } finally { rmSync(f.dir, { recursive: true, force: true }); }
 });
 
+test('pause racing container exit becomes STOPPED instead of a stale pause request', async () => {
+  const f = fixture();
+  try {
+    f.control.close();
+    const exiting = {
+      async pause() { f.state.status = 'exited'; throw new Error('exited during pause'); },
+      async status() { return f.state.status; },
+    };
+    const control = new WorkerJobControl(f.dir, exiting, ready, { maxPauseDurationMs: 60_000 });
+    const cmd = newLocalJobCommand(f.jobId, 'local:1000', 'CLI');
+    await assert.rejects(control.pause(cmd), { code: 'CONTROL_FAILED' });
+    assert.equal(control.snapshot(f.jobId).status, 'STOPPED');
+    assert.equal(control.commandHistory(f.jobId)[0].confirmed_at, null);
+    control.close();
+  } finally { rmSync(f.dir, { recursive: true, force: true }); }
+});
+
 test('unsupported mode is explicit, never silently cancelled', async () => {
   const f = fixture('NOT_SUPPORTED');
   try {
@@ -129,6 +146,19 @@ test('restart reconciliation never reports a removed execution as still paused',
     await f.control.pause(newLocalJobCommand(f.jobId, 'local:1000', 'CLI'));
     f.state.status = 'exited';
     assert.equal((await f.control.reconcile(f.jobId)).status, 'STOPPED');
+  } finally { f.cleanup(); }
+});
+
+test('daemon startup stops an orphaned container before accepting new offers', async () => {
+  const f = fixture();
+  try {
+    f.control.beginBrokerOperation(f.jobId, uuid());
+    const stopped = await f.control.stopOrphanedAtStartup();
+    assert.equal(stopped.length, 1);
+    assert.equal(stopped[0].status, 'STOPPED');
+    assert.equal(f.state.stopCalls, 1);
+    assert.equal(f.control.activeBrokerOperations(f.jobId), 0);
+    assert.deepEqual(await f.control.stopOrphanedAtStartup(), []);
   } finally { f.cleanup(); }
 });
 

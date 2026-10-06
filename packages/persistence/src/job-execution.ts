@@ -1,7 +1,8 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
-import { JobContractSnapshotSchema, PublishedCapabilityVersionSchema } from '../../contracts/src/capability-version.js';
+import { JobContractSnapshotSchema, PublishedCapabilityVersionSchema,
+  type JobContractSnapshot } from '../../contracts/src/capability-version.js';
 import { JobTransitionSchema, type JobStatus, type JobTransition } from '../../contracts/src/job-lifecycle.js';
 import { applyJobTransition } from '../../domain/src/job-lifecycle.js';
 import { createJobContractSnapshot } from '../../domain/src/capability-version.js';
@@ -12,6 +13,7 @@ import type { ObjectStoragePort } from '../../infrastructure/contracts/src/ports
 import { JobControlCommandSchema, type PauseSupport } from '../../contracts/src/job-control.js';
 import { JobOfferSchema, WORKER_PROTOCOL_VERSION, type JobOffer } from '../../worker-protocol/src/messages.js';
 import type { LeaseTokenIssuer } from '../../application/src/lease-token.js';
+import { SUPPORTED_FILE_TYPES } from '../../contracts/src/file-types.js';
 
 const uuid = z.uuid();
 const controlPlane = z.string().min(1).max(160);
@@ -104,6 +106,24 @@ export type WorkerExecutionRecovery = {
   readonly action: 'STOP';
   readonly reason: 'UNKNOWN_OR_UNOWNED' | 'LEASE_EXPIRED' | 'JOB_NOT_ACTIVE' | 'PAYMENT_NOT_SECURED';
 };
+
+export interface AcceptedWorkerInput {
+  readonly jobId: string;
+  readonly executionId: string;
+  readonly attemptId: string;
+  readonly buyerAccountId: string;
+  readonly outputRetainUntil: string;
+  readonly inputManifestId: string;
+  readonly inputManifestHash: string;
+  readonly inputSchemaHash: string;
+  readonly inputContract: JobContractSnapshot['inputContractSnapshot'];
+  readonly outputContract: JobContractSnapshot['outputContractSnapshot'];
+  readonly payload: ReturnType<typeof validateInputPayload>;
+  readonly stagedAssets: Readonly<Record<string, readonly { assetId: string; extension: string;
+    detectedMimeType: string; sizeBytes: number }[]>>;
+  readonly downloads: readonly { binding: { fieldKey: string; assetId: string; path: string;
+    detectedMimeType: string; sizeBytes: number }; signedGetUrl: string; expectedSha256: string }[];
+}
 
 const submittedResultSchema = z.strictObject({
   resultManifestId: uuid,
@@ -504,6 +524,96 @@ export class PostgresJobExecutionRepository {
     });
   }
 
+  /** Values and one-use file URLs are released only to the accepted, leased Worker. */
+  async acceptedInputForWorker(executionId: string, workerDeviceId: string, planeId: string,
+    leaseToken: string, storage: ObjectStoragePort, outputRetentionSeconds: number): Promise<AcceptedWorkerInput> {
+    uuid.parse(executionId); uuid.parse(workerDeviceId); controlPlane.parse(planeId);
+    if (!Number.isSafeInteger(outputRetentionSeconds) || outputRetentionSeconds < 86400 ||
+      outputRetentionSeconds > 365 * 86400) throw new JobExecutionError('NOT_ELIGIBLE');
+    const selected = await this.transaction(async (client) => {
+      const executionResult = await client.query<ExecutionRow>(
+        'SELECT * FROM job_executions WHERE id=$1 FOR SHARE', [executionId]);
+      const execution = executionResult.rows[0];
+      if (!execution || !execution.accepted_at || execution.completed_at ||
+        execution.worker_device_id !== workerDeviceId || execution.control_plane_id !== planeId ||
+        execution.lease_expires_at.getTime() <= Date.now() ||
+        !equalDigest(execution.lease_token_hash, digest(leaseToken))) {
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      }
+      const job = await this.lockJob(client, execution.job_id, false);
+      if (!['ACCEPTED', 'STARTING', 'RUNNING'].includes(job.status) ||
+        !job.payment_reservation_id ||
+        !await this.payment.isSecured(client, job.id, job.payment_reservation_id)) {
+        throw new JobExecutionError('PAYMENT_NOT_SECURED');
+      }
+      const snapshot = JobContractSnapshotSchema.parse(job.contract_snapshot);
+      const manifest = await client.query<{ id: string; payload: unknown; manifest_hash: string;
+        schema_hash: string; total_bytes: string; file_count: number }>(
+        'SELECT * FROM job_input_manifests WHERE job_id=$1 FOR SHARE', [job.id]);
+      const row = manifest.rows[0];
+      if (!row || row.schema_hash !== hashCanonicalJson(snapshot.inputContractSnapshot)) {
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      }
+      const payload = validateInputPayload(snapshot.inputContractSnapshot, row.payload);
+      const ids = Object.values(payload.assets).flat();
+      if (new Set(ids).size !== ids.length || ids.length !== row.file_count) {
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      }
+      const stagedAssets: Record<string, { assetId: string; extension: string;
+        detectedMimeType: string; sizeBytes: number }[]> = Object.create(null);
+      const files: { binding: { fieldKey: string; assetId: string; path: string;
+        detectedMimeType: string; sizeBytes: number }; objectKey: string; sha256: string }[] = [];
+      const hashAssets: { id: string; sizeBytes: number; sha256: string }[] = [];
+      let totalBytes = Buffer.byteLength(canonicalJson(payload));
+      for (const [fieldKey, references] of Object.entries(payload.assets)) {
+        const field = snapshot.inputContractSnapshot.fields.find((candidate) => candidate.key === fieldKey);
+        if (!field || (field.type !== 'FILE' && field.type !== 'FILES')) throw new JobExecutionError('NOT_ELIGIBLE');
+        stagedAssets[fieldKey] = [];
+        for (const id of references) {
+          const assetResult = await client.query<{ owner_account_id: string; state: string;
+            object_key: string; size_bytes: string; sha256: string;
+            detected_mime_type: string; retain_until: Date }>(
+            'SELECT owner_account_id,state,object_key,size_bytes,sha256,detected_mime_type,retain_until FROM assets WHERE id=$1 FOR SHARE',
+            [id]);
+          const asset = assetResult.rows[0];
+          const grant = await client.query<{ expires_at: Date }>(
+            'SELECT expires_at FROM asset_read_grants WHERE asset_id=$1 AND target_job_id=$2', [id, job.id]);
+          const sizeBytes = Number(asset?.size_bytes);
+          const type = SUPPORTED_FILE_TYPES.find((item) => item.mime === asset?.detected_mime_type);
+          const extension = type?.extensions.find((candidate) => field.constraints.allowedExtensions.includes(candidate));
+          if (!asset || asset.owner_account_id !== job.buyer_account_id || asset.state !== 'READY' ||
+            asset.retain_until.getTime() <= Date.now() || !grant.rows[0] ||
+            grant.rows[0].expires_at.getTime() <= Date.now() ||
+            !Number.isSafeInteger(sizeBytes) || sizeBytes < 0 || !extension ||
+            !field.constraints.allowedMimeTypes.includes(asset.detected_mime_type)) {
+            throw new JobExecutionError('NOT_ELIGIBLE');
+          }
+          totalBytes += sizeBytes;
+          const binding = { fieldKey, assetId: id, path: `/job/input/${fieldKey}/${id}${extension}`,
+            detectedMimeType: asset.detected_mime_type, sizeBytes };
+          stagedAssets[fieldKey]!.push({ assetId: id, extension,
+            detectedMimeType: asset.detected_mime_type, sizeBytes });
+          files.push({ binding, objectKey: asset.object_key, sha256: asset.sha256 });
+          hashAssets.push({ id, sizeBytes, sha256: asset.sha256 });
+        }
+      }
+      if (totalBytes !== Number(row.total_bytes) ||
+        hashCanonicalJson({ jobId: job.id, payload, assets: hashAssets.sort((a, b) =>
+          a.id.localeCompare(b.id)) }) !== row.manifest_hash) throw new JobExecutionError('NOT_ELIGIBLE');
+      return { jobId: job.id, executionId, attemptId: execution.attempt_id,
+        buyerAccountId: job.buyer_account_id, inputManifestId: row.id,
+        inputManifestHash: row.manifest_hash, inputSchemaHash: row.schema_hash,
+        inputContract: snapshot.inputContractSnapshot, outputContract: snapshot.outputContractSnapshot,
+        payload, stagedAssets, files };
+    });
+    const downloads = await Promise.all(selected.files.map(async (file) => ({
+      binding: file.binding, signedGetUrl: await storage.presignPrivateDownload(file.objectKey, 300),
+      expectedSha256: file.sha256,
+    })));
+    return { ...selected, downloads,
+      outputRetainUntil: new Date(Date.now() + outputRetentionSeconds * 1000).toISOString() };
+  }
+
   async renewLease(executionId: string, workerDeviceId: string, planeId: string,
     leaseToken: string, ttlSeconds: number): Promise<string> {
     uuid.parse(executionId); uuid.parse(workerDeviceId); controlPlane.parse(planeId);
@@ -670,7 +780,9 @@ export class PostgresJobExecutionRepository {
       const support: PauseSupport = snapshot.pauseSupportSnapshot;
       if (support !== 'FULL_RESUME') throw new JobExecutionError('NOT_ELIGIBLE');
       const target = command.action === 'PAUSE' ? 'PAUSE_REQUESTED' : 'RESUME_REQUESTED';
-      if (command.action === 'PAUSE' && !['RUNNING', 'STARTING'].includes(job.status) ||
+      // A newly created container has no running process tree for Docker to freeze.
+      // The seller pause contract begins at RUNNING; STARTING may be cancelled.
+      if (command.action === 'PAUSE' && job.status !== 'RUNNING' ||
         command.action === 'RESUME' && job.status !== 'PAUSED') throw new JobExecutionError('NOT_ELIGIBLE');
       await client.query(`INSERT INTO job_control_commands(id,job_id,execution_id,action,source,
         actor_id,reason,previous_state,requested_at,pause_support)

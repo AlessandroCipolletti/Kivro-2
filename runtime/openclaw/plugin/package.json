@@ -1,0 +1,11 @@
+{
+  "name": "@kivro/openclaw-broker-tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.mjs"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "kivro-broker",
+  "name": "Kivro Broker Tools",
+  "description": "Worker-mediated, job-scoped research and resource operations",
+  "categories": [
+    "other"
+  ],
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "version": "0.0.0",
+  "contracts": {
+    "tools": [
+      "kivro_research_search",
+      "kivro_research_fetch",
+      "kivro_research_download",
+      "kivro_resource_read",
+      "kivro_declared_api",
+      "kivro_submit_result",
+      "kivro_read_input",
+      "kivro_write_output"
+    ]
+  }
+}
