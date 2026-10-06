@@ -3,7 +3,9 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { OpenClawDiscoveryAdapter } from '../../../packages/openclaw-adapter/src/discovery.js';
 import { LocalOpenClawCommandRunner } from '../../../packages/openclaw-adapter/src/command-runner.js';
+import { checkOpenClawCompatibility } from '../../../packages/openclaw-adapter/src/compatibility.js';
 import { WorkerLocalState, WorkerStateError } from './local-state.js';
+import { EncryptedDeviceIdentityStore, KeychainDeviceIdentityStore } from './device-identity.js';
 
 interface Check {
   readonly name: string;
@@ -41,19 +43,44 @@ function checkDocker(): Check {
 
 async function doctor(): Promise<readonly Check[]> {
   const inspection = await new OpenClawDiscoveryAdapter(new LocalOpenClawCommandRunner()).inspect();
+  const compatibility = checkOpenClawCompatibility(inspection.detection.status === 'detected' ? inspection.detection.version : null);
+  const identity = deviceStatus();
   return [
     { name: 'OpenClaw installed', status: inspection.detection.status === 'detected' ? 'PASS' : 'FAIL', detail: inspection.detection.status === 'detected' ? inspection.detection.version : 'unavailable' },
-    { name: 'OpenClaw compatibility', status: 'FAIL', detail: 'supported version policy is not configured' },
-    { name: 'OpenClaw config', status: inspection.config === 'valid' ? 'PASS' : 'FAIL', detail: inspection.config },
+    { name: 'OpenClaw compatibility', status: 'FAIL', detail: `${compatibility.status}: ${compatibility.reason}; candidate ${compatibility.candidateVersion}` },
+    { name: 'OpenClaw config', status: 'FAIL', detail: `${inspection.local.config}; effective validation unavailable` },
     checkDocker(),
     { name: 'Sandbox isolation', status: 'FAIL', detail: 'no verified effective policy or self-test' },
-    { name: 'Device identity', status: 'FAIL', detail: 'no paired identity' },
+    { name: 'Device identity', status: 'FAIL', detail: identity.status === 'METADATA_PRESENT' ? 'local metadata present; credential and cloud pairing unverified' : 'no verified paired identity' },
     { name: 'Cloud connection', status: 'FAIL', detail: 'not connected' },
   ];
 }
 
 function help(): string {
-  return 'Usage: kivro-worker pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | health [--json] | doctor [--json]';
+  return 'Usage: kivro-worker pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | health [--json] | doctor [--json] | device status [--json]';
+}
+
+function deviceStatus(): { readonly status: 'METADATA_PRESENT' | 'MISSING' | 'INVALID'; readonly storage: 'OS_KEYCHAIN' | 'ENCRYPTED_FILE' | null; readonly deviceId: string | null; readonly pairing: 'UNKNOWN' } {
+  const directory = stateDirectory();
+  const candidates: { storage: 'OS_KEYCHAIN' | 'ENCRYPTED_FILE'; deviceId: string }[] = [];
+  try {
+    candidates.push({ storage: 'OS_KEYCHAIN', deviceId: new KeychainDeviceIdentityStore(directory).readPublic().deviceId });
+  } catch (error) {
+    if (!(error instanceof Error && 'code' in error && error.code === 'NOT_FOUND')) {
+      return { status: 'INVALID', storage: null, deviceId: null, pairing: 'UNKNOWN' };
+    }
+  }
+  try {
+    candidates.push({ storage: 'ENCRYPTED_FILE', deviceId: new EncryptedDeviceIdentityStore(directory).readPublic().deviceId });
+  } catch (error) {
+    if (!(error instanceof Error && 'code' in error && error.code === 'NOT_FOUND')) {
+      return { status: 'INVALID', storage: null, deviceId: null, pairing: 'UNKNOWN' };
+    }
+  }
+  if (candidates.length !== 1) return { status: candidates.length === 0 ? 'MISSING' : 'INVALID', storage: null, deviceId: null, pairing: 'UNKNOWN' };
+  const candidate = candidates[0];
+  if (!candidate) throw new Error('Missing device candidate');
+  return { status: 'METADATA_PRESENT', storage: candidate.storage, deviceId: candidate.deviceId, pairing: 'UNKNOWN' };
 }
 
 function parseReason(args: readonly string[]): string | undefined {
@@ -66,12 +93,20 @@ function parseReason(args: readonly string[]): string | undefined {
 /** Host-native CLI; success for pause means the local database committed. */
 export async function runWorkerCli(args: readonly string[], write: (line: string) => void = (line) => process.stdout.write(`${line}\n`)): Promise<number> {
   const command = args[0];
-  if (!['pause', 'resume', 'health', 'doctor'].includes(command ?? '')) {
+  if (!['pause', 'resume', 'health', 'doctor', 'device'].includes(command ?? '')) {
     write(help());
     return 2;
   }
   let state: WorkerLocalState;
   try {
+    if (command === 'device') {
+      if (args[1] !== 'status' || args.length > 3 || (args.length === 3 && args[2] !== '--json')) {
+        throw new WorkerStateError('INVALID_ARGUMENT', help());
+      }
+      const status = deviceStatus();
+      write(args[2] === '--json' ? JSON.stringify(status) : `Device identity: ${status.status}${status.storage ? ` (${status.storage})` : ''}; cloud pairing ${status.pairing}`);
+      return status.status === 'INVALID' ? 1 : 0;
+    }
     state = new WorkerLocalState(stateDirectory(), unmetReadiness);
   } catch (error) {
     write(error instanceof WorkerStateError ? `${error.code}: ${error.message}` : 'Worker state unavailable');

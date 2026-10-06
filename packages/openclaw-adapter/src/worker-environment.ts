@@ -101,6 +101,7 @@ export function createWorkerEnvironment(baseDirectory: string, workerId: string,
 /** Inherited seller env is deliberately excluded, including provider credentials and OpenClaw defaults. */
 export function isolatedOpenClawEnvironment(paths: WorkerEnvironmentPaths, executablePath: string): NodeJS.ProcessEnv {
   return {
+    NODE_ENV: 'production',
     PATH: executablePath,
     HOME: paths.workerRoot,
     XDG_CONFIG_HOME: paths.xdgConfigDir,

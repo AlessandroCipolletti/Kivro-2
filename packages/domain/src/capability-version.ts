@@ -4,11 +4,10 @@ import {
   type CapabilityVersionCandidate, type PublishedCapabilityVersion, type JobContractSnapshot,
   JobContractSnapshotSchema,
 } from '../../contracts/src/capability-version.js';
+import { LocalCapabilityPackageSchema } from '../../contracts/src/capability-package.js';
 import { hashCanonicalJson } from '../../contracts/src/canonical-json.js';
-import { InternalPermissionPolicySchema } from '../../contracts/src/permission-policy.js';
 import { buildPublicPermissionManifest } from '../../policy-engine/src/public-manifest.js';
-import type { PriceTier } from '../../contracts/src/pricing.js';
-import { hashWorkerManifest, WorkerManifestSchema } from '../../contracts/src/worker-manifest.js';
+import { hashWorkerManifest } from '../../contracts/src/worker-manifest.js';
 import { priceForTier } from './pricing.js';
 
 function freezeDeep<T>(value: T): Readonly<T> {
@@ -25,26 +24,17 @@ export interface VersionCandidateInput {
   readonly versionNumber: number;
   readonly workerDeviceId: string;
   readonly requestedAt: string;
-  readonly workerManifest: unknown;
-  readonly localPackageHash: string;
-  readonly permissionPolicy: unknown;
-  readonly sellerInferenceConfigHash: string | null;
-  readonly ioContract: unknown;
-  readonly priceTier: PriceTier;
-  readonly dependencySnapshot: readonly unknown[];
-  readonly concurrencyLimit: number;
-  readonly exampleRefs: readonly string[];
-  readonly testRefs: readonly string[];
+  readonly localPackage: unknown;
 }
 
 export function buildVersionCandidate(input: VersionCandidateInput): Readonly<CapabilityVersionCandidate> {
-  const manifest = WorkerManifestSchema.parse(input.workerManifest);
-  if (manifest.capabilityVersionId !== input.id) throw new TypeError('Worker manifest version ID mismatch');
-  const permissionPolicy = InternalPermissionPolicySchema.parse(input.permissionPolicy);
-  if ((permissionPolicy.aiInference === 'SELLER') !== (input.sellerInferenceConfigHash !== null)) {
-    throw new TypeError('Seller inference configuration mismatch');
+  const localPackage = LocalCapabilityPackageSchema.parse(input.localPackage);
+  if (localPackage.capabilityVersionId !== input.id || localPackage.workerDeviceId !== input.workerDeviceId) {
+    throw new TypeError('Local package identity mismatch');
   }
-  const ioContract = CapabilityIOContractSchema.parse(input.ioContract);
+  const manifest = localPackage.workerManifest;
+  const permissionPolicy = localPackage.permissionPolicy;
+  const ioContract = CapabilityIOContractSchema.parse(localPackage.ioContract);
   const version = CapabilityVersionCandidateSchema.parse({
     id: input.id,
     capabilityId: input.capabilityId,
@@ -55,17 +45,18 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
     requestedAt: input.requestedAt,
     runtime: manifest.runtime,
     workerManifestHash: hashWorkerManifest(manifest),
-    localPackageHash: DigestSchema.parse(input.localPackageHash),
+    localPackageHash: hashCanonicalJson(localPackage),
+    dependencyGraphHash: hashCanonicalJson(localPackage.dependencyGraph),
     permissionPolicyHash: hashCanonicalJson(permissionPolicy),
-    sellerInferenceConfigHash: input.sellerInferenceConfigHash === null ? null : DigestSchema.parse(input.sellerInferenceConfigHash),
+    sellerInferenceConfigHash: localPackage.sellerInferenceConfigHash === null ? null : DigestSchema.parse(localPackage.sellerInferenceConfigHash),
     ioContract,
     publicPermissionManifest: buildPublicPermissionManifest(permissionPolicy),
-    price: priceForTier(input.priceTier),
-    dependencySnapshot: input.dependencySnapshot,
+    price: priceForTier(localPackage.priceTier),
+    dependencySnapshot: localPackage.dependencySnapshot,
     resourceLimits: manifest.limits,
-    concurrencyLimit: input.concurrencyLimit,
-    exampleRefs: input.exampleRefs,
-    testRefs: input.testRefs,
+    concurrencyLimit: localPackage.concurrencyLimit,
+    exampleRefs: localPackage.exampleRefs,
+    testRefs: localPackage.testRefs,
   });
   return freezeDeep(version);
 }

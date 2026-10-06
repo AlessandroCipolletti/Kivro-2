@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PLATFORM_FILE_LIMITS } from './file-limits.js';
 
 const key = z.string().min(1).max(64).regex(/^[A-Za-z][A-Za-z0-9_]*$/);
 const label = z.string().trim().min(1).max(120);
@@ -29,10 +30,10 @@ const choiceConstraints = z.strictObject({
   maxSelections: z.number().int().positive().max(100).optional(),
 });
 const fileConstraints = z.strictObject({
-  minFiles: z.number().int().min(0).max(50).optional(),
-  maxFiles: z.number().int().positive().max(50),
-  maxFileSizeBytes: z.number().int().positive().max(1_073_741_824),
-  maxTotalSizeBytes: z.number().int().positive().max(5_368_709_120),
+  minFiles: z.number().int().min(0).max(PLATFORM_FILE_LIMITS.maxFilesPerField).optional(),
+  maxFiles: z.number().int().positive().max(PLATFORM_FILE_LIMITS.maxFilesPerField),
+  maxFileSizeBytes: z.number().int().positive().max(PLATFORM_FILE_LIMITS.maxSingleFileBytes),
+  maxTotalSizeBytes: z.number().int().positive().max(PLATFORM_FILE_LIMITS.maxTotalFieldBytes),
   allowedMimeTypes: z.array(z.string().min(3).max(120)).min(1).max(32),
   allowedExtensions: z.array(z.string().regex(/^\.[A-Za-z0-9]{1,16}$/)).min(1).max(32),
 }).refine((v) => (v.minFiles ?? 0) <= v.maxFiles);
@@ -51,7 +52,13 @@ const files = z.strictObject({ ...base, type: z.literal('FILES'), constraints: f
 const markdown = z.strictObject({ ...base, type: z.literal('MARKDOWN'), constraints: textConstraints.optional() });
 
 export const InputFieldSchema = z.discriminatedUnion('type', [
-  shortText, longText, integer, number, boolean, select, multiSelect, url, json, file, files,
+  shortText.extend({ defaultValue: z.string().optional() }),
+  longText.extend({ defaultValue: z.string().optional() }),
+  integer.extend({ defaultValue: z.number().int().optional() }),
+  number.extend({ defaultValue: z.number().finite().optional() }),
+  boolean.extend({ defaultValue: z.boolean().optional() }),
+  select.extend({ defaultValue: z.string().optional() }),
+  multiSelect, url, json, file, files,
 ]);
 export const OutputFieldSchema = z.discriminatedUnion('type', [
   shortText, longText, markdown, number, boolean, url, json, file, files,
@@ -60,6 +67,27 @@ export const OutputFieldSchema = z.discriminatedUnion('type', [
 function uniqueFields(fields: readonly { key: string; order: number }[]): boolean {
   return new Set(fields.map((field) => field.key)).size === fields.length &&
     new Set(fields.map((field) => field.order)).size === fields.length;
+}
+
+function reachableConditionValue(field: z.infer<typeof InputFieldSchema>,
+  expected: string | number | boolean): boolean {
+  switch (field.type) {
+    case 'BOOLEAN':
+      return typeof expected === 'boolean';
+    case 'SELECT':
+      return typeof expected === 'string' && field.constraints.allowedValues.includes(expected);
+    case 'INTEGER':
+    case 'NUMBER':
+      return typeof expected === 'number' && (field.type !== 'INTEGER' || Number.isInteger(expected)) &&
+        expected >= (field.constraints?.minimum ?? -Infinity) &&
+        expected <= (field.constraints?.maximum ?? Infinity);
+    case 'SHORT_TEXT':
+      return typeof expected === 'string' &&
+        expected.length >= Math.max(field.required ? 1 : 0, field.constraints?.minLength ?? 0) &&
+        expected.length <= (field.constraints?.maxLength ?? 256);
+    default:
+      return false;
+  }
 }
 
 export const InputContractSchema = z.strictObject({
@@ -71,8 +99,19 @@ export const InputContractSchema = z.strictObject({
   for (const field of contract.fields) {
     const dependency = field.visibleWhen && byKey.get(field.visibleWhen.fieldKey);
     if (field.visibleWhen && (!dependency || dependency.order >= field.order ||
-      !['BOOLEAN', 'SELECT', 'INTEGER', 'NUMBER', 'SHORT_TEXT'].includes(dependency.type))) {
+      !reachableConditionValue(dependency, field.visibleWhen.equals))) {
       context.addIssue({ code: 'custom', message: `Invalid visibleWhen for ${field.key}` });
+    }
+    if ('defaultValue' in field && field.defaultValue !== undefined) {
+      const value = field.defaultValue;
+      const valid = field.type === 'SELECT' ? field.constraints.allowedValues.includes(value as string) :
+        field.type === 'SHORT_TEXT' || field.type === 'LONG_TEXT' ?
+          (value as string).length >= Math.max(field.required ? 1 : 0, field.constraints?.minLength ?? 0) &&
+          (value as string).length <= (field.constraints?.maxLength ?? (field.type === 'SHORT_TEXT' ? 256 : 10_000)) :
+          field.type === 'INTEGER' || field.type === 'NUMBER' ?
+            (value as number) >= (field.constraints?.minimum ?? -Infinity) &&
+            (value as number) <= (field.constraints?.maximum ?? Infinity) : true;
+      if (!valid) context.addIssue({ code: 'custom', message: `Invalid default for ${field.key}` });
     }
   }
 });

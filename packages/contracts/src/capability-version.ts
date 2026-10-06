@@ -22,6 +22,7 @@ const versionFields = {
   runtime: WorkerManifestSchema.shape.runtime,
   workerManifestHash: DigestSchema,
   localPackageHash: DigestSchema,
+  dependencyGraphHash: DigestSchema,
   permissionPolicyHash: DigestSchema,
   sellerInferenceConfigHash: DigestSchema.nullable(),
   ioContract: CapabilityIOContractSchema,

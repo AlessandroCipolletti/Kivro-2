@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
+import { EncryptedDeviceIdentityStore } from '../dist/apps/worker/src/device-identity.js';
 
 const command = join(process.cwd(), 'tools', 'kivro-worker.mjs');
 
@@ -43,4 +44,22 @@ test('doctor shows critical failures and does not print local paths or secrets',
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('device status reports local metadata without claiming credential or cloud pairing', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'kivro-worker-cli-'));
+  chmodSync(directory, 0o700);
+  const env = { ...process.env, KIVRO_WORKER_STATE_DIR: directory };
+  try {
+    const missing = JSON.parse(execFileSync(process.execPath, [command, 'device', 'status', '--json'], { env, encoding: 'utf8' }));
+    assert.equal(missing.status, 'MISSING');
+    assert.equal(missing.pairing, 'UNKNOWN');
+    const device = new EncryptedDeviceIdentityStore(directory).create('fixture passphrase for local device');
+    const found = JSON.parse(execFileSync(process.execPath, [command, 'device', 'status', '--json'], { env, encoding: 'utf8' }));
+    assert.equal(found.status, 'METADATA_PRESENT');
+    assert.equal(found.deviceId, device.deviceId);
+    assert.equal(found.storage, 'ENCRYPTED_FILE');
+    assert.equal(found.pairing, 'UNKNOWN');
+    assert.doesNotMatch(JSON.stringify(found), /PRIVATE KEY|passphrase/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });

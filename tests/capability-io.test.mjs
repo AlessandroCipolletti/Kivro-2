@@ -32,6 +32,12 @@ test('contract rejects duplicate keys, impossible conditions, and unbounded file
   assert.equal(CapabilityIOContractSchema.safeParse({ ...contract, input: { schemaVersion: 1, fields: [text('x', 0), text('x', 1)] } }).success, false);
   assert.equal(CapabilityIOContractSchema.safeParse({ ...contract, input: { schemaVersion: 1, fields: [text('x', 0), { ...text('y', 1), visibleWhen: { fieldKey: 'missing', equals: true } }] } }).success, false);
   assert.equal(CapabilityIOContractSchema.safeParse({ ...contract, input: { schemaVersion: 1, fields: [{ key: 'upload', label: 'Upload', order: 0, required: true, type: 'FILE' }] } }).success, false);
+  const impossibleChoice = JSON.parse(JSON.stringify(contract));
+  impossibleChoice.input.fields[2].visibleWhen.equals = 'audio';
+  assert.equal(CapabilityIOContractSchema.safeParse(impossibleChoice).success, false);
+  const wrongType = JSON.parse(JSON.stringify(contract));
+  wrongType.input.fields[2].visibleWhen.equals = true;
+  assert.equal(CapabilityIOContractSchema.safeParse(wrongType).success, false);
 });
 
 test('server validation rejects hidden, missing, unknown, malformed and duplicate asset inputs', () => {
@@ -54,4 +60,21 @@ test('URL fields accept only credential-free HTTP(S) syntax; JSON fields reject 
   assert.throws(() => validateInputPayload(input, { values: { website: 'https://user:pass@example.com', data: {} }, assets: {} }), { code: 'INVALID_VALUE', field: 'website' });
   const unsafe = JSON.parse('{"__proto__":{"isAdmin":true}}');
   assert.throws(() => validateInputPayload(input, { values: { website: 'https://example.com', data: unsafe }, assets: {} }), { code: 'INVALID_VALUE', field: 'data' });
+});
+
+test('published scalar defaults fill omitted fields but cannot hide file or invalid choice input', () => {
+  const input = { schemaVersion: 1, fields: [
+    { key: 'resolution', label: 'Resolution', order: 0, required: true, type: 'SELECT',
+      constraints: { allowedValues: ['1080p', '4K'] }, defaultValue: '1080p' },
+    { key: 'variants', label: 'Variants', order: 1, required: true, type: 'INTEGER',
+      constraints: { minimum: 1, maximum: 10 }, defaultValue: 1 },
+  ] };
+  assert.equal(validateInputPayload(input, { values: {}, assets: {} }).values.resolution, '1080p');
+  assert.equal(validateInputPayload(input, { values: {}, assets: {} }).values.variants, 1);
+  assert.equal(CapabilityIOContractSchema.safeParse({ contractVersion: 1, input: {
+    ...input, fields: [{ ...input.fields[0], defaultValue: '8K' }, input.fields[1]],
+  }, output: contract.output }).success, false);
+  assert.equal(CapabilityIOContractSchema.safeParse({ contractVersion: 1, input: {
+    ...contract.input, fields: [{ ...contract.input.fields[2], defaultValue: 'asset-id' }],
+  }, output: contract.output }).success, false);
 });

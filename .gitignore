@@ -1,8 +1,13 @@
 node_modules/
+.next/
 dist/
 .env
+.env.local
 .env.*.local
 .pnpm-store/
+.local/
 .DS_Store
 coverage/
+test-results/
+playwright-report/
 *.log

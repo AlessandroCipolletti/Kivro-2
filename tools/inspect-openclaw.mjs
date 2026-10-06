@@ -5,7 +5,11 @@ import { LocalOpenClawCommandRunner } from '../dist/packages/openclaw-adapter/sr
 const inspection = await new OpenClawDiscoveryAdapter(new LocalOpenClawCommandRunner()).inspect();
 process.stdout.write(`${JSON.stringify({
   runtime: inspection.detection,
-  config: inspection.config,
-  skills: inspection.skills.status,
-  skillCount: inspection.skills.suggestions.length,
+  config: inspection.local.config,
+  discovery: inspection.local.status,
+  completeness: inspection.local.completeness,
+  skillCount: inspection.local.skills.length,
+  toolReferenceCount: inspection.local.tools.length,
+  pluginReferenceCount: inspection.local.plugins.length,
+  issues: inspection.local.issues,
 })}\n`);

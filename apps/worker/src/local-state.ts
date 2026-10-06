@@ -127,6 +127,25 @@ function pathExistsNoFollow(path: string): boolean {
   }
 }
 
+/** Opens a seller-local SQLite file with the same ownership, mode and durability rules for every Worker store. */
+export function openPrivateWorkerSqlite(stateDir: string, filename: 'worker.sqlite' | 'import.sqlite'): DatabaseSync {
+  const dir = resolve(stateDir);
+  if (!pathExistsNoFollow(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
+  assertPrivatePath(dir, true);
+  const dbPath = join(dir, filename);
+  if (pathExistsNoFollow(dbPath)) assertPrivatePath(dbPath, false);
+  const db = new DatabaseSync(dbPath);
+  try {
+    chmodSync(dbPath, 0o600);
+    assertPrivatePath(dbPath, false);
+    db.exec('PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+}
+
 function assertReason(reason: string | undefined): string | null {
   if (reason === undefined) return null;
   if (reason.length > 500 || [...reason].some((character) => character.charCodeAt(0) < 32)) {
@@ -174,16 +193,8 @@ export class WorkerLocalState {
   private readonly db: DatabaseSync;
 
   constructor(stateDir: string, private readonly readiness: WorkerReadinessChecker) {
-    const dir = resolve(stateDir);
-    if (!pathExistsNoFollow(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
-    assertPrivatePath(dir, true);
-    const dbPath = join(dir, 'worker.sqlite');
-    if (pathExistsNoFollow(dbPath)) assertPrivatePath(dbPath, false);
-    this.db = new DatabaseSync(dbPath);
+    this.db = openPrivateWorkerSqlite(stateDir, 'worker.sqlite');
     try {
-      chmodSync(dbPath, 0o600);
-      assertPrivatePath(dbPath, false);
-      this.db.exec('PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
       this.db.exec(schema);
     } catch (error) {
       this.db.close();

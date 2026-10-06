@@ -133,6 +133,10 @@ function validatePayload(fields: readonly Field[], input: unknown): ContractPayl
       continue;
     }
     if (!supplied) {
+      if ('defaultValue' in field && field.defaultValue !== undefined) {
+        acceptedValues[field.key] = validateScalar(field, field.defaultValue);
+        continue;
+      }
       if (field.required) throw new ContractValidationError('MISSING_FIELD', field.key);
       continue;
     }

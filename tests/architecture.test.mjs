@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
-import { architectureViolations, forbiddenImports } from '../tools/architecture.mjs';
+import { architectureViolations, forbiddenImports, openClawBoundaryViolations } from '../tools/architecture.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -23,4 +23,11 @@ test('drift canary rejects a provider import in shared code', () => {
   assert.deepEqual(forbiddenImports('import { createJob } from "../infrastructure/netsons/job.js";'), ['../infrastructure/netsons/job.js']);
   assert.deepEqual(forbiddenImports('import "aws-sdk";'), ['aws-sdk']);
   assert.deepEqual(forbiddenImports('type S3 = import("@aws-sdk/client-s3").S3Client;'), ['@aws-sdk/client-s3']);
+  assert.deepEqual(forbiddenImports('import { storage } from "../infrastructure/s3/src/storage.js";'),
+    ['../infrastructure/s3/src/storage.js']);
+});
+
+test('OpenClaw stays external and runtime access stays behind the adapter', () => {
+  assert.equal(existsSync(join(root, 'openclaw')), false, 'Do not vendor an OpenClaw fork');
+  assert.deepEqual(openClawBoundaryViolations(root), []);
 });

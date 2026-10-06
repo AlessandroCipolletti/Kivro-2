@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 export interface CommandResult {
   readonly exitCode: number;
@@ -19,7 +22,7 @@ export class OpenClawCommandError extends Error {
 }
 
 /**
- * Only version probing is proven side-effect free on the installed CLI.
+ * Only version probing is permitted and it runs with an isolated temporary home.
  * `skills list --json` attempted to chmod personal state on OpenClaw 2026.8.2.
  * Config/skill inspection remains fixture-only until isolated read-only discovery is proven.
  */
@@ -40,11 +43,23 @@ export class LocalOpenClawCommandRunner implements OpenClawCommandRunner {
     }
 
     return new Promise((resolve, reject) => {
+      const scratch = mkdtempSync(join(tmpdir(), 'kivro-openclaw-version-'));
       const child = spawn(this.executable, [...args], {
         shell: false,
         stdio: ['ignore', 'pipe', 'ignore'],
         detached: process.platform !== 'win32',
-        env: { ...process.env, OPENCLAW_CONFIG_READONLY: '1' },
+        env: {
+          PATH: process.env.PATH ?? '/usr/bin:/bin',
+          HOME: scratch,
+          XDG_CONFIG_HOME: join(scratch, 'xdg'),
+          OPENCLAW_HOME: scratch,
+          OPENCLAW_STATE_DIR: join(scratch, 'state'),
+          OPENCLAW_CONFIG_PATH: join(scratch, 'openclaw.json'),
+          OPENCLAW_OFFLINE: '1',
+          OPENCLAW_LOAD_SHELL_ENV: '0',
+          OPENCLAW_CONFIG_READONLY: '1',
+          NODE_ENV: 'production',
+        },
       });
       const terminate = (): void => {
         if (process.platform !== 'win32' && child.pid !== undefined) {
@@ -81,6 +96,8 @@ export class LocalOpenClawCommandRunner implements OpenClawCommandRunner {
 
       child.on('close', (code) => {
         clearTimeout(timeout);
+        try { rmSync(scratch, { recursive: true, force: true }); }
+        catch { reject(new OpenClawCommandError('PROCESS_FAILED')); return; }
         if (failure) {
           reject(new OpenClawCommandError(failure));
           return;

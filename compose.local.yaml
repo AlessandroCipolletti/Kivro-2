@@ -1,0 +1,45 @@
+name: kivro2-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kivro
+      POSTGRES_DB: kivro
+      POSTGRES_PASSWORD: ${KIVRO_LOCAL_DB_PASSWORD:?Run pnpm local:auth:setup}
+    ports:
+      - 127.0.0.1:15432:5432
+    volumes:
+      - kivro2-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U kivro -d kivro']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  mail:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - 127.0.0.1:11025:1025
+      - 127.0.0.1:18025:8025
+    environment:
+      MP_MAX_MESSAGES: 1000
+
+  storage:
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    command:
+      - server
+      - -dir=/data
+      - -s3
+      - -s3.config=/etc/seaweedfs/s3.json
+      - -volume.max=0
+      - -master.volumeSizeLimitMB=100
+    ports:
+      - 127.0.0.1:18333:8333
+    volumes:
+      - kivro2-storage:/data
+      - ./.local/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+
+volumes:
+  kivro2-postgres:
+  kivro2-storage:

@@ -26,12 +26,21 @@ const ioContract = {
   input: { schemaVersion: 1, fields: [{ key: 'question', label: 'Question', order: 0, required: true, type: 'SHORT_TEXT' }] },
   output: { schemaVersion: 1, fields: [{ key: 'answer', label: 'Answer', order: 0, required: true, type: 'LONG_TEXT' }] },
 };
+const dependencyGraph = {
+  graphVersion: 1, rootId: 'document-analyzer', inference: null, alternatives: [],
+  nodes: [{ id: 'document-analyzer', type: 'SKILL', name: 'Document Analyzer', requirement: 'REQUIRED',
+    sensitivity: 'MEDIUM', discoveredFrom: ['SKILL_METADATA'], dependsOn: [],
+    marketplaceSupport: 'UNDETERMINED', confidence: 'CONFIRMED', selected: false, health: 'UNKNOWN' }],
+};
+const localPackage = {
+  packageVersion: 1, capabilityVersionId: nextId, workerDeviceId: id,
+  workerManifest: manifest, dependencyGraph, permissionPolicy: policy,
+  sellerInferenceConfigHash: null, ioContract, priceTier: 'USD_999', dependencySnapshot: [],
+  concurrencyLimit: 1, exampleRefs: [], testRefs: [],
+};
 const input = {
   id: nextId, capabilityId: id, versionNumber: 1, workerDeviceId: id,
-  requestedAt: '2026-10-06T12:00:00Z', workerManifest: manifest,
-  localPackageHash: hash, permissionPolicy: policy, sellerInferenceConfigHash: null,
-  ioContract, priceTier: 'USD_999', dependencySnapshot: [], concurrencyLimit: 1,
-  exampleRefs: [], testRefs: [],
+  requestedAt: '2026-10-06T12:00:00Z', localPackage,
 };
 
 test('canonical USD tiers have exact integer buyer, fee and seller amounts', () => {
@@ -52,10 +61,11 @@ test('version candidate is immutable and cannot be used for a job', () => {
   assert.throws(() => createJobContractSnapshot(version, id, id, '2026-10-06T13:00:00Z'));
   assert.equal(version.price.buyerAmountMinor, 999);
   assert.ok(Object.isFrozen(version.ioContract.input.fields));
-  source.ioContract.input.fields[0].label = 'Changed later';
-  source.workerManifest.limits.timeoutSeconds = 999;
+  source.localPackage.ioContract.input.fields[0].label = 'Changed later';
+  source.localPackage.workerManifest.limits.timeoutSeconds = 999;
   assert.equal(version.ioContract.input.fields[0].label, 'Question');
   assert.equal(version.resourceLimits.timeoutSeconds, 120);
+  assert.match(version.dependencyGraphHash, /^sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(JSON.stringify(version), /sellerCredentialRefs|sellerInstructions|apiKey/);
 });
 
@@ -75,8 +85,22 @@ test('historical job snapshot pins only a published version fixture', () => {
 });
 
 test('candidate rejects mismatched worker version, arbitrary tier and secret-like fields', () => {
-  assert.throws(() => buildVersionCandidate({ ...input, workerManifest: { ...manifest, capabilityVersionId: id } }));
-  assert.throws(() => buildVersionCandidate({ ...input, priceTier: 'USD_1234' }));
-  assert.throws(() => buildVersionCandidate({ ...input, permissionPolicy: { ...policy, credentialValue: 'secret' } }));
-  assert.throws(() => buildVersionCandidate({ ...input, sellerInferenceConfigHash: hash }));
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    workerManifest: { ...manifest, capabilityVersionId: id } } }));
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage, priceTier: 'USD_1234' } }));
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    permissionPolicy: { ...policy, credentialValue: 'secret' } } }));
+  assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    sellerInferenceConfigHash: hash } }));
+  assert.throws(() => buildVersionCandidate({ ...input, workerDeviceId: nextId }));
+});
+
+test('full local graph is frozen by a candidate hash while the cloud candidate stays sanitized', () => {
+  const before = buildVersionCandidate(input);
+  const changed = buildVersionCandidate({ ...input, localPackage: { ...localPackage,
+    dependencyGraph: { ...dependencyGraph, nodes: [{ ...dependencyGraph.nodes[0], name: 'Revised' }] },
+  } });
+  assert.notEqual(changed.localPackageHash, before.localPackageHash);
+  assert.notEqual(changed.dependencyGraphHash, before.dependencyGraphHash);
+  assert.equal(JSON.stringify(before).includes('Document Analyzer'), false);
 });

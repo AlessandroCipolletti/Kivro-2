@@ -109,9 +109,81 @@ user/product-owner approval.
 Date: 2026-10-06  
 Status: Accepted implementation safeguard  
 Context: On installed OpenClaw 2026.8.2, `skills list --json` attempted permission changes in the personal OpenClaw state during a supposed read-only scan. The local filesystem sandbox denied the writes. `OPENCLAW_CONFIG_READONLY=1` did not prevent the attempt.  
-Decision: The live Kivro command allowlist contains only `--version`. Config and skill output parsers remain fixture-tested, but cannot be invoked against personal state. Future discovery must run through a pinned, proven isolated read-only path and demonstrate that personal config/state bytes and metadata stay unchanged.  
-Consequences: Seller skill discovery is incomplete and remains OPEN in coverage. No discovery-driven publish or execution path is enabled.  
+Decision: The live Kivro command allowlist contains only `--version`. Kivro uses a bounded, read-only filesystem parser behind the OpenClaw adapter for JSON5 config and `SKILL.md` frontmatter instead of stateful CLI listing. It skips symlinks and unsupported roots, never reads `.env` or secret values into discovery output, and marks uncertain inventory/readiness explicitly. It inspects the verified installed package's bundled and Custodian skill roots without executing it. Discovery never selects or authorizes a capability. Fixture byte-integrity and a passing 57,826-entry live metadata before/after test verify the read-only boundary; seller-selection and effective-runtime tests remain open.  
+Consequences: File-backed skill and configured-reference suggestions are available locally; authoritative Gateway inventory, effective readiness, and discovery-driven publication remain OPEN in coverage. No execution path is enabled.  
 Master Spec references: §§7.2–7.4, 13.1, 57–59; DEC-002, DEC-003, DEC-005.
+
+### DEC-IMPL-002 --- Pin OpenClaw candidate without claiming runtime support
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: OpenClaw 2026.8.2 passed isolated Worker config syntax validation. The mandatory real sandbox execution and adversarial conformance tests have not run.  
+Decision: The Worker compatibility matrix lists 2026.8.2 as a candidate only. The Worker doctor reports this status as a blocking FAIL, and unknown/missing versions also fail. No version grants paid execution until the pinned runtime, policy, and sandbox conformance evidence exists.  
+Consequences: Detection and remediation are explicit without treating version parsing or config syntax as execution compatibility. Revisit the matrix when M04/M07 effective execution tests pass.  
+Master Spec references: §§22, 56–59, 372; DEC-003.
+
+### DEC-IMPL-003 --- Explicit Argon2id password policy
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: The selected authentication library's default hash is secure scrypt, but its parameters and on-disk format are implicit in the library version.  
+Decision: First-party passwords use pinned Argon2id v19 with 64 MiB memory, three passes, one lane, and independent random salts. Verification accepts only this PHC policy and rejects malformed or downgraded hashes. The shared auth options provide the hash/verify functions explicitly.  
+Consequences: Password storage has an auditable versioned format and no plaintext; future parameter changes require an intentional compatibility/rehash policy. This greenfield change does not assume any production legacy accounts.  
+Master Spec references: §§575, 579; AUTH-004, AUTH-017. [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+
+### DEC-IMPL-004 --- Explicit password setup for Google-origin accounts
+
+Date: 2026-10-06  
+Status: Accepted product policy for the conditional §577 flow  
+Context: Better Auth's password recovery endpoint can issue a reset link to a verified Google-origin account with no credential identity. Leaving that behavior implicit would make the conditional `AUTH-014` policy ambiguous.  
+Decision: Kivro permits a Google-origin account to add a first-party password by explicitly requesting a one-use, expiring email recovery link and setting a new password through that link. The UI explains this behavior. The flow preserves the existing canonical account ID and Google provider subject, and uses the same rate limits, private encrypted mail outbox and password hash policy as ordinary recovery.  
+Consequences: The conditional policy is enabled and must be tested. A local PostgreSQL/Mailpit integration test seeds a verified Google-origin identity, requests and consumes the link, and confirms one account with both identities. Real signed Google OIDC creation/linking and account-takeover E2E remain separate open gates.  
+Master Spec references: §577; AUTH-011–AUTH-014, AUTH-019.
+
+### DEC-IMPL-005 --- Keep the full dependency graph in the Worker-local package
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: §110 requires an immutable dependency graph snapshot for each capability version. The graph can contain seller-local resource names and credential references that are unnecessary in buyer or public cloud views. A public permission category also cannot detect a changed file ID, credential, tool or network destination between versions.  
+Decision: A strict, versioned Worker-local capability package contains the full graph, internal permission policy and execution manifest. The cloud candidate carries a canonical package hash, graph hash, and sanitized projections. Candidate construction derives those fields from one validated package rather than accepting caller-supplied hashes. Seller review compares the internal security surface at reference level; changed file/credential IDs, skills, tools, resource grants, network destinations, graph nodes and inference configuration require fresh review. A later publish service must verify the stored package/hash, seller consents, security tests and payout/readiness before creating a published version.  
+Consequences: The draft schema and pure diff are testable now without exposing seller-local names or claiming publication. Durable local package persistence, cloud-to-Worker hash attestation and real publish/rollback E2E remain open.  
+Master Spec references: §§96, 107, 110–114, 306–311; DEC-003, DEC-SELLERUX-002, DEC-SELLERUX-006.
+
+### DEC-IMPL-006 --- Offline Docker canary before any OpenClaw or paid execution
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: M04 must establish a real isolation boundary before M07 can execute hostile buyer input. The installed OpenClaw version and a matching runtime image have not passed effective sandbox tests.  
+Decision: The first executable sandbox adapter accepts only a platform-approved digest-pinned image and a strict offline plan. It creates an ephemeral Docker container with no network, read-only root, non-root user, no-new-privileges, seccomp, all capabilities dropped, bounded memory/CPU/PIDs/time/output, and exactly one read-only per-attempt input mount. It inspects effective Docker settings before start and removes the container on success/failure. Docker, image or policy failure blocks execution with no host fallback. A cached Alpine digest is used solely as an adversarial isolation fixture, never as proof of OpenClaw compatibility or a paid-job runtime.  
+Consequences: Network/inference/resource jobs remain blocked until M06 brokers, and paid OpenClaw execution remains blocked until M07 validates a pinned compatible runtime image, package hash, Worker identity, secured payment and full file/result flow. M05 must design staging readable by the container's non-root UID without exposing seller paths.  
+Master Spec references: §§16–21, 70–73; DEC-002, DEC-003, DEC-006, DEC-LOCAL-003.
+
+### DEC-IMPL-007 --- Do not rely on Docker cp for tmpfs results
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: M04 uses a size-bounded `/job/output` tmpfs. Real Docker experiments showed `docker cp` could not see a file written there either after container exit or while it remained running; ordinary `docker exec` inside the running container could read it. Treating a successful sandbox exit as a retrievable result would silently lose buyer deliverables. An unrestricted host bind output would lose the tmpfs byte ceiling.  
+Decision: Paid result delivery remains disabled until M05 implements a bounded transfer from the isolated container to private attempt staging, validates every declared output and hash, uploads to private object storage, and M07 commits authoritative finalization. Do not substitute unbounded host bind output or claim `docker cp` provides the required transfer. The current stopped-attempt collector validates a staged fixture only.  
+Consequences: The transfer mechanism needs a separately tested supervisor/stream or quota-bound volume design with descendant termination, path validation and cleanup. The M05/M07 gates remain OPEN.  
+Master Spec references: §§60, 70, 211–218; DEC-003, DEC-LOCAL-003, DEC-ASYNC-001–005.
+
+### DEC-IMPL-008 --- Bounded tmpfs volume and read-only collector for stopped output
+
+Date: 2026-10-06  
+Status: Accepted implementation safeguard  
+Context: A container's own `/job/output` tmpfs is unavailable to `docker cp` after exit. A disposable Docker experiment showed that a local-driver tmpfs **volume** with explicit size, UID/GID and private mode remains readable after the job exits while a separate read-only collector container keeps it mounted. This avoids an unbounded host bind.  
+Decision: M05 mounts the size-limited, non-root-owned tmpfs volume only at `/job/output` in the isolated job container and read-only in a pinned, offline collector container. The adapter inspects the effective volume/container settings before starting work. After job exit, it streams `docker cp` **from the collector**, bounds the tar stream and logical file bytes, rejects links/traversal/special entries, validates the declared result, and destroys the job, collector, volume and local staging on success or failure. Verified output is streamed to private object storage and read back for hash validation. The Worker must still wait for M07's authoritative cloud commit before any paid result is delivered or settled.  
+Consequences: Docker and the collector image are mandatory prerequisites for this output profile. This local test does not prove hostile OpenClaw descendant handling, authenticated asset APIs, retention, provider deployment policy or payment finalization; those gates remain OPEN.  
+Master Spec references: §§60, 70, 211–218; DEC-003, DEC-IMPL-007, DEC-ASYNC-001–005.
+
+### DEC-IMPL-009 --- Pinned authenticated SeaweedFS for ordinary local object storage
+
+Date: 2026-10-06  
+Status: Accepted local development composition  
+Context: The locally cached MinIO fixture passed the S3 adapter checks, but its registry digest was unavailable for fresh clone/CI pulls. The specification permits MinIO **or equivalent** S3-compatible local storage. An official SeaweedFS multi-platform digest is remotely pullable. Its [S3 command documentation](https://github.com/seaweedfs/seaweedfs/blob/master/weed/command/s3.go) says an absent identity configuration can allow unauthenticated access, so the local composition must supply an explicit identity file and verify denial.  
+Decision: Local Compose uses `chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d` with a generated private static S3 identity, loopback-only published port and private named data volume. Setup creates the bucket and refuses a successful anonymous read. A real adapter test proves signed PUT/GET, checksum mismatch denial and anonymous denial. MinIO remains an extra conformance fixture, not the required fresh-clone image. Netsons/AWS still use the same provider-neutral storage port and shared asset policy.  
+Consequences: This is a local development service, not a hosted storage recommendation. CI must pull the digest and run the same private-storage test. Deployment bucket policy and both-profile conformance remain OPEN.  
+Master Spec references: §§218, 225–228, 555–557; DEC-LOCAL-001, DEC-LOCAL-004, DEC-ASYNC-001–005.
 
 ## DEC-LOCAL-001 --- Docker Compose local infrastructure
 
