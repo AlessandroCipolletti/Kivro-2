@@ -84,6 +84,7 @@ export interface LocalJobSnapshot {
   readonly jobId: string;
   readonly executionId: string;
   readonly attemptId: string;
+  readonly capabilityVersionId: string;
   readonly controlPlaneId: string;
   readonly pauseSupport: PauseSupport;
   readonly leaseExpiresAt: string;
@@ -124,6 +125,7 @@ export class WorkerJobControl {
     const row = this.row(jobId);
     return {
       jobId, executionId: row.execution_id, attemptId: row.attempt_id,
+      capabilityVersionId:row.capability_version_id,
       controlPlaneId: row.control_plane_id, pauseSupport: row.pause_support,
       leaseExpiresAt: row.lease_expires_at,
       status: row.status, pauseExpiresAt: row.pause_expires_at,

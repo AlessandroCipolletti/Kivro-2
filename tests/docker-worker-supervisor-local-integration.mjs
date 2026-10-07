@@ -1,7 +1,7 @@
 /* global Buffer, setTimeout, clearTimeout */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -17,12 +17,87 @@ import { WorkerExecutionSupervisor } from '../dist/apps/worker/src/execution-sup
 import { WorkerLocalState } from '../dist/apps/worker/src/local-state.js';
 import { WorkerJobControl, newLocalJobCommand } from '../dist/apps/worker/src/job-control.js';
 import { WorkerResultOutbox } from '../dist/apps/worker/src/result-outbox.js';
+import { runRepresentativePackageTest } from
+  '../dist/apps/worker/src/import-review-runner.js';
+import { WorkerCapabilityPackageStore } from
+  '../dist/apps/worker/src/capability-package-store.js';
 
 const docker = execFileSync('which', ['docker'], { encoding: 'utf8' }).trim();
 const image = JSON.parse(execFileSync(docker, ['image', 'inspect', 'kivro-openclaw-runtime:m07',
   '--format', '{{json .RepoDigests}}'], { encoding: 'utf8' }))
   .find((value) => value.startsWith('kivro-openclaw-runtime@sha256:'));
-const collector = 'alpine@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b';
+const collector = image;
+
+test('a seller-selected skill package passes an actual isolated OpenClaw review job before local installation',
+  {timeout:120_000},async()=>{
+    const root=mkdtempSync(join(tmpdir(),'kivro-import-review-'));
+    const {mkdirSync}=await import('node:fs');
+    const stateDir=join(root,'state'),attemptRoot=join(root,'attempts');
+    mkdirSync(stateDir,{mode:0o700});mkdirSync(attemptRoot,{mode:0o700});
+    const runtimeRoot=resolve('runtime/openclaw'),approvalPath=join(root,'approval.json');
+    writeFileSync(approvalPath,JSON.stringify({schemaVersion:1,image,
+      openClawVersion:'2026.8.2',runtimeSourceHash:await hashOpenClawRuntimeSource(runtimeRoot),
+      conformanceSuite:'m07-openclaw-execution/1',
+      conformancePassedAt:new Date().toISOString()}),{mode:0o600});
+    const base=fixture();
+    const skillBytes=Buffer.from('---\nname: selected\ndescription: Answer buyer questions only.\n---\nUse the declared output contract.\n');
+    const skillHash=hashCanonicalJson([{path:'SKILL.md',sha256:`sha256:${createHash('sha256')
+      .update(skillBytes).digest('hex')}`}]);
+    const graphNode=(id,type,dependsOn=[])=>({id,type,name:id,
+      requirement:'REQUIRED',sensitivity:'LOW',discoveredFrom:['SELLER_DECLARATION'],
+      dependsOn,marketplaceSupport:'UNDETERMINED',confidence:'CONFIRMED',
+      selected:true,health:'UNKNOWN'});
+    const pkg={...base.pkg,workerManifest:{...base.pkg.workerManifest,
+      skills:[{name:'selected',contentHash:skillHash}]},
+      dependencyGraph:{graphVersion:1,rootId:'skill',inference:{mode:'REMOTE_PROVIDER',
+        dependencyId:'model',provider:'synthetic',model:'broker',credentialRef:'credential',
+        billingOwner:'SELLER'},alternatives:[],nodes:[
+        graphNode('skill','SKILL',['model']),graphNode('model','AI_MODEL',['provider','credential']),
+        graphNode('provider','AI_PROVIDER'),graphNode('credential','CREDENTIAL')]},
+      dependencySnapshot:[{id:'skill',version:'selected-skill',contentHash:skillHash}]};
+    const skills=[{name:'selected',files:[{path:'SKILL.md',
+      bytesBase64:skillBytes.toString('base64')}]}];
+    const readiness={async check(){return {ready:false,checkedAt:new Date().toISOString(),
+      blockingReasons:['REVIEW_ONLY']};}};
+    const local=new WorkerLocalState(stateDir,readiness);
+    const dockerControl=new DockerJobControlAdapter(docker);
+    const jobs=new WorkerJobControl(stateDir,dockerControl,readiness,
+      {maxPauseDurationMs:60_000});
+    const packages=new WorkerCapabilityPackageStore(stateDir);
+    let providerCalls=0;
+    const completion=new SellerCompletionBroker({async resolve(){return 'synthetic-key';}},
+      {providerId:'synthetic',async complete(){providerCalls++;
+        return {id:randomUUID(),object:'chat.completion',created:Math.floor(Date.now()/1000),
+          model:'broker',choices:[{index:0,finish_reason:providerCalls===1?'tool_calls':'stop',
+            message:providerCalls===1?{role:'assistant',content:null,tool_calls:[{
+              id:'call_kivro_result',type:'function',function:{name:'kivro_submit_result',
+                arguments:JSON.stringify({fields:{answer:{type:'SHORT_TEXT',value:'ready'}}})}}]}:
+              {role:'assistant',content:'Submitted.'}}],
+          usage:{prompt_tokens:12,completion_tokens:4,total_tokens:16}};
+      }},{async reserve(){},async settle(){}});
+    try{
+      const result=await runRepresentativePackageTest(pkg,skills,base.accepted.payload,{
+        attemptRoot,dockerExecutable:docker,approvedImage:image,
+        imageApproval:new OpenClawImageApproval(approvalPath,runtimeRoot,docker),
+        sandbox:new DockerSandboxAdapter({dockerExecutable:docker,approvedImage:image,
+          collectorImage:collector,attemptRoot}),docker:dockerControl,
+        jobControl:jobs,localState:local,brokerPorts:{completion},
+        async checkDependencies(){return {ready:true,
+          verifiedNodeIds:['skill','model','provider','credential'],
+          evidence:{skillHash,credentialPresent:true,providerModel:'synthetic/broker'}};}});
+      assert.equal(providerCalls,2);
+      assert.equal(result.reviewedPackage.dependencyGraph.nodes.every((node)=>
+        node.health==='READY'),true);
+      assert.match(result.securityProbes,/^sha256:[a-f0-9]{64}$/);
+      assert.match(result.representativeJob,/^sha256:[a-f0-9]{64}$/);
+      packages.installReviewed(result.reviewedPackage,{actorId:'local:seller',
+        approvedAt:new Date().toISOString(),reviewEvidenceHash:hashCanonicalJson(result)},skills);
+      assert.equal(packages.loadReviewedSkills(pkg.capabilityVersionId)[0].name,'selected');
+      assert.equal(jobs.snapshots().filter((item)=>item.controlPlaneId==='local-review')
+        .every((item)=>item.status==='STOPPED'),true);
+    }finally{packages.close();jobs.close();local.close();
+      rmSync(root,{recursive:true,force:true});}
+  });
 
 function fixture() {
   const workerDeviceId = randomUUID(), capabilityId = randomUUID(), capabilityVersionId = randomUUID();
@@ -135,12 +210,12 @@ test('Worker supervisor admits, executes, validates, and finalizes one real offl
       storageOrigin: 'https://storage.example.invalid', approvedImage: image,
       imageApproval: new OpenClawImageApproval(approvalPath, runtimeRoot, docker),
       localWorkerDeviceId: offer.workerDeviceId, authenticatedControlPlaneId: offer.controlPlaneId,
-      reviewedSkills: [] });
+    });
     try {
-      await assert.rejects(supervisor.execute({ ...offer, paymentSecured: false }, pkg));
+      await assert.rejects(supervisor.execute({ ...offer, paymentSecured: false }, pkg, []));
       assert.equal(inferenceCalls, 0);
       assert.deepEqual(transitions, []);
-      await assert.rejects(supervisor.execute(offer, pkg), /ACK_LOST/);
+      await assert.rejects(supervisor.execute(offer, pkg, []), /ACK_LOST/);
       assert.equal(inferenceCalls, 2);
       assert.equal(finalizations, 1);
       assert.deepEqual(transitions, ['ACCEPTED->STARTING', 'STARTING->RUNNING',
@@ -167,7 +242,8 @@ test('accepted payload drift fails before Docker and reports a terminal policy f
     readiness: { async check() { return { ready: true, checkedAt: new Date().toISOString(),
       policyValidationHash: offer.policyValidationHash, sandboxVerified: true,
       requiredSecretsReady: true, runtimeHealthy: true, capacityAvailable: true }; } },
-    imageApproval: { async assertApprovedImage() {} }, approvedImage: image,
+    imageApproval: { async assertApprovedImage() {return {openClawVersion:'2026.8.2'};} },
+    approvedImage: image,
     outbox: { load() { return null; } },
     cloud: { async accept() {}, async acceptedInput() { return { ...accepted,
       outputContract: { schemaVersion: 1, fields: [{ key: 'secret', label: 'Secret',
@@ -176,7 +252,7 @@ test('accepted payload drift fails before Docker and reports a terminal policy f
     sandbox: { async runWithOutputControlled() { throw new Error('DOCKER_MUST_NOT_START'); } },
     localWorkerDeviceId: offer.workerDeviceId, authenticatedControlPlaneId: offer.controlPlaneId });
   try {
-    await assert.rejects(supervisor.execute(offer, pkg), { code: 'PAYLOAD_MISMATCH' });
+    await assert.rejects(supervisor.execute(offer, pkg, []), { code: 'PAYLOAD_MISMATCH' });
     assert.deepEqual(failures, [{ from: 'ACCEPTED', to: 'FAILED_POLICY',
       reason: 'PAYLOAD_MISMATCH' }]);
   } finally { localState.close(); rmSync(root, { recursive: true, force: true }); }
@@ -224,9 +300,9 @@ test('a real OpenClaw inference is quiesced before PAUSED and cannot spend again
       storageOrigin: 'https://storage.example.invalid', approvedImage: image,
       imageApproval: new OpenClawImageApproval(approvalPath, runtimeRoot, docker),
       localWorkerDeviceId: offer.workerDeviceId, authenticatedControlPlaneId: offer.controlPlaneId,
-      reviewedSkills: [] });
+    });
     try {
-      const execution = supervisor.execute(offer, pkg).then(() => 'COMPLETED', (error) => error);
+      const execution = supervisor.execute(offer, pkg, []).then(() => 'COMPLETED', (error) => error);
       let timeout;
       try {
         await Promise.race([providerStarted, new Promise((_, reject) => {

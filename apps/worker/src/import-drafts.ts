@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 import { canonicalJson, hashCanonicalJson } from '../../../packages/contracts/src/canonical-json.js';
@@ -13,6 +14,17 @@ const selection = z.strictObject({
   selected: z.boolean(), expectedRevision: z.number().int().nonnegative(),
   actedAt: z.iso.datetime(),
 });
+const reference = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/);
+const inferenceAction = z.discriminatedUnion('mode', [
+  z.strictObject({ actionId: uuid, draftId: uuid, sellerAccountId: uuid,
+    expectedRevision: z.number().int().nonnegative(), actedAt: z.iso.datetime(),
+    mode: z.literal('REMOTE_PROVIDER'), provider: reference, model: z.string().min(1).max(160),
+    credentialRef: reference }),
+  z.strictObject({ actionId: uuid, draftId: uuid, sellerAccountId: uuid,
+    expectedRevision: z.number().int().nonnegative(), actedAt: z.iso.datetime(),
+    mode: z.literal('LOCAL'), provider: reference, model: z.string().min(1).max(160),
+    endpointRef: reference }),
+]);
 
 const schema = `
 CREATE TABLE IF NOT EXISTS import_drafts (
@@ -39,6 +51,20 @@ CREATE TRIGGER IF NOT EXISTS import_selection_no_update BEFORE UPDATE ON import_
   BEGIN SELECT RAISE(ABORT, 'import selection is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS import_selection_no_delete BEFORE DELETE ON import_selection_actions
   BEGIN SELECT RAISE(ABORT, 'import selection is append-only'); END;
+CREATE TABLE IF NOT EXISTS import_inference_actions (
+  action_id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES import_drafts(id) ON DELETE RESTRICT,
+  seller_account_id TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  resulting_graph_json TEXT NOT NULL,
+  resulting_revision INTEGER NOT NULL CHECK (resulting_revision > 0),
+  resulting_updated_at TEXT NOT NULL,
+  acted_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS import_inference_no_update BEFORE UPDATE ON import_inference_actions
+  BEGIN SELECT RAISE(ABORT, 'inference choice is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS import_inference_no_delete BEFORE DELETE ON import_inference_actions
+  BEGIN SELECT RAISE(ABORT, 'inference choice is append-only'); END;
 CREATE TABLE IF NOT EXISTS import_permission_consents (
   id TEXT PRIMARY KEY,
   seller_account_id TEXT NOT NULL,
@@ -59,6 +85,49 @@ type DraftRow = {
 };
 type ActionRow = { request_hash: string; resulting_graph_json: string; resulting_revision: number; resulting_updated_at: string };
 type ConsentRow = { payload_json: string; payload_hash: string };
+
+function inferenceNodeId(type: string, name: string): string {
+  return `dep:inference:${type}:${createHash('sha256').update(name).digest('hex').slice(0, 24)}`;
+}
+
+/** Seller declaration adds candidates only. It cannot select, authorize or test an inference resource. */
+function withInferenceCandidates(graph: DependencyGraph,
+  action: z.infer<typeof inferenceAction>): DependencyGraph {
+  if (graph.inference !== null) throw new ImportDraftError('CONFLICT', 'Inference is already configured; start a new draft to change it');
+  const root = graph.nodes.find((node) => node.id === graph.rootId);
+  if (!root) throw new ImportDraftError('INVALID_ARGUMENT', 'Draft root is missing');
+  const modelId = inferenceNodeId('model', `${action.provider}\0${action.model}`);
+  const providerId = inferenceNodeId('provider', action.provider);
+  const endpointId = action.mode === 'LOCAL' ? inferenceNodeId('endpoint', action.endpointRef) : null;
+  const credentialId = action.mode === 'REMOTE_PROVIDER' ? inferenceNodeId('credential', action.credentialRef) : null;
+  const ids = [modelId, providerId, endpointId, credentialId].filter((value): value is string => value !== null);
+  if (ids.some((id) => graph.nodes.some((node) => node.id === id))) {
+    throw new ImportDraftError('CONFLICT', 'Inference dependency collides with existing draft');
+  }
+  const candidate = (id: string, type: 'AI_PROVIDER' | 'AI_MODEL' | 'CREDENTIAL' | 'LOCAL_SERVICE',
+    name: string, dependsOn: string[]) => ({ id, type, name, requirement: 'REQUIRED' as const,
+    sensitivity: type === 'CREDENTIAL' ? 'HIGH' as const : 'MEDIUM' as const,
+    discoveredFrom: ['SELLER_DECLARATION' as const], dependsOn,
+    marketplaceSupport: 'UNDETERMINED' as const, confidence: 'UNKNOWN' as const,
+    selected: false, health: 'UNKNOWN' as const });
+  const dependency = endpointId ?? credentialId;
+  if (!dependency) throw new ImportDraftError('INVALID_ARGUMENT', 'Inference route is incomplete');
+  return DependencyGraphSchema.parse({ ...graph,
+    inference: action.mode === 'REMOTE_PROVIDER'
+      ? { mode: action.mode, dependencyId: modelId, provider: action.provider,
+        model: action.model, credentialRef: credentialId, billingOwner: 'SELLER' }
+      : { mode: action.mode, dependencyId: modelId, provider: action.provider,
+        model: action.model, endpointRef: endpointId, billingOwner: 'SELLER' },
+    nodes: [ ...graph.nodes.map((node) => node.id === graph.rootId
+      ? { ...node, dependsOn: [...node.dependsOn, modelId] } : node),
+      candidate(providerId, 'AI_PROVIDER', action.provider, []),
+      candidate(modelId, 'AI_MODEL', action.model, [providerId, dependency]),
+      action.mode === 'REMOTE_PROVIDER'
+        ? candidate(credentialId!, 'CREDENTIAL', action.credentialRef, [])
+        : candidate(endpointId!, 'LOCAL_SERVICE', action.endpointRef, []),
+    ],
+  });
+}
 
 export interface ImportDraft {
   readonly id: string;
@@ -173,6 +242,38 @@ export class SellerImportDraftStore {
       this.db.prepare(`INSERT INTO import_selection_actions
         (action_id,draft_id,seller_account_id,request_hash,resulting_graph_json,resulting_revision,resulting_updated_at,acted_at)
         VALUES (?,?,?,?,?,?,?,?)`).run(action.actionId, action.draftId, action.sellerAccountId,
+        requestHash, graphJson, revision, now, action.actedAt);
+      this.db.exec('COMMIT');
+      return toDraft({ ...current, graph_json: graphJson, graph_hash: graphHash, revision, updated_at: now });
+    } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+  }
+
+  configureInference(rawAction: unknown): Readonly<ImportDraft> {
+    const action = inferenceAction.parse(rawAction);
+    const requestHash = hashCanonicalJson(action);
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const prior = this.db.prepare('SELECT * FROM import_inference_actions WHERE action_id = ?')
+        .get(action.actionId) as ActionRow | undefined;
+      const current = this.db.prepare('SELECT * FROM import_drafts WHERE id = ? AND seller_account_id = ?')
+        .get(action.draftId, action.sellerAccountId) as DraftRow | undefined;
+      if (!current) throw new ImportDraftError('NOT_FOUND', 'Draft not found');
+      if (prior) {
+        if (prior.request_hash !== requestHash) throw new ImportDraftError('CONFLICT', 'Inference action identifier was reused');
+        this.db.exec('COMMIT');
+        return toDraft({ ...current, graph_json: prior.resulting_graph_json,
+          graph_hash: hashCanonicalJson(JSON.parse(prior.resulting_graph_json)),
+          revision: prior.resulting_revision, updated_at: prior.resulting_updated_at });
+      }
+      if (current.revision !== action.expectedRevision) throw new ImportDraftError('CONFLICT', 'Draft revision changed');
+      const nextGraph = withInferenceCandidates(DependencyGraphSchema.parse(JSON.parse(current.graph_json)), action);
+      const graphJson = canonicalJson(nextGraph), graphHash = hashCanonicalJson(nextGraph);
+      const revision = current.revision + 1, now = new Date().toISOString();
+      this.db.prepare('UPDATE import_drafts SET graph_json=?,graph_hash=?,revision=?,updated_at=? WHERE id=?')
+        .run(graphJson, graphHash, revision, now, action.draftId);
+      this.db.prepare(`INSERT INTO import_inference_actions(action_id,draft_id,seller_account_id,
+        request_hash,resulting_graph_json,resulting_revision,resulting_updated_at,acted_at)
+        VALUES(?,?,?,?,?,?,?,?)`).run(action.actionId, action.draftId, action.sellerAccountId,
         requestHash, graphJson, revision, now, action.actedAt);
       this.db.exec('COMMIT');
       return toDraft({ ...current, graph_json: graphJson, graph_hash: graphHash, revision, updated_at: now });

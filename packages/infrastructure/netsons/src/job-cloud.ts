@@ -29,6 +29,11 @@ const transitionSchema = z.strictObject({
   paymentReservationId: z.null(), resultManifestId: z.null(),
 });
 const ok = z.strictObject({ ok: z.literal(true) });
+const finalDisposition=z.union([ok,z.strictObject({ok:z.literal(false),
+  code:z.literal('RESULT_REJECTED')})]);
+const preparedAsset=z.strictObject({assetId:uuid,
+  objectKey:z.string().regex(/^private\/assets\/[a-f0-9-]{36}\/[a-f0-9-]{36}$/),
+  uploadUrl:z.url(),uploadHeaders:z.record(z.string(),z.string())});
 
 /** Netsons HTTPS implementation of the provider-neutral Worker job service port. */
 export class NetsonsWorkerJobCloud {
@@ -72,6 +77,17 @@ export class NetsonsWorkerJobCloud {
     return result.leaseExpiresAt;
   }
 
+  async prepareResultAsset(offer:JobOffer,asset:{assetId:string;fieldKey:string;
+    extension:string;sizeBytes:number;sha256:string;detectedMimeType:string}){
+    const binding=this.binding(offer);
+    const result=preparedAsset.parse(await this.transport.postJobRpc('PREPARE_RESULT_ASSET',
+      {...binding,...asset}));
+    if(result.assetId!==asset.assetId||
+      result.objectKey.split('/')[2]!==asset.assetId)
+      throw new WorkerPollingError('PROTOCOL_MISMATCH');
+    return result;
+  }
+
   async finalizeResult(raw: unknown): Promise<void> {
     const result = z.strictObject({ resultManifestId: uuid, jobId: uuid, executionId: uuid,
       attemptId: uuid, workerDeviceId: uuid, controlPlaneId: z.string().min(1),
@@ -80,7 +96,9 @@ export class NetsonsWorkerJobCloud {
     if (result.controlPlaneId !== this.transport.controlPlaneId) {
       throw new WorkerPollingError('WRONG_CONTROL_PLANE');
     }
-    ok.parse(await this.transport.postJobRpc('FINALIZE_RESULT', result));
+    // A cloud safety rejection is a terminal acknowledgement. Retrying the
+    // same unsafe file can never make it deliverable or restore payment.
+    finalDisposition.parse(await this.transport.postJobRpc('FINALIZE_RESULT', result));
   }
 
   async failExecution(offer: JobOffer, input: { from: 'ACCEPTED' | 'STARTING' | 'RUNNING' |

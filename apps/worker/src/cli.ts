@@ -1,9 +1,14 @@
 import { execFileSync } from 'node:child_process';
-import { readSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { closeSync, constants, fstatSync, openSync, readSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { createInterface } from 'node:readline/promises';
+import { homedir, hostname, platform } from 'node:os';
 import { join } from 'node:path';
 import { OpenClawDiscoveryAdapter } from '../../../packages/openclaw-adapter/src/discovery.js';
 import { LocalOpenClawCommandRunner } from '../../../packages/openclaw-adapter/src/command-runner.js';
+import { ReadOnlyOpenClawDiscovery } from '../../../packages/openclaw-adapter/src/read-only-discovery.js';
+import { buildSuggestedDependencyGraph } from '../../../packages/openclaw-adapter/src/dependency-candidates.js';
+import { analyzeDependencyGraph } from '../../../packages/domain/src/dependency-graph.js';
 import { checkOpenClawCompatibility } from '../../../packages/openclaw-adapter/src/compatibility.js';
 import { WorkerLocalState, WorkerStateError, openPrivateWorkerSqlite } from './local-state.js';
 import { EncryptedDeviceIdentityStore, KeychainDeviceIdentityStore } from './device-identity.js';
@@ -11,6 +16,14 @@ import { WorkerJobControl, newLocalJobCommand } from './job-control.js';
 import { DockerJobControlAdapter } from '../../../packages/sandbox-adapter/src/docker.js';
 import { localHealth, localResumeReadiness } from './health.js';
 import { KeychainSellerCredentialVault } from './seller-credential-vault.js';
+import { workerPairingProofBytes } from '../../../packages/persistence/src/worker-pairing.js';
+import { unlockIdentity } from './control-sync-runtime.js';
+import { SellerImportDraftStore } from './import-drafts.js';
+import { pairedSellerForDevice, rememberPairedSeller } from './paired-seller.js';
+import { prepareSelectedPackage, WorkerUnreviewedPackageStore } from './import-package.js';
+import { runWorkerImportReview } from './import-review-command.js';
+import { runGuidedImport } from './guided-import.js';
+import { readLocalPermissionReview } from './import-permission-review.js';
 
 interface Check {
   readonly name: string;
@@ -48,7 +61,216 @@ function runningJobCount(): number {
 }
 
 function help(): string {
-  return 'Usage: kivro-worker pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | stop --all --confirm | job pause|resume|cancel|status <job-id> | credential check <seller:ref> | credential set <seller:ref> --from-fd <fd> | health [--json] | doctor [--json] | device status [--json]';
+  return 'Usage: kivro-worker pair <code> | discover [--json] | import guided | import start <skill-name> | import show <draft-id> [--json] | import select <draft-id> <dependency-id> --allow|--deny | import inference <draft-id> remote <provider> <model> <seller:credential-ref> | import inference <draft-id> local <provider> <model> <endpoint-ref> | import package <draft-id> <private-config.json> | import review <version-id> <private-review.json> | import review-retry <version-id> | import permissions <version-id> [--against <prior-version-id>] | pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | stop --all --confirm | job pause|resume|cancel|status <job-id> | credential check <seller:ref> | credential set <seller:ref> --from-fd <fd> | health [--json] | doctor [--json] | device status [--json]';
+}
+
+function readPrivateAuthoring(path: string): unknown {
+  if (constants.O_NOFOLLOW === undefined) throw new Error('PRIVATE_CONFIG_UNAVAILABLE');
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || stat.size < 2 || stat.size > 65_536 ||
+      (stat.mode & 0o077) !== 0 ||
+      (typeof process.getuid === 'function' && stat.uid !== process.getuid())) {
+      throw new Error('PRIVATE_CONFIG_UNSAFE');
+    }
+    const bytes=Buffer.alloc(65_537);let used=0;
+    while(used<bytes.length){
+      const count=readSync(fd,bytes,used,bytes.length-used,used);
+      if(count===0)break;
+      used+=count;
+    }
+    const after=fstatSync(fd);
+    if(used>65_536||used!==stat.size||after.dev!==stat.dev||
+      after.ino!==stat.ino||after.mtimeMs!==stat.mtimeMs)
+      throw new Error('PRIVATE_CONFIG_CHANGED');
+    return JSON.parse(bytes.subarray(0,used).toString('utf8'));
+  } finally { closeSync(fd); }
+}
+
+async function discover(args: readonly string[], write: (line: string) => void): Promise<number> {
+  if (args.length > 1 || args.length === 1 && args[0] !== '--json') {
+    write(help()); return 2;
+  }
+  try {
+    const snapshot = await new ReadOnlyOpenClawDiscovery().scan();
+    if (args[0] === '--json') write(JSON.stringify(snapshot));
+    else write([
+      `Read-only OpenClaw discovery: ${snapshot.status}`,
+      ...snapshot.skills.map((skill) =>
+        `${skill.name} (${skill.source}; metadata ${skill.metadata}; readiness unknown${skill.ambiguous ? '; ambiguous' : ''})`),
+      ...snapshot.issues.map((issue) => `Uncertainty: ${issue}`),
+      'Discovery is local and grants no Kivro permissions. Select and approve resources separately before publication.',
+    ].join('\n'));
+    return snapshot.status === 'unavailable' ? 1 : 0;
+  } catch {
+    write('READ_ONLY_DISCOVERY_UNAVAILABLE'); return 1;
+  }
+}
+
+function pairingEndpoint(): URL {
+  const configured=process.env.KIVRO_CLOUD_URL;
+  if(!configured)throw new Error('CLOUD_URL_NOT_CONFIGURED');
+  const url=new URL('/api/seller/pairing/redeem',configured);
+  const local=['localhost','127.0.0.1','[::1]'].includes(url.hostname);
+  if(url.protocol!=='https:'&&!(local&&url.protocol==='http:'&&
+    process.env.KIVRO_ALLOW_LOCAL_HTTP==='true'&&process.env.NODE_ENV!=='production'))
+    throw new Error('PAIRING_REQUIRES_HTTPS');
+  return url;
+}
+
+async function pairDevice(args:readonly string[],write:(line:string)=>void):Promise<number>{
+  if(args.length!==1||! /^[A-F0-9]{8}(?:-[A-F0-9]{8}){3}$/.test(args[0]??'')){
+    write(help());return 2;
+  }
+  try{
+    const endpoint=pairingEndpoint();
+    const directory=stateDirectory();
+    const local=openPrivateWorkerSqlite(directory,'worker.sqlite');local.close();
+    const keychain=new KeychainDeviceIdentityStore(directory);
+    const status=deviceStatus();
+    if(status.status==='INVALID')throw new Error('DEVICE_IDENTITY_INVALID');
+    if(status.status==='MISSING')await keychain.create();
+    const identity=await unlockIdentity(directory);
+    const code=args[0]!;
+    const proof=workerPairingProofBytes(code,identity.deviceId,identity.publicKeyPem);
+    const response=await fetch(endpoint,{method:'POST',redirect:'error',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({code,deviceId:identity.deviceId,
+        publicKeyPem:identity.publicKeyPem,
+        possessionSignature:identity.signChallenge(proof).toString('base64url'),
+        name:hostname().slice(0,120)||'Seller computer',
+        platform:platform()==='darwin'?'MACOS':platform()==='win32'?'WINDOWS':'LINUX',
+        workerRelease:process.env.KIVRO_WORKER_RELEASE??'0.0.0-dev'}),
+      signal:AbortSignal.timeout(10_000)});
+    const body=await response.json() as {code?:string;deviceId?:string;
+      sellerAccountId?:string;sellerProfileId?:string};
+    if(!response.ok||body.deviceId!==identity.deviceId){
+      write(body.code??'PAIRING_FAILED');return 1;
+    }
+    rememberPairedSeller(directory,body);
+    write(`Worker paired: ${identity.deviceId}. Start the Worker control connection to report health.`);
+    return 0;
+  }catch(error){
+    write(error instanceof Error&&'code' in error&&typeof error.code==='string'?
+      error.code:error instanceof Error?error.message:'PAIRING_FAILED');return 1;
+  }
+}
+
+/** Drafts contain only the seller's selected skill graph and never leave this Worker. */
+async function importCommand(args:readonly string[],write:(line:string)=>void):Promise<number>{
+  const status=deviceStatus();
+  if(status.status!=='METADATA_PRESENT'||!status.deviceId){
+    write('DEVICE_IDENTITY_UNAVAILABLE');return 1;
+  }
+  const owner=pairedSellerForDevice(stateDirectory(),status.deviceId);
+  if(!owner){write('PAIRING_REQUIRED');return 1;}
+  const store=new SellerImportDraftStore(stateDirectory());
+  try{
+    if(args[0]==='permissions'&&
+      (args.length===2||args.length===4&&args[2]==='--against')){
+      const result=readLocalPermissionReview(stateDirectory(),status.deviceId,
+        args[1]!,args.length===4?args[3]:undefined);
+      write(JSON.stringify(result,null,2));
+      return 0;
+    }
+    if(args[0]==='guided'&&args.length===1){
+      if(!process.stdin.isTTY||!process.stderr.isTTY){write('INTERACTIVE_REQUIRED');return 2;}
+      const signer=await unlockIdentity(stateDirectory());
+      if(signer.deviceId!==status.deviceId)throw new Error('DEVICE_IDENTITY_MISMATCH');
+      const terminal=createInterface({input:process.stdin,output:process.stderr});
+      try{
+        await runGuidedImport({stateDir:stateDirectory(),
+          sellerAccountId:owner.sellerAccountId,signer,
+          ask:(prompt)=>terminal.question(prompt),write});
+      }finally{terminal.close();}
+      return 0;
+    }
+    if(args[0]==='start'&&args.length===2){
+      const discovery=await new ReadOnlyOpenClawDiscovery().scan();
+      const graph=buildSuggestedDependencyGraph(discovery,args[1]!);
+      const draft=store.createDraft(randomUUID(),owner.sellerAccountId,graph);
+      write(JSON.stringify({draftId:draft.id,graphHash:draft.graphHash,
+        selectedDependencies:0,readiness:'UNKNOWN',
+        discoveryIssues:discovery.issues,
+        dependencies:draft.graph.nodes.map((node)=>({id:node.id,name:node.name,
+          type:node.type,requirement:node.requirement,sensitivity:node.sensitivity,
+          confidence:node.confidence,health:node.health})),
+        next:'Review each dependency locally. Use import select <draft-id> <dependency-id> --allow or --deny. No resource is approved automatically.'}));
+      return 0;
+    }
+    if(args[0]==='show'&&(args.length===2||args.length===3&&args[2]==='--json')){
+      const draft=store.getDraft(args[1]!,owner.sellerAccountId);
+      const analysis=analyzeDependencyGraph(draft.graph);
+      write(args[2]==='--json'?JSON.stringify({draft,analysis}):[
+        `Local draft ${draft.id}, revision ${draft.revision}`,
+        ...draft.graph.nodes.map((node)=>`${node.selected?'SELECTED':'NOT SELECTED'} ${node.type} ${node.name} (${node.id}; ${node.health.toLowerCase()} health)`),
+        ...analysis.issues.map((issue)=>`Publication check: ${issue.code} (${issue.dependencyId})`),
+        'Selections are local review only. Publication requires separate permission consent and tests.',
+      ].join('\n'));
+      return 0;
+    }
+    if(args[0]==='select'&&args.length===4&&
+      (args[3]==='--allow'||args[3]==='--deny')){
+      const draft=store.getDraft(args[1]!,owner.sellerAccountId);
+      const next=store.applySelection({actionId:randomUUID(),draftId:draft.id,
+        sellerAccountId:owner.sellerAccountId,dependencyId:args[2],
+        selected:args[3]==='--allow',expectedRevision:draft.revision,
+        actedAt:new Date().toISOString()});
+      write(`Local selection recorded. Revision ${next.revision}. This does not grant runtime access or publish a capability.`);
+      return 0;
+    }
+    if(args[0]==='inference'&&args.length===6&&
+      (args[2]==='remote'||args[2]==='local')){
+      const draft=store.getDraft(args[1]!,owner.sellerAccountId);
+      const common={actionId:randomUUID(),draftId:draft.id,
+        sellerAccountId:owner.sellerAccountId,expectedRevision:draft.revision,
+        actedAt:new Date().toISOString(),provider:args[3]!,model:args[4]!};
+      const next=store.configureInference(args[2]==='remote'
+        ? {...common,mode:'REMOTE_PROVIDER',credentialRef:args[5]!}
+        : {...common,mode:'LOCAL',endpointRef:args[5]!});
+      write(JSON.stringify({draftId:next.id,revision:next.revision,
+        inference:next.graph.inference,
+        candidates:next.graph.nodes.filter((node)=>node.discoveredFrom.includes('SELLER_DECLARATION'))
+          .map((node)=>({id:node.id,type:node.type,name:node.name,selected:node.selected,
+            health:node.health})),
+        next:'These are unselected candidates. Review and select each required resource separately; configure dedicated credentials locally. Inference remains blocked until tested and explicitly consented.'}));
+      return 0;
+    }
+    if(args[0]==='package'&&args.length===3){
+      const draft=store.getDraft(args[1]!,owner.sellerAccountId);
+      const authored=readPrivateAuthoring(args[2]!);
+      const prepared=await prepareSelectedPackage(draft,authored,
+        {sellerAccountId:owner.sellerAccountId,workerDeviceId:status.deviceId},
+        new ReadOnlyOpenClawDiscovery());
+      const packages=new WorkerUnreviewedPackageStore(stateDirectory());
+      try{
+        const staged=packages.stage(draft,prepared);
+        write(JSON.stringify({...staged,state:'UNREVIEWED',
+          next:'Run isolated dependency, representative-job and security tests before seller review or publication.'}));
+      }finally{packages.close();}
+      return 0;
+    }
+    if((args[0]==='review'&&args.length===3)||
+      (args[0]==='review-retry'&&args.length===2)){
+      const signer=await unlockIdentity(stateDirectory());
+      if(signer.deviceId!==status.deviceId)
+        throw new Error('DEVICE_IDENTITY_MISMATCH');
+      const result=await runWorkerImportReview({stateDir:stateDirectory(),
+        versionId:args[1]!,sellerAccountId:owner.sellerAccountId,signer,
+        retry:args[0]==='review-retry',
+        ...(args[0]==='review'?{privateConfig:readPrivateAuthoring(args[2]!)}:{})});
+      write(JSON.stringify({...result,
+        next:'Open the seller dashboard to review the exact tested package and approve publication. Discovery and local testing do not grant consent.'}));
+      return 0;
+    }
+    write(help());return 2;
+  }catch(error){
+    write(error instanceof Error&&'code' in error&&typeof error.code==='string'?
+      error.code:error instanceof Error&&error.message==='PAIRING_OWNER_CHANGED'?
+        error.message:'IMPORT_UNAVAILABLE_OR_AMBIGUOUS');
+    return 1;
+  }finally{store.close();}
 }
 
 async function credentialCommand(args:readonly string[],write:(line:string)=>void):Promise<number>{
@@ -176,6 +398,9 @@ function parseReason(args: readonly string[]): string | undefined {
 /** Host-native CLI; success for pause means the local database committed. */
 export async function runWorkerCli(args: readonly string[], write: (line: string) => void = (line) => process.stdout.write(`${line}\n`)): Promise<number> {
   const command = args[0];
+  if (command === 'pair') return pairDevice(args.slice(1),write);
+  if (command === 'discover') return discover(args.slice(1),write);
+  if (command === 'import') return importCommand(args.slice(1),write);
   if (command === 'job') return runJobCommand(args.slice(1), write);
   if (command === 'stop') return stopAll(args.slice(1),write);
   if (command === 'credential') return credentialCommand(args.slice(1),write);

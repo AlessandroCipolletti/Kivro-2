@@ -85,3 +85,31 @@ test('Worker refuses a corrupt stored object and removes its tentative upload', 
     assert.equal(storage.objects.size, 0);
   } finally { f.cleanup(); }
 });
+
+test('Worker uses only a cloud-issued presigned output key and never needs storage credentials',async()=>{
+  const f=fixture();
+  try{
+    const collected=await collectStoppedAttemptOutput(f.root,f.attemptId,outputContract,
+      {maxFileBytes:1024,maxResultBytes:4096});
+    let uploadedBytes=null,requests=0;
+    const prepared=(asset)=>({assetId:asset.assetId,
+      objectKey:`private/assets/${asset.assetId}/${randomUUID()}`,
+      uploadUrl:'https://storage.example.test/private/put',
+      uploadHeaders:{'content-type':'text/plain'}});
+    const run=(prepareAsset)=>uploadValidatedOutput(null,{ownerAccountId:randomUUID(),
+      sourceJobId:randomUUID(),retainUntil,maxTotalBytes:4096,outputRoot:f.output,
+      outputContract,collected,storageOrigin:'https://storage.example.test',prepareAsset,
+      uploadFetcher:async(_url,options)=>{
+        requests++;const chunks=[];for await(const chunk of options.body)
+          chunks.push(Buffer.from(chunk));
+        uploadedBytes=Buffer.concat(chunks);return new globalThis.Response(null,{status:200});
+      }});
+    const result=await run(async(asset)=>prepared(asset));
+    assert.equal(requests,1);
+    assert.equal(uploadedBytes.toString(),'hello');
+    assert.equal(result.assets[0].objectKey.split('/')[2],result.assets[0].id);
+    await assert.rejects(run(async(asset)=>({...prepared(asset),
+      uploadUrl:'https://evil.example/private/put'})),{code:'UPLOAD_FAILED'});
+    assert.equal(requests,1);
+  }finally{f.cleanup();}
+});

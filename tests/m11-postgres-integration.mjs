@@ -28,7 +28,8 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
     const finance=new PostgresFinanceRepository(pool,'test');
     const availability=new PostgresAvailabilityRepository(pool,finance);
     const execution=new PostgresJobExecutionRepository(pool,finance,
-      new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,17)},'v1'),availability);
+      new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,17)},'v1'),availability,
+      {async scan(){return 'CLEAN';}});
     const catalog=new MarketplaceCatalog(pool,availability);
     const social=new MarketplaceSocialRepository(pool);
     const buyerRepo=new MarketplaceBuyerRepository(pool,availability,finance,execution);
@@ -278,7 +279,18 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         [second.jobId])).rows[0].n,0);
       const fileId=randomUUID();const fileBytes=Buffer.from('Validated private research file\n');
       const fileHash=`sha256:${createHash('sha256').update(fileBytes).digest('hex')}`;
-      const fileKey=`private/assets/${fileId}/${randomUUID()}`;
+      const fileObjects=new Map();
+      let fileKey;
+      const resultStorage={
+        async presignPrivateUpload(){return {url:'https://storage.example.test/put',headers:{}};},
+        async headPrivateObject(key){const bytes=fileObjects.get(key);
+          return bytes?{sizeBytes:bytes.length,claimedSha256:fileHash}:null;},
+        async readPrivateObject(key){const bytes=fileObjects.get(key);
+          if(!bytes)throw new Error('missing');return (async function*(){yield bytes;})();},
+        async copyPrivateObject(source,target){const bytes=fileObjects.get(source);
+          if(!bytes)throw new Error('missing');fileObjects.set(target,Buffer.from(bytes));},
+        async deletePrivateObject(key){fileObjects.delete(key)},
+      };
       const deliver=async(step,answer,withFile=false)=>{
         const offered=await execution.offer(step.jobId,worker,plane,120);
         await execution.accept(offered.executionId,worker,plane,offered.leaseToken,randomUUID());
@@ -289,16 +301,21 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
             correlationId:randomUUID(),paymentReservationId:null,resultManifestId:null},
           offered.executionId,worker,plane,offered.leaseToken);
         }
+        if(withFile){
+          const prepared=await execution.prepareResultAsset({assetId:fileId,jobId:step.jobId,
+            executionId:offered.executionId,attemptId:offered.attemptId,
+            workerDeviceId:worker,controlPlaneId:plane,leaseToken:offered.leaseToken,
+            fieldKey:'report',extension:'.txt',sizeBytes:fileBytes.length,sha256:fileHash,
+            detectedMimeType:'text/plain'},resultStorage);
+          fileKey=prepared.objectKey;fileObjects.set(fileKey,fileBytes);
+        }
         await execution.finalizeResult({resultManifestId:randomUUID(),jobId:step.jobId,
           executionId:offered.executionId,attemptId:offered.attemptId,workerDeviceId:worker,
           controlPlaneId:plane,leaseToken:offered.leaseToken,
           payload:{values:{answer},assets:withFile?{report:[fileId]}:{}},
           assets:withFile?[{id:fileId,fieldKey:'report',objectKey:fileKey,
             sizeBytes:fileBytes.length,sha256:fileHash,detectedMimeType:'text/plain'}]:[]},
-        {async headPrivateObject(key){return key===fileKey?{
-          sizeBytes:fileBytes.length,claimedSha256:fileHash}:null;},
-          async readPrivateObject(key){if(key!==fileKey)throw new Error('missing');
-            return (async function*(){yield fileBytes;})();}},
+        resultStorage,
         new Date(Date.now()+86_400_000).toISOString());
         await finance.settleDeliveredJob(step.jobId);
       };

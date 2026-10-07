@@ -7,6 +7,7 @@ import { JobAcceptedSchema, JobOfferSchema, WorkerHeartbeatSchema, WorkerHelloSc
   WorkerLocalJobControlReportSchema,
   WORKER_PROTOCOL_VERSION } from '../../../worker-protocol/src/messages.js';
 import type { WorkerProtocolTransport } from '../../../worker-protocol/src/transport.js';
+import { WorkerCapabilityReviewSchema } from '../../../contracts/src/seller-publication.js';
 
 const controlPlane = z.strictObject({
   id: z.string().min(1).max(160),
@@ -23,7 +24,7 @@ const pollResponse = z.strictObject({
     WorkerJobControlCommandSchema])).max(32),
 });
 const outboundMessage = z.union([WorkerHeartbeatSchema, JobAcceptedSchema,
-  WorkerJobControlAckSchema,WorkerLocalJobControlReportSchema]);
+  WorkerJobControlAckSchema,WorkerLocalJobControlReportSchema,WorkerCapabilityReviewSchema]);
 
 export interface WorkerMessageSigner {
   readonly deviceId: string;
@@ -159,9 +160,10 @@ export class HttpsPollingWorkerTransport implements WorkerProtocolTransport {
 
   /** Fixed authenticated job RPCs; full server routes are composed with the API milestone. */
   async postJobRpc(kind: 'ACCEPT' | 'ACCEPTED_INPUT' | 'TRANSITION' | 'RENEW_LEASE' |
-    'FINALIZE_RESULT', body: unknown): Promise<unknown> {
+    'PREPARE_RESULT_ASSET' | 'FINALIZE_RESULT', body: unknown): Promise<unknown> {
     const path = ({ ACCEPT: '/worker/jobs/accept', ACCEPTED_INPUT: '/worker/jobs/accepted-input',
       TRANSITION: '/worker/jobs/transition', RENEW_LEASE: '/worker/jobs/renew-lease',
+      PREPARE_RESULT_ASSET:'/worker/jobs/prepare-result-asset',
       FINALIZE_RESULT: '/worker/jobs/finalize-result' } as const)[kind];
     let response: Response;
     try { response = await this.fetcher(new URL(path, this.endpoint), {

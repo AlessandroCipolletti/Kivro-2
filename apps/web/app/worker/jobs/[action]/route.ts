@@ -3,7 +3,8 @@ import { handleWorkerJobRpc,type WorkerJobRpcKind } from '../../../../src/worker
 export const runtime='nodejs';
 const actions:Readonly<Record<string,WorkerJobRpcKind>>={
   accept:'ACCEPT','accepted-input':'ACCEPTED_INPUT',transition:'TRANSITION',
-  'renew-lease':'RENEW_LEASE','finalize-result':'FINALIZE_RESULT'};
+  'renew-lease':'RENEW_LEASE','prepare-result-asset':'PREPARE_RESULT_ASSET',
+  'finalize-result':'FINALIZE_RESULT'};
 
 export async function POST(request:Request,context:{params:Promise<{action:string}>}):Promise<Response>{
   const {action}=await context.params;

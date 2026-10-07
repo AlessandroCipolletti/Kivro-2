@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildVersionCandidate, createJobContractSnapshot } from '../dist/packages/domain/src/capability-version.js';
+import { buildVersionCandidate, createJobContractSnapshot, describePublicationChanges } from '../dist/packages/domain/src/capability-version.js';
+import { randomUUID } from 'node:crypto';
 import { PublishedCapabilityVersionSchema } from '../dist/packages/contracts/src/capability-version.js';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
@@ -114,9 +115,12 @@ test('full local graph is frozen by a candidate hash while the cloud candidate s
 
 test('public research policy is pinned in the sanitized published/job snapshot without seller secrets', () => {
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/m06-advertising-capability.json', import.meta.url), 'utf8'));
-  const candidate = buildVersionCandidate({ ...input, localPackage: { ...localPackage,
-    permissionPolicy: { ...policy, publicInternet: 'PUBLIC_RESEARCH_BROKER', internet: fixture.internetPolicy },
-  } });
+  const networked={...localPackage,permissionPolicy:{...policy,
+    publicInternet:'PUBLIC_RESEARCH_BROKER',internet:fixture.internetPolicy}};
+  assert.throws(()=>buildVersionCandidate({...input,externalProcessors:[],localPackage:networked}),
+    /External processors must be declared/);
+  const candidate = buildVersionCandidate({ ...input, externalProcessors: ['Brave Search'],
+    localPackage: networked });
   assert.equal(candidate.publicResearchPolicy.mode, 'PUBLIC_WEB_RESEARCH');
   const publishedFields = JSON.parse(JSON.stringify(candidate));
   delete publishedFields.requestedAt;
@@ -125,6 +129,7 @@ test('public research policy is pinned in the sanitized published/job snapshot w
   });
   const job = createJobContractSnapshot(published, id, id, '2026-10-06T13:00:00Z');
   assert.deepEqual(job.publicResearchPolicySnapshot, fixture.internetPolicy);
+  assert.deepEqual(job.externalProcessorsSnapshot,['Brave Search']);
   assert.doesNotMatch(JSON.stringify(job), /seller:|credentialRef|privateDatabase/);
 });
 
@@ -138,4 +143,28 @@ test('networked package cannot publish from a coarse permission or unselected co
   assert.throws(() => buildVersionCandidate({ ...input, localPackage: { ...localPackage,
     permissionPolicy: { ...policy, publicInternet: 'DECLARED_DOMAINS', internet: connectorPolicy },
   } }), /Declared API connector is not selected/);
+});
+
+test('prepublication diff exposes changed economics, contracts and opaque access changes',()=>{
+  const original=buildVersionCandidate(input);
+  const publishedFields=JSON.parse(JSON.stringify(original));
+  delete publishedFields.requestedAt;
+  const current=PublishedCapabilityVersionSchema.parse({...publishedFields,
+    publicationState:'PUBLISHED',publishedAt:'2026-10-06T12:30:00Z',
+    policyValidationHash:hash});
+  const newer=randomUUID();
+  const candidate=buildVersionCandidate({...input,id:newer,versionNumber:2,
+    localPackage:{...localPackage,capabilityVersionId:newer,priceTier:'USD_1499',
+      workerManifest:{...manifest,capabilityVersionId:newer},
+      ioContract:{...ioContract,output:{...ioContract.output,fields:[{
+        ...ioContract.output.fields[0],label:'Revised answer'}]}},
+      permissionPolicy:{...policy,buyerFileAccess:true}},
+    selectedPrice:{tier:'USD_1499',currency:'USD',buyerAmountMinor:1499,
+      platformFeeMinor:299,sellerEarningMinor:1200}});
+  const changes=describePublicationChanges(current,candidate);
+  assert.ok(changes.some((item)=>item.includes('buyer $9.99 → $14.99')));
+  assert.ok(changes.some((item)=>item.includes('Result output contract changed')));
+  assert.ok(changes.some((item)=>item.includes('Detailed permission policy changed')));
+  assert.ok(changes.some((item)=>/buyer file access/i.test(item)));
+  assert.throws(()=>describePublicationChanges(current,original),/cannot be compared/);
 });

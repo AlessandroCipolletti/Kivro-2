@@ -18,6 +18,8 @@ import { WorkerBrokerRouter, type JobBrokerPorts } from './broker-router.js';
 import { prepareOpenClawJobInput, type ReviewedSkillSnapshot } from
   '../../../packages/openclaw-adapter/src/job-config.js';
 import type { OpenClawImageApproval } from '../../../packages/openclaw-adapter/src/image-approval.js';
+import { isPinnedRuntimeRangeCompatible } from
+  '../../../packages/openclaw-adapter/src/compatibility.js';
 
 export interface AcceptedJobPayload {
   readonly jobId: string; readonly executionId: string; readonly attemptId: string;
@@ -35,6 +37,10 @@ export interface WorkerExecutionCloudPort {
     to: 'STARTING' | 'RUNNING' | 'UPLOADING_RESULT'; actor: 'WORKER'; reason: string;
     attemptId: string; correlationId: string; paymentReservationId: null; resultManifestId: null }): Promise<void>;
   renewLease(offer: JobOffer, ttlSeconds: number): Promise<string>;
+  prepareResultAsset(offer:JobOffer,asset:{assetId:string;fieldKey:string;
+    extension:string;sizeBytes:number;sha256:string;detectedMimeType:string}):Promise<{
+    assetId:string;objectKey:string;uploadUrl:string;
+    uploadHeaders:Readonly<Record<string,string>>}>;
   finalizeResult(result: PendingWorkerResult): Promise<void>;
   failExecution(offer: JobOffer, input: { from: 'ACCEPTED' | 'STARTING' | 'RUNNING' |
     'UPLOADING_RESULT'; to: 'FAILED_POLICY' | 'FAILED_STARTUP' | 'FAILED_EXECUTION' |
@@ -57,15 +63,14 @@ export interface WorkerSupervisorDependencies {
   readonly sandbox: DockerSandboxAdapter;
   readonly docker: DockerJobControlAdapter;
   readonly dockerExecutable: string;
-  readonly brokerPorts: JobBrokerPorts;
-  readonly storage: ObjectStoragePort;
+  readonly brokerPorts: JobBrokerPorts | ((pkg: ReturnType<typeof LocalCapabilityPackageSchema.parse>) => JobBrokerPorts);
+  readonly storage: ObjectStoragePort | null;
   readonly attemptRoot: string;
   readonly storageOrigin: string;
   readonly approvedImage: string;
   readonly imageApproval: OpenClawImageApproval;
   readonly localWorkerDeviceId: string;
   readonly authenticatedControlPlaneId: string;
-  readonly reviewedSkills: readonly ReviewedSkillSnapshot[];
   readonly allowInsecureLoopbackStorage?: boolean;
   readonly inputFetcher?: typeof fetch;
 }
@@ -81,14 +86,17 @@ export class WorkerExecutionSupervisor {
       correlationId: offer.executionId, paymentReservationId: null, resultManifestId: null };
   }
 
-  async execute(rawOffer: unknown, rawPackage: unknown): Promise<void> {
+  async execute(rawOffer: unknown, rawPackage: unknown,
+    reviewedSkills: readonly ReviewedSkillSnapshot[]): Promise<void> {
     const offer = await assessJobOffer(rawOffer, rawPackage, {
       authenticatedControlPlaneId: this.deps.authenticatedControlPlaneId,
       localWorkerDeviceId: this.deps.localWorkerDeviceId,
       localPauseState: this.deps.localState, readiness: this.deps.readiness,
     });
     const pkg = LocalCapabilityPackageSchema.parse(rawPackage);
-    await this.deps.imageApproval.assertApprovedImage(this.deps.approvedImage);
+    const approval=await this.deps.imageApproval.assertApprovedImage(this.deps.approvedImage);
+    if(!isPinnedRuntimeRangeCompatible(pkg.workerManifest.runtime.supportedVersionRange,
+      approval.openClawVersion))throw new WorkerExecutionError('NOT_READY');
     if (this.deps.outbox.load(offer.executionId)) {
       throw new WorkerExecutionError('OUTPUT_NOT_DURABLE');
     }
@@ -122,7 +130,9 @@ export class WorkerExecutionSupervisor {
     }
     const fileOutput = envelope.contractData.output.fields.some((field) =>
       field.type === 'FILE' || field.type === 'FILES');
-    const router = new WorkerBrokerRouter(pkg, offer.jobId, this.deps.brokerPorts,
+    const brokerPorts=typeof this.deps.brokerPorts==='function'?
+      this.deps.brokerPorts(pkg):this.deps.brokerPorts;
+    const router = new WorkerBrokerRouter(pkg, offer.jobId, brokerPorts,
       { inputFiles: envelope.files.length > 0, outputFiles: fileOutput });
     const limits = pkg.workerManifest.limits;
     const plan = OfflineSandboxPlanSchema.parse({ planVersion: 1, image: this.deps.approvedImage,
@@ -150,7 +160,7 @@ export class WorkerExecutionSupervisor {
     }, async (inputRoot) => {
       await prepareOpenClawJobInput({ inputRoot, localPackage: pkg, envelope,
         approvedImage: this.deps.approvedImage,
-        allowedToolNames: router.allowedToolNames, reviewedSkills: this.deps.reviewedSkills,
+        allowedToolNames: router.allowedToolNames, reviewedSkills,
         maxOutputFileBytes });
       const authorize = async (): Promise<void> => {
         const state = this.deps.jobControl.snapshot(offer.jobId);
@@ -172,7 +182,10 @@ export class WorkerExecutionSupervisor {
             const upload = await uploadValidatedOutput(this.deps.storage, {
               ownerAccountId: accepted.buyerAccountId, sourceJobId: offer.jobId,
               retainUntil: accepted.outputRetainUntil, maxTotalBytes: limits.maxOutputBytes,
-              outputRoot, outputContract: envelope.contractData.output, collected });
+              outputRoot, outputContract: envelope.contractData.output, collected,
+              storageOrigin:this.deps.storageOrigin,
+              allowInsecureLoopback:this.deps.allowInsecureLoopbackStorage??false,
+              prepareAsset:(asset)=>this.deps.cloud.prepareResultAsset(offer,asset) });
             const pending = this.deps.outbox.record(offer, upload, accepted.outputRetainUntil);
             await this.deps.cloud.finalizeResult(pending);
             this.deps.outbox.acknowledge(offer.executionId);
@@ -241,9 +254,10 @@ export class WorkerExecutionSupervisor {
   }
 
   /** Retry a lost finalization acknowledgement without rerunning OpenClaw or uploading files. */
-  async retryPendingResults(): Promise<number> {
+  async retryPendingResults(controlPlaneId?:string): Promise<number> {
     let completed = 0;
     for (const pending of this.deps.outbox.pending()) {
+      if(controlPlaneId&&pending.controlPlaneId!==controlPlaneId)continue;
       await this.deps.cloud.finalizeResult(pending);
       this.deps.outbox.acknowledge(pending.executionId);
       completed++;

@@ -1,10 +1,18 @@
 import Link from 'next/link';
 import type { CapabilityCard } from '../../../../packages/contracts/src/marketplace.js';
+import { Icon } from '../ui/kivro-icon';
+import { ProductHeader } from '../ui/product-header';
 
 export function money(minor:number){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100);}
 export function availabilityLabel(status:string,acceptingQueue=false){return ({ONLINE:'Available now',BUSY:acceptingQueue?'Busy · queue open':'Busy',
   SCHEDULED_OFFLINE:'Scheduled offline',OFFLINE:'Worker offline',PAUSED:'Paused',
   READINESS_BLOCKED:'Temporarily unavailable',UNAVAILABLE:'Unavailable'} as Record<string,string>)[status]??'Unavailable';}
+export function availabilityReasonLabel(reason:string){return ({NONE:'Ready',NOT_PUBLISHED:'Not published',
+  NOT_VISIBLE:'Not visible to buyers',READINESS_STALE:'Readiness check is stale',
+  PLATFORM_BLOCKED:'Kivro security block',SELLER_PAUSED:'Paused by seller',
+  RECONCILIATION_PENDING:'Worker control sync pending',SCHEDULE_CLOSED:'Outside service hours',
+  WORKER_OFFLINE:'Worker offline',CAPACITY_FULL:'At capacity',QUEUE_FULL:'Queue full'} as
+  Record<string,string>)[reason]??'Availability is being checked';}
 export function jobStatusLabel(status:string){return ({PAYMENT_RESERVED:'Payment reserved',
   WAITING_FOR_AVAILABILITY:'Waiting for schedule',QUEUED:'In queue',
   WAITING_FOR_WORKER:'Waiting for provider',DISPATCHED:'Offered to provider',
@@ -18,9 +26,7 @@ export function jobStatusLabel(status:string){return ({PAYMENT_RESERVED:'Payment
   TIMED_OUT:'Timed out',FAILED_STARTUP:'Could not start',REJECTED:'Not accepted'} as
     Record<string,string>)[status]??'Updating';}
 export function MarketplaceHeader({signedIn=false}:{signedIn?:boolean}){
-  return <header className="site-header market-header"><Link href="/" className="brand" aria-label="Kivro home"><span className="brand-mark">K</span><span>Kivro</span></Link>
-    <nav aria-label="Marketplace navigation"><Link href="/discover">Discover</Link><Link href="/ai-request">AI Request</Link><Link href="/discover#categories">Categories</Link>
-      {signedIn?<><Link href="/buyer?view=favorites">Favorites</Link><Link href="/buyer">My jobs</Link><Link href="/seller">Selling</Link><Link className="nav-action" href="/account">Account ↗</Link></>:<Link className="nav-action" href="/sign-in">Sign in ↗</Link>}</nav></header>;
+  return <ProductHeader signedIn={signedIn}/>;
 }
 export function Card({item}:{item:CapabilityCard}){
   const runtime=item.typicalRuntimeSeconds===null?'Runtime not established':
@@ -31,10 +37,10 @@ export function Card({item}:{item:CapabilityCard}){
     <p className="market-card-seller">by {item.sellerName}</p>
     <div className="market-card-tags"><span>Input: {item.inputTypes.slice(0,2).join(' + ')}</span><span>Output: {item.outputTypes.slice(0,2).join(' + ')}</span></div>
     <div className="market-card-bottom"><div><strong>{money(item.price.buyerAmountMinor)}</strong><span>fixed price</span></div>
-      <div className="market-card-proof"><strong>{item.rating.average===null?'New':`${item.rating.average.toFixed(1)} ★`}</strong><span>{item.rating.count?`${item.rating.count} verified reviews`:'No reviews yet'}</span></div></div>
+      <div className="market-card-proof"><strong>{item.rating.average===null?'New':<>{item.rating.average.toFixed(1)} <Icon name="star"/></>}</strong><span>{item.rating.count?`${item.rating.count} verified reviews`:'No reviews yet'}</span></div></div>
     <div className="market-runtime">{runtime}{item.completedJobs?` · ${item.completedJobs} completed jobs`:''}</div>
   </Link>;
 }
 export function EmptyMarket({title,description}:{title:string;description:string}){
-  return <div className="market-empty"><span aria-hidden="true">◌</span><h2>{title}</h2><p>{description}</p></div>;
+  return <div className="market-empty"><h2>{title}</h2><p>{description}</p></div>;
 }

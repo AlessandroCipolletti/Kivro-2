@@ -36,12 +36,16 @@ test('real Docker sandbox enforces offline isolation and cleans up', async () =>
       `if test -e ${hostSentinel}; then echo HOST_VISIBLE; else echo HOST_HIDDEN; fi; ` +
       "grep '^CapEff:[[:space:]]*0000000000000000' /proc/self/status >/dev/null && echo NO_CAPABILITIES; " +
       "grep '^NoNewPrivs:[[:space:]]*1' /proc/self/status >/dev/null && echo NO_NEW_PRIVILEGES; " +
-      'if wget -q -T 1 -O /dev/null http://1.1.1.1 2>/dev/null; then echo NETWORK_OPEN; else echo NETWORK_BLOCKED; fi; ' +
+      'for target in 1.1.1.1 127.0.0.1 192.168.1.1 169.254.169.254; do ' +
+      'if wget -q -T 1 -O /dev/null "http://$target/" 2>/dev/null; then ' +
+      'echo NETWORK_OPEN_$target; else echo NETWORK_BLOCKED_$target; fi; done; ' +
       'touch /job/output/created && echo OUTPUT_WRITABLE']);
     assert.equal(result.exitCode, 0, result.stderr);
     for (const marker of ['65532\n65532', 'NO_SOCKET', 'NO_PERSONAL_OPENCLAW', 'ROOT_READONLY',
       'INPUT_READONLY', 'HOST_HIDDEN', 'NO_CAPABILITIES', 'NO_NEW_PRIVILEGES',
-      'NETWORK_BLOCKED', 'OUTPUT_WRITABLE']) {
+      'NETWORK_BLOCKED_1.1.1.1', 'NETWORK_BLOCKED_127.0.0.1',
+      'NETWORK_BLOCKED_192.168.1.1', 'NETWORK_BLOCKED_169.254.169.254',
+      'OUTPUT_WRITABLE']) {
       assert.ok(result.stdout.includes(marker), `missing ${marker}: ${result.stdout}`);
     }
     assert.ok(!result.stdout.includes('ROOT_WRITABLE'));

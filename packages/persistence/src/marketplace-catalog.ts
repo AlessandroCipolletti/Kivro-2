@@ -207,6 +207,7 @@ export class MarketplaceCatalog {
       version:{id:version.id,number:version.versionNumber,ioContract:version.ioContract,
         permissionManifest:version.publicPermissionManifest,
         researchAccess:version.publicResearchPolicy!==null,
+        externalProcessors:version.externalProcessors,
         executionModel:'ISOLATED_SELLER_OPENCLAW'},
       sellerMemberSince:row.seller_member_since.toISOString(),
       reviews:reviews.rows.map((r)=>({id:r.id,rating:r.rating,text:r.review_text,

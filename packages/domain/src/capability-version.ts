@@ -27,6 +27,7 @@ export interface VersionCandidateInput {
   readonly localPackage: unknown;
   /** Server-validated enabled catalog price; required by the publication service. */
   readonly selectedPrice: PriceSnapshot;
+  readonly externalProcessors?: readonly string[];
 }
 
 export function buildVersionCandidate(input: VersionCandidateInput): Readonly<CapabilityVersionCandidate> {
@@ -41,6 +42,11 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
   }
   const manifest = localPackage.workerManifest;
   const permissionPolicy = localPackage.permissionPolicy;
+  const noExternalAccess=permissionPolicy.aiInference==='NONE'&&
+    permissionPolicy.publicInternet==='DENY'&&permissionPolicy.privateApi==='NONE'&&
+    !permissionPolicy.externalSideEffects;
+  if(!noExternalAccess&&(!input.externalProcessors||input.externalProcessors.length===0))
+    throw new TypeError('External processors must be declared before publication');
   const ioContract = CapabilityIOContractSchema.parse(localPackage.ioContract);
   const version = CapabilityVersionCandidateSchema.parse({
     id: input.id,
@@ -65,6 +71,7 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
       platformFeeMinor: input.selectedPrice.platformFeeMinor,
       sellerEarningMinor: input.selectedPrice.sellerEarningMinor }),
     dependencySnapshot: localPackage.dependencySnapshot,
+    externalProcessors: input.externalProcessors??[],
     resourceLimits: manifest.limits,
     concurrencyLimit: localPackage.concurrencyLimit,
     pauseSupport: localPackage.pauseSupport,
@@ -96,6 +103,50 @@ export function createJobContractSnapshot(
     outputContractSnapshot: version.ioContract.output,
     priceSnapshot: version.price,
     pauseSupportSnapshot: version.pauseSupport,
+    externalProcessorsSnapshot: version.externalProcessors,
   });
   return freezeDeep(snapshot);
+}
+
+/** Seller-facing semantic preview. An opaque policy-hash change is explicitly
+ * called out; a category summary is never presented as a complete access diff. */
+export function describePublicationChanges(previous: PublishedCapabilityVersion,
+  next: CapabilityVersionCandidate): readonly string[] {
+  const before=PublishedCapabilityVersionSchema.parse(previous);
+  const after=CapabilityVersionCandidateSchema.parse(next);
+  if(before.capabilityId!==after.capabilityId||after.versionNumber<=before.versionNumber)
+    throw new TypeError('Publication versions cannot be compared');
+  const changes:string[]=[];
+  const money=(minor:number)=>`$${(minor/100).toFixed(2)}`;
+  if(before.price.buyerAmountMinor!==after.price.buyerAmountMinor||
+    before.price.platformFeeMinor!==after.price.platformFeeMinor||
+    before.price.sellerEarningMinor!==after.price.sellerEarningMinor)
+    changes.push(`Economics: buyer ${money(before.price.buyerAmountMinor)} → ${
+      money(after.price.buyerAmountMinor)}, Kivro fee ${money(before.price.platformFeeMinor)} → ${
+      money(after.price.platformFeeMinor)}, seller proceeds ${money(before.price.sellerEarningMinor)} → ${
+      money(after.price.sellerEarningMinor)}`);
+  for(const side of ['input','output'] as const){
+    if(hashCanonicalJson(before.ioContract[side])!==hashCanonicalJson(after.ioContract[side]))
+      changes.push(`${side==='input'?'Buyer input':'Result output'} contract changed`);
+  }
+  const oldAccess=new Map(before.publicPermissionManifest.entries.map((entry)=>
+    [entry.category,entry.state]));
+  for(const entry of after.publicPermissionManifest.entries){
+    const state=oldAccess.get(entry.category);
+    if(state!==entry.state)changes.push(`Access ${entry.category.replaceAll('_',' ')}: ${
+      state??'not declared'} → ${entry.state}`);
+  }
+  if(before.permissionPolicyHash!==after.permissionPolicyHash)
+    changes.push('Detailed permission policy changed; review exact local access before consent');
+  if(before.workerManifestHash!==after.workerManifestHash)
+    changes.push('Worker skills, tools, resources or limits changed');
+  if(hashCanonicalJson(before.dependencySnapshot)!==hashCanonicalJson(after.dependencySnapshot))
+    changes.push('Dependency versions or content changed');
+  if(hashCanonicalJson(before.publicResearchPolicy)!==hashCanonicalJson(after.publicResearchPolicy))
+    changes.push('Public research destinations or limits changed');
+  if(hashCanonicalJson(before.externalProcessors)!==hashCanonicalJson(after.externalProcessors))
+    changes.push('External processors changed');
+  if(before.sellerInferenceConfigHash!==after.sellerInferenceConfigHash)
+    changes.push('Inference configuration changed');
+  return changes.length?changes:['No buyer-visible or declared access change'];
 }

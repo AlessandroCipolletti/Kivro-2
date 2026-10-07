@@ -46,7 +46,7 @@ export default function BuyerIntegrations(){
     set(items.includes(item)?items.filter((value)=>value!==item):[...items,item]);
   return <section className="integrations" aria-labelledby="integrations-title">
     <div className="integrations-intro"><p className="eyebrow">Developer access</p>
-      <h2 id="integrations-title">Make Kivro part of your workflow.</h2>
+      <h2 id="integrations-title">API keys and webhooks</h2>
       <p>Use buyer keys for the versioned API. Worker pairing uses separate credentials.
         Keys and webhook secrets appear only once; keep them in your own secret store.</p></div>
     {error&&<p role="alert" className="notice error">{error}</p>}

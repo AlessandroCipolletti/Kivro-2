@@ -6,6 +6,8 @@ import { basename, delimiter, dirname, isAbsolute, join, resolve, sep } from 'no
 import process from 'node:process';
 import JSON5 from 'json5';
 import { parseDocument } from 'yaml';
+import { createHash } from 'node:crypto';
+import { hashCanonicalJson } from '../../contracts/src/canonical-json.js';
 
 const validName = /^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,159}$/;
 const maxConfigBytes = 1024 * 1024;
@@ -134,7 +136,7 @@ async function pathSafety(path: string): Promise<'ok' | 'missing' | 'symlink' | 
   return 'ok';
 }
 
-async function readBounded(path: string, limit: number): Promise<string> {
+async function readBoundedBytes(path: string, limit: number): Promise<Buffer> {
   if (constants.O_NOFOLLOW === undefined || await pathSafety(path) !== 'ok') {
     throw new Error('Unsafe read-only path');
   }
@@ -150,10 +152,14 @@ async function readBounded(path: string, limit: number): Promise<string> {
       offset += bytesRead;
     }
     if (offset > limit) throw new Error('Metadata file grew beyond limit');
-    return buffer.toString('utf8', 0, offset);
+    return Buffer.from(buffer.subarray(0, offset));
   } finally {
     await file.close();
   }
+}
+
+async function readBounded(path:string,limit:number):Promise<string>{
+  return (await readBoundedBytes(path,limit)).toString('utf8');
 }
 
 function includes(value: unknown, depth = 0): boolean {
@@ -203,6 +209,7 @@ function skillMetadata(content: string, folder: string): SkillMetadata {
 
 /** Reads allowlisted config fields and SKILL.md frontmatter; never invokes an OpenClaw stateful CLI. */
 export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
+  private readonly skillLocations=new Map<string,string[]>();
   constructor(private readonly paths: DiscoveryPaths = ReadOnlyOpenClawDiscovery.defaultPaths()) {}
 
   static defaultPaths(): DiscoveryPaths {
@@ -218,6 +225,7 @@ export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
   }
 
   async scan(): Promise<LocalOpenClawDiscovery> {
+    this.skillLocations.clear();
     const issues = new Set<DiscoveryIssue>();
     const config = await this.readConfig(issues);
     const parsed = config.value;
@@ -300,6 +308,45 @@ export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
     };
   }
 
+  /** A selected skill can be copied into a private reviewed package without mutating OpenClaw.
+   * The path never enters the public discovery projection or cloud message. */
+  async snapshotSelectedSkill(skillName:string):Promise<{
+    readonly name:string;readonly files:readonly {path:string;bytesBase64:string}[];
+    readonly contentHash:string }> {
+    const isolatedScan=new ReadOnlyOpenClawDiscovery(this.paths);
+    const discovery=await isolatedScan.scan();
+    const matches=discovery.skills.filter((skill)=>skill.name===skillName);
+    const paths=isolatedScan.skillLocations.get(skillName)??[];
+    if(matches.length!==1||matches[0]?.ambiguous||matches[0]?.metadata!=='parsed'||
+      paths.length!==1)throw new Error('SELECTED_SKILL_UNAVAILABLE_OR_AMBIGUOUS');
+    const directory=paths[0]!;
+    if(await pathSafety(directory)!=='ok')throw new Error('SELECTED_SKILL_PATH_UNSAFE');
+    const before=await lstat(directory);
+    if(!before.isDirectory()||before.isSymbolicLink())throw new Error('SELECTED_SKILL_PATH_UNSAFE');
+    const entries=await readdir(directory,{withFileTypes:true});
+    if(entries.length<1||entries.length>32||entries.some((entry)=>
+      !entry.isFile()||entry.isSymbolicLink()||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(entry.name)))
+      throw new Error('SELECTED_SKILL_CONTENT_UNSUPPORTED');
+    let total=0;
+    const files=[];
+    for(const entry of entries.sort((a,b)=>a.name.localeCompare(b.name))){
+      const bytes=await readBoundedBytes(join(directory,entry.name),1_000_000);
+      total+=bytes.byteLength;
+      if(total>2_000_000)throw new Error('SELECTED_SKILL_TOO_LARGE');
+      files.push({path:entry.name,bytesBase64:bytes.toString('base64'),
+        sha256:`sha256:${createHash('sha256').update(bytes).digest('hex')}`});
+    }
+    if(!files.some((file)=>file.path==='SKILL.md'))
+      throw new Error('SELECTED_SKILL_CONTENT_UNSUPPORTED');
+    const after=await lstat(directory);
+    if(before.dev!==after.dev||before.ino!==after.ino||
+      before.mtimeMs!==after.mtimeMs)throw new Error('SELECTED_SKILL_CHANGED');
+    const contentHash=hashCanonicalJson(files.map(({path,sha256})=>({path,sha256})));
+    return {name:skillName,files:files.map(({path,bytesBase64})=>({path,bytesBase64})),
+      contentHash};
+  }
+
   private async readConfig(issues: Set<DiscoveryIssue>): Promise<{
     status: LocalOpenClawDiscovery['config']; value?: Record<string, unknown>;
   }> {
@@ -364,6 +411,9 @@ export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
             output.push({ name: metadata.name, source: root.source, metadata: metadata.metadata,
               readiness: 'unknown', visibility: 'unknown', consent: 'not-granted', ambiguous: false,
               declaredResources: metadata.declaredResources });
+            const locations=this.skillLocations.get(metadata.name)??[];
+            locations.push(item.path);
+            this.skillLocations.set(metadata.name,locations);
           } catch { issues.add('SKILL_UNREADABLE'); }
         } else if (entry.isDirectory() && item.depth < maxDepth) {
           queue.push({ path: join(item.path, entry.name), depth: item.depth + 1 });

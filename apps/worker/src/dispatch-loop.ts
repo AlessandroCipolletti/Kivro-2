@@ -82,9 +82,11 @@ export class WorkerDispatchLoop {
     }
     const messages = await this.transport.poll({ type: 'WORKER_HELLO', messageId: randomUUID(),
       workerDeviceId: this.deviceId, controlPlaneId: this.transport.controlPlaneId,
-      supportedProtocolVersions: [WORKER_PROTOCOL_VERSION], workerRelease: '0.0.0-dev',
+      supportedProtocolVersions: [WORKER_PROTOCOL_VERSION],
+      workerRelease: this.availabilityReporting?.workerRelease ?? '0.0.0-dev',
       localRevision: this.localState.snapshot().localRevision,
       activeExecutionIds: this.jobControl.snapshots().filter((item) =>
+        item.controlPlaneId===this.transport.controlPlaneId &&
         !['STOPPED', 'CANCELLED', 'TIMED_OUT'].includes(item.status)).map((item) => item.executionId) });
     for (const message of messages) {
       if (message.controlPlaneId !== this.transport.controlPlaneId) {
@@ -119,9 +121,21 @@ export class WorkerDispatchLoop {
         }
         this.router.ownExecution(message.executionId, this.transport.controlPlaneId);
         let pkg;
-        try { pkg = this.packages.load(message.capabilityVersionId); }
+        let reviewedSkills;
+        try {
+          pkg = this.packages.load(message.capabilityVersionId);
+          reviewedSkills = this.packages.loadReviewedSkills(message.capabilityVersionId);
+        }
         catch (error) { this.router.releaseExecution(message.executionId); this.onExecutionError(message, error); continue; }
-        const task = this.supervisor.execute(message, pkg).catch((error: unknown) => {
+        const occupied=this.jobControl.snapshots().filter((item)=>
+          item.capabilityVersionId===pkg.capabilityVersionId&&
+          !['STOPPED','CANCELLED','TIMED_OUT'].includes(item.status)).length;
+        if(occupied>=pkg.concurrencyLimit){
+          this.router.releaseExecution(message.executionId);
+          this.onExecutionError(message,new WorkerDispatchError('CAPACITY_FULL'));
+          continue;
+        }
+        const task = this.supervisor.execute(message, pkg, reviewedSkills).catch((error: unknown) => {
           this.onExecutionError(message, error);
         }).finally(() => {
           this.active.delete(message.executionId);

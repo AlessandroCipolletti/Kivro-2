@@ -147,7 +147,8 @@ function pathExistsNoFollow(path: string): boolean {
 }
 
 /** Opens a seller-local SQLite file with the same ownership, mode and durability rules for every Worker store. */
-export function openPrivateWorkerSqlite(stateDir: string, filename: 'worker.sqlite' | 'import.sqlite'): DatabaseSync {
+export function openPrivateWorkerSqlite(stateDir: string,
+  filename: 'worker.sqlite' | 'import.sqlite' | 'paired-seller.sqlite'): DatabaseSync {
   const dir = resolve(stateDir);
   if (!pathExistsNoFollow(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
   assertPrivatePath(dir, true);

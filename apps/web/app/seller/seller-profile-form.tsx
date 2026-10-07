@@ -37,6 +37,6 @@ export default function SellerProfileForm({ defaultName, existingProfile }: Read
     <label className="seller-ack"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} disabled={!ready} required />
       <span>I understand approved jobs will run in a separate restricted environment on my computer. I provide the machine and pay any model or provider costs. Kivro will ask me to approve each resource before publishing.</span></label>
     {error && <p role="alert" className="notice error">{error}</p>}
-    <button className="primary-button" type="submit" disabled={!ready || submitting || !confirmed}>{submitting ? 'Saving…' : existingProfile ? 'Confirm and continue' : 'Create seller profile'} <span aria-hidden="true">↗</span></button>
+    <button className="primary-button" type="submit" disabled={!ready || submitting || !confirmed}>{submitting ? 'Saving…' : existingProfile ? 'Confirm and continue' : 'Create seller profile'} </button>
   </form>;
 }

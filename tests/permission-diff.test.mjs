@@ -76,4 +76,8 @@ test('detailed Internet and local-resource changes require review even when publ
   const changes = securitySurfaceExpansion(current, expanded);
   assert.ok(changes.some((item) => item.reference === 'internet'));
   assert.ok(changes.some((item) => item.reference === 'localResources'));
+  assert.ok(changes.some((item) => item.kind === 'NETWORK_DESTINATION' &&
+    item.reference === 'connector:ads.search:api.example.com/search'));
+  assert.ok(changes.some((item) => item.kind === 'RESOURCE_PERMISSION' &&
+    item.reference === 'operation:company_db:company_get'));
 });

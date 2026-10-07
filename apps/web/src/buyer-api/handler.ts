@@ -17,6 +17,7 @@ import { JobExecutionError } from '../../../../packages/persistence/src/job-exec
 import { getMarketplaceService } from '../marketplace/server.js';
 import { getBuyerApiKeys,getBuyerWebhooks } from './server.js';
 import { readBoundedJson } from './http.js';
+import { safeResultFileName } from '../../../../packages/contracts/src/file-types.js';
 
 const uuid=z.uuid();
 const jobInput=z.strictObject({inputs:z.record(z.string(),z.unknown()),
@@ -152,6 +153,8 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
         ...(parsed.latestAcceptableStartAt?{
           latestAcceptableStartAt:parsed.latestAcceptableStartAt}:{})});}
       catch(error){
+        if(error instanceof AvailabilityError&&error.code==='BUYER_LIMIT')
+          return finish(json({code:'BUYER_LIMIT'},429));
         if(error instanceof AvailabilityError)return finish(await unavailable(detail.id,
           actor.accountId,error.code));
         if(error instanceof BuyerMarketplaceError)return finish(json({code:error.code},
@@ -171,6 +174,8 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
         quoteId:claimed.quoteId,jobId:claimed.jobId,reservationId:claimed.reservationId,
         manifestId:claimed.manifestId,payload});}
       catch(error){
+        if(error instanceof AvailabilityError&&error.code==='BUYER_LIMIT')
+          return finish(json({code:'BUYER_LIMIT'},429));
         if(error instanceof AvailabilityError)return finish(await unavailable(detail.id,
           actor.accountId,error.code));
         if(error instanceof FinanceError&&error.code==='INSUFFICIENT_CREDITS')
@@ -207,7 +212,7 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
         else controller.enqueue(next.value);},async cancel(){await iterator.return?.();}});
       return new Response(bytes,{headers:{'Content-Type':asset.mimeType,
         'Content-Length':String(asset.sizeBytes),'Content-Disposition':
-          `attachment; filename="kivro-result-${uuid.parse(path[1])}"`,
+          `attachment; filename="${safeResultFileName(uuid.parse(path[1]),asset.mimeType)}"`,
         'Content-Security-Policy':"default-src 'none'; sandbox",
         'X-Content-Type-Options':'nosniff','Cache-Control':'private, no-store'}});
     }
@@ -237,11 +242,13 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
       error.retryAfterSeconds?{'Retry-After':String(error.retryAfterSeconds)}:{});
     if(error instanceof BuyerMarketplaceError||error instanceof MarketplaceAssetError||
       error instanceof BuyerWebhookError||error instanceof JobExecutionError)
-      return json({code:error.code},error.code==='NOT_FOUND'?404:409);
+      return json({code:error.code},error.code==='NOT_FOUND'?404:
+        error.code==='ABUSE_DENIED'?403:409);
     if(error instanceof FinanceError)return json({code:error.code==='INSUFFICIENT_CREDITS'?
       'INSUFFICIENT_FUNDS':error.code},
       error.code==='INSUFFICIENT_CREDITS'?402:409);
-    if(error instanceof AvailabilityError)return json({code:error.code},409);
+    if(error instanceof AvailabilityError)return json({code:error.code},
+      error.code==='BUYER_LIMIT'?429:409);
     if(error instanceof ContractValidationError)return json({code:'INVALID_INPUT',
       reason:error.code,field:error.field??null},400);
     if(error instanceof z.ZodError||error instanceof SyntaxError||error instanceof TypeError)

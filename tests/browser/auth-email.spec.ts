@@ -47,7 +47,7 @@ test('email registration through final account and one-use recovery', async ({ p
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('status')).toContainText('verify');
+  await expect(page.locator('#auth-notice[role="alert"]')).toContainText('verify');
 
   await service.outbox.deliverDue(transport);
   const verifyLink = await localMailLink(email, 'Verify your Kivro email');
@@ -109,7 +109,7 @@ test('email registration through final account and one-use recovery', async ({ p
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('status')).toContainText('could not sign you in');
+  await expect(page.locator('#auth-notice[role="alert"]')).toContainText('could not sign you in');
   await page.getByLabel('Password').fill(newPassword);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/account');

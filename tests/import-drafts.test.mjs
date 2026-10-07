@@ -67,6 +67,62 @@ test('discovered imports cannot arrive preselected or with an inferred inference
   } finally { f.cleanup(); }
 });
 
+test('seller inference choice adds unselected local candidates and survives restart without touching discovery', () => {
+  const f = state();
+  try {
+    let store = new SellerImportDraftStore(f.dir);
+    store.createDraft(draftId, seller, graph());
+    const action = { actionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', draftId,
+      sellerAccountId: seller, expectedRevision: 0,
+      actedAt: '2026-10-06T00:00:00.000Z', mode: 'REMOTE_PROVIDER',
+      provider: 'anthropic', model: 'claude-test', credentialRef: 'seller:anthropic' };
+    const configured = store.configureInference(action);
+    assert.equal(configured.revision, 1);
+    assert.equal(configured.graph.inference.mode, 'REMOTE_PROVIDER');
+    assert.equal(configured.graph.inference.billingOwner, 'SELLER');
+    const declared = configured.graph.nodes.filter((node) =>
+      node.discoveredFrom.includes('SELLER_DECLARATION'));
+    assert.deepEqual(declared.map((node) => node.type).sort(),
+      ['AI_MODEL', 'AI_PROVIDER', 'CREDENTIAL']);
+    assert.ok(declared.every((node) => node.selected === false && node.health === 'UNKNOWN' &&
+      node.marketplaceSupport === 'UNDETERMINED'));
+    assert.ok(configured.graph.nodes[0].dependsOn.includes(configured.graph.inference.dependencyId));
+    assert.deepEqual(store.configureInference(action), configured,
+      'Lost acknowledgement replay returns the committed result');
+    assert.throws(() => store.configureInference({ ...action, model: 'different' }), { code: 'CONFLICT' });
+    assert.throws(() => store.configureInference({ ...action,
+      actionId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', expectedRevision: 1 }),
+    { code: 'CONFLICT' }, 'A new inference route requires a separately reviewed draft');
+    assert.throws(() => store.configureInference({ ...action,
+      actionId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', sellerAccountId: otherSeller }),
+    { code: 'NOT_FOUND' });
+    store.close();
+    store = new SellerImportDraftStore(f.dir);
+    assert.deepEqual(store.getDraft(draftId, seller), configured);
+    store.close();
+    const db = new DatabaseSync(join(f.dir, 'import.sqlite'));
+    assert.throws(() => db.prepare('DELETE FROM import_inference_actions WHERE action_id = ?')
+      .run(action.actionId), /append-only/);
+    db.close();
+  } finally { f.cleanup(); }
+});
+
+test('local inference requires an explicit endpoint candidate, never an inferred personal service grant', () => {
+  const f = state();
+  try {
+    const store = new SellerImportDraftStore(f.dir);
+    store.createDraft(draftId, seller, graph());
+    const configured = store.configureInference({ actionId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+      draftId, sellerAccountId: seller, expectedRevision: 0,
+      actedAt: '2026-10-06T00:00:00.000Z', mode: 'LOCAL', provider: 'ollama',
+      model: 'local-test', endpointRef: 'seller:ollama' });
+    assert.equal(configured.graph.inference.mode, 'LOCAL');
+    assert.ok(configured.graph.nodes.some((node) => node.id ===
+      configured.graph.inference.endpointRef && node.type === 'LOCAL_SERVICE' && !node.selected));
+    store.close();
+  } finally { f.cleanup(); }
+});
+
 test('consent is immutable, idempotent and visible only through seller-scoped queries', () => {
   const f = state();
   try {

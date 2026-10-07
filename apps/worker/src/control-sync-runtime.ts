@@ -24,7 +24,7 @@ function privatePassphrase(path:string):string{
   }finally{closeSync(fd);}
 }
 
-async function unlockIdentity(directory:string):Promise<DeviceIdentitySigner>{
+export async function unlockIdentity(directory:string):Promise<DeviceIdentitySigner>{
   const keychain=new KeychainDeviceIdentityStore(directory);
   try{return await keychain.unlock();}
   catch(error){

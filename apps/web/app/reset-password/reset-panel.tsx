@@ -33,7 +33,7 @@ export default function ResetPanel() {
     finally { setBusy(false); }
   }
 
-  return <div className="auth-card"><Link href="/sign-in" className="return-link">← Back to sign in</Link>
+  return <div className="auth-card"><Link href="/sign-in" className="return-link">Back to sign in</Link>
     <p className="form-eyebrow">Account recovery</p><h2>{token ? 'Choose a new password' : 'Reset your password'}</h2>
     <p className="card-copy">{token ? 'Use a password you have not used before.' : 'Enter your email and we will send a secure link if an account exists. You can also use it to add a password to an account created with Google.'}</p>
     {notice && <p className={`notice ${notice.kind}`} role="status" aria-live="polite">{notice.text}</p>}

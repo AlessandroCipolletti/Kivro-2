@@ -41,7 +41,9 @@ export class PostgresWorkerPairingRepository {
     }
     const owner = await this.pool.query<{ id: string }>(`SELECT s.id FROM seller_profiles s
       JOIN accounts a ON a.id=s.account_id WHERE s.id=$1 AND s.account_id=$2
-      AND s.status <> 'SUSPENDED' AND a.status='ACTIVE' AND a.email_verified_at IS NOT NULL`,
+      AND s.status <> 'SUSPENDED' AND a.status='ACTIVE' AND a.auth_email_verified=true
+      AND EXISTS (SELECT 1 FROM seller_execution_model_acknowledgements ack
+        WHERE ack.seller_profile_id=s.id AND ack.statement_version=1)`,
     [sellerProfileId, sellerAccountId]);
     if (!owner.rows[0]) throw new WorkerPairingError('NOT_ELIGIBLE');
     const compact = randomBytes(16).toString('hex').toUpperCase();
@@ -52,7 +54,8 @@ export class PostgresWorkerPairingRepository {
     return { code, expiresAt };
   }
 
-  async redeem(raw: unknown): Promise<{ readonly deviceId: string; readonly sellerProfileId: string }> {
+  async redeem(raw: unknown): Promise<{ readonly deviceId: string; readonly sellerProfileId: string;
+    readonly sellerAccountId: string }> {
     const input = redemptionSchema.parse(raw);
     let publicKey;
     try {
@@ -67,17 +70,35 @@ export class PostgresWorkerPairingRepository {
     try {
       await client.query('BEGIN');
       const code = await client.query<{ seller_profile_id: string; expires_at: Date;
-        consumed_at: Date | null }>(`SELECT seller_profile_id,expires_at,consumed_at
+        consumed_at: Date | null;paired_device_id:string|null }>(`SELECT seller_profile_id,
+        expires_at,consumed_at,paired_device_id
         FROM worker_pairing_codes WHERE code_hash=$1 FOR UPDATE`, [hashCode(input.code)]);
       const row = code.rows[0];
-      if (!row || row.consumed_at || row.expires_at.getTime() <= Date.now()) {
+      if (!row) {
         throw new WorkerPairingError('INVALID_CODE');
       }
-      const owner = await client.query<{ id: string }>(`SELECT s.id FROM seller_profiles s
+      const owner = await client.query<{ id: string; account_id: string }>(`SELECT s.id,s.account_id FROM seller_profiles s
         JOIN accounts a ON a.id=s.account_id WHERE s.id=$1 AND s.status <> 'SUSPENDED'
-        AND a.status='ACTIVE' AND a.email_verified_at IS NOT NULL FOR SHARE OF s,a`,
+        AND a.status='ACTIVE' AND a.auth_email_verified=true
+        AND EXISTS (SELECT 1 FROM seller_execution_model_acknowledgements ack
+          WHERE ack.seller_profile_id=s.id AND ack.statement_version=1)
+        FOR SHARE OF s,a`,
       [row.seller_profile_id]);
       if (!owner.rows[0]) throw new WorkerPairingError('NOT_ELIGIBLE');
+      if (row.consumed_at) {
+        // A lost response after COMMIT must not strand the persistent Worker
+        // identity. An exact same-key retry reports the committed pairing.
+        const paired=await client.query<{public_key:string;status:string}>(`SELECT public_key,status
+          FROM worker_devices WHERE id=$1 AND seller_profile_id=$2 FOR SHARE`,
+        [row.paired_device_id,row.seller_profile_id]);
+        if(row.paired_device_id!==input.deviceId||
+          paired.rows[0]?.public_key!==input.publicKeyPem||
+          paired.rows[0]?.status==='REVOKED')throw new WorkerPairingError('INVALID_CODE');
+        await client.query('COMMIT');
+        return {deviceId:input.deviceId,sellerProfileId:row.seller_profile_id,
+          sellerAccountId:owner.rows[0].account_id};
+      }
+      if (row.expires_at.getTime() <= Date.now()) throw new WorkerPairingError('INVALID_CODE');
       const existing = await client.query('SELECT id FROM worker_devices WHERE id=$1 OR public_key=$2',
         [input.deviceId, input.publicKeyPem]);
       if (existing.rowCount) throw new WorkerPairingError('ALREADY_PAIRED');
@@ -88,7 +109,8 @@ export class PostgresWorkerPairingRepository {
       await client.query(`UPDATE worker_pairing_codes SET consumed_at=now(),paired_device_id=$2
         WHERE code_hash=$1`, [hashCode(input.code), input.deviceId]);
       await client.query('COMMIT');
-      return { deviceId: input.deviceId, sellerProfileId: row.seller_profile_id };
+      return { deviceId: input.deviceId, sellerProfileId: row.seller_profile_id,
+        sellerAccountId: owner.rows[0].account_id };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

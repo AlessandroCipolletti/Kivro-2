@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { checkOpenClawCompatibility, openClawCompatibilityMatrix } from '../dist/packages/openclaw-adapter/src/compatibility.js';
+import { checkOpenClawCompatibility, isPinnedRuntimeRangeCompatible,
+  openClawCompatibilityMatrix } from '../dist/packages/openclaw-adapter/src/compatibility.js';
 
 test('isolated pinned image conformance never authorizes the ambient personal binary', () => {
   assert.equal(openClawCompatibilityMatrix.length, 1);
@@ -17,4 +18,12 @@ test('unknown, missing and untested OpenClaw versions fail closed', () => {
     assert.notEqual(report.status, 'CANDIDATE');
     assert.equal(report.executionAllowed, false);
   }
+});
+
+test('review and paid execution accept only declared ranges for the approved pinned runtime',()=>{
+  assert.equal(isPinnedRuntimeRangeCompatible('2026.8.2','2026.8.2'),true);
+  assert.equal(isPinnedRuntimeRangeCompatible('>=2026.8.2 <2026.9.0','2026.8.2'),true);
+  for(const range of ['*','>=2026.8.0','>=2026.9.0','2026.8.3'])
+    assert.equal(isPinnedRuntimeRangeCompatible(range,'2026.8.2'),false);
+  assert.equal(isPinnedRuntimeRangeCompatible('>=2026.8.2 <2026.9.0','2026.8.3'),false);
 });

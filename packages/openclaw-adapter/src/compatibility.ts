@@ -4,6 +4,13 @@ export const openClawCompatibilityMatrix = [
     configSyntaxChecked: true, executionConformanceChecked: true },
 ] as const;
 
+/** Until a versioned range parser is conformance-tested, admit only the two
+ * explicit declarations that contain the single approved runtime build. */
+export function isPinnedRuntimeRangeCompatible(range:string,version:string):boolean{
+  return version==='2026.8.2'&&
+    (range==='2026.8.2'||range==='>=2026.8.2 <2026.9.0');
+}
+
 export interface OpenClawCompatibilityReport {
   readonly status: 'CANDIDATE' | 'UNSUPPORTED' | 'UNAVAILABLE';
   readonly detectedVersion: string | null;

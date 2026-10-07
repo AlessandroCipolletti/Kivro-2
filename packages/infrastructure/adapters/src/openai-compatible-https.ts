@@ -33,6 +33,14 @@ export class OpenAiCompatibleHttpsConnector implements CompletionConnector {
     this.endpoint = safeEndpoint(endpoint);
   }
 
+  /** Readiness only. The actual request resolves and pins a fresh public answer. */
+  async checkDestination():Promise<void>{
+    const addresses=await this.dns.lookup(this.endpoint.hostname);
+    if(!addresses.length||addresses.length>32||addresses.some((item)=>
+      (item.family!==4&&item.family!==6)||!isPublicInternetAddress(item.address)))
+      throw new NetworkPolicyError('PRIVATE_DESTINATION_DENIED');
+  }
+
   async complete(input: CompletionRequest, credential: string, signal: AbortSignal): Promise<unknown> {
     if (!credential || credential.length > 4096 || /[\r\n]/.test(credential) || signal.aborted ||
       input.stream !== false) throw new NetworkPolicyError('NETWORK_POLICY_DENIED');

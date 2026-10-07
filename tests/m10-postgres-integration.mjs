@@ -420,6 +420,18 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       assert.equal((await buyerRepo.job(buyer,rerunJob)).summary.priceMinor,1499);
       assert.equal((await buyerRepo.job(buyer,completedJob)).summary.priceMinor,999);
       await buyerRepo.cancel(buyer,rerunJob,randomUUID());
+      const consumed=Number((await pool.query(`SELECT count(*) AS count FROM payment_reservations
+        WHERE buyer_account_id=$1 AND created_at>=now()-interval '1 hour'`,[buyer])).rows[0].count);
+      await pool.query(`UPDATE platform_buyer_limits SET max_jobs_per_hour=$1 WHERE singleton=true`,
+        [consumed]);
+      const limited=await buyerRepo.preflight({buyerId:buyer,capabilityId:capability,
+        mode:'EARLIEST_AVAILABLE',quoteId:randomUUID(),expectedVersionId:newVersionId,payload});
+      const limitedJob=randomUUID();
+      await assert.rejects(buyerRepo.purchase({buyerId:buyer,quoteId:limited.quote.id,
+        jobId:limitedJob,reservationId:randomUUID(),manifestId:randomUUID(),payload}),
+        {code:'BUYER_LIMIT'});
+      assert.equal((await pool.query(`SELECT count(*) AS count FROM payment_reservations
+        WHERE job_id=$1`,[limitedJob])).rows[0].count,'0');
       await social.setFavorite(buyer,capability,false);
       assert.deepEqual(await social.favorites(buyer),[]);
     }finally{await pool.end();}

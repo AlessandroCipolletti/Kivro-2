@@ -25,6 +25,11 @@ if (!process.env.M09_DATABASE_URL) {
 } else {
   test('real M09 quote, credits, queue fairness, Worker eligibility and schedule changes', async () => {
     const pool = new pg.Pool({ connectionString: process.env.M09_DATABASE_URL, max: 16 });
+    // This fixture deliberately creates many jobs to exercise queue fairness,
+    // independent of M15's conservative private-alpha buyer ceilings.
+    await pool.query(`UPDATE platform_buyer_limits SET max_jobs_per_hour=1000,
+      max_spend_minor_per_day=100000000,max_active_jobs=1000,
+      max_quotes_per_minute=10000 WHERE singleton=true`);
     const finance = new PostgresFinanceRepository(pool, 'test');
     const availability = new PostgresAvailabilityRepository(pool, finance);
     const repo = new PostgresJobExecutionRepository(pool, finance,

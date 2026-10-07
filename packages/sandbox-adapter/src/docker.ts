@@ -37,7 +37,8 @@ export interface DockerSandboxOptions {
 
 type DockerInspect = {
   Id?: unknown;
-  Config?: { User?: unknown; Image?: unknown; Labels?: Record<string, unknown> };
+  Config?: { User?: unknown; Image?: unknown; Entrypoint?: unknown;
+    Labels?: Record<string, unknown> };
   HostConfig?: Record<string, unknown>;
   Mounts?: { Type?: unknown; Name?: unknown; Source?: unknown; Destination?: unknown; RW?: unknown }[];
   State?: { ExitCode?: unknown; Status?: unknown; StartedAt?: unknown; FinishedAt?: unknown };
@@ -138,6 +139,9 @@ function verifyCollector(raw: unknown, image: string, volume: string): void {
   const host = container.HostConfig;
   const mount = container.Mounts?.[0];
   if (container.Config?.Image !== image || container.Config.User !== '65532:65532' ||
+    !Array.isArray(container.Config.Entrypoint) ||
+    container.Config.Entrypoint.length !== 1 ||
+    container.Config.Entrypoint[0] !== '/bin/sleep' ||
     host?.NetworkMode !== 'none' || host.ReadonlyRootfs !== true || host.Privileged !== false ||
     host.IpcMode !== 'private' && host.IpcMode !== '' ||
     host.PidsLimit !== 16 || host.Memory !== 64 * 1024 * 1024 ||
@@ -322,7 +326,7 @@ export class DockerSandboxAdapter {
           '--security-opt=seccomp=builtin', '--user=65532:65532', '--pids-limit=16',
           '--memory=64m', '--memory-swap=64m', '--cpus=0.2',
           `--mount=type=volume,source=${outputVolume},target=/job/output,readonly`,
-          this.collectorImage, 'sleep', '7200'];
+          '--entrypoint=/bin/sleep', this.collectorImage, '7200'];
         collectorCreated = true;
         const collectorId = (await boundedDockerCommand(this.dockerExecutable, collectorArgs)).trim();
         if (!containerIdPattern.test(collectorId)) throw new DockerSandboxError('COLLECTOR_UNAVAILABLE');

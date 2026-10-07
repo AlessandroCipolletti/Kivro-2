@@ -11,6 +11,7 @@ import { workerMessageHash, workerSignatureBytes } from '../dist/packages/worker
 import { PostgresWorkerHeartbeatRepository } from '../dist/packages/persistence/src/worker-heartbeat.js';
 import { PostgresWorkerPairingRepository, workerPairingProofBytes } from '../dist/packages/persistence/src/worker-pairing.js';
 import { WORKER_PROTOCOL_VERSION } from '../dist/packages/worker-protocol/src/messages.js';
+import { PlatformOperationsRepository } from '../dist/packages/persistence/src/platform-operations.js';
 
 if (!process.env.M07_DATABASE_URL) {
   test('M07 PostgreSQL requires disposable local container', { skip: true }, () => {});
@@ -41,8 +42,8 @@ if (!process.env.M07_DATABASE_URL) {
       messageId: randomUUID(), controlPlaneId: plane, workerDeviceId: worker,
       workerRelease: '0.0.0-dev', openClawVersion: null, status: 'ONLINE',
       runningJobs: 0, capacity: 1, policyVersion: 1, localRevision: 0 }, worker, plane);
-    await pool.query("INSERT INTO capabilities(id,seller_profile_id,slug,name,status) VALUES($1,$2,'m07-test','M07 Capability','DRAFT')", [capability, seller]);
-    await pool.query("INSERT INTO capability_versions(id,capability_id,version_number,publication_state,version_snapshot,worker_manifest_hash,policy_validation_hash,published_at) VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())", [version, capability, { workerDeviceId: worker }, `sha256:${'a'.repeat(64)}`, `sha256:${'b'.repeat(64)}`]);
+    await pool.query("INSERT INTO capabilities(id,seller_profile_id,slug,name,status) VALUES($1,$2,'m07-test','M07 Capability','PUBLISHED')", [capability, seller]);
+    await pool.query("INSERT INTO capability_versions(id,capability_id,version_number,publication_state,version_snapshot,worker_manifest_hash,policy_validation_hash,published_at) VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())", [version, capability, { workerDeviceId: worker,externalProcessors:[] }, `sha256:${'a'.repeat(64)}`, `sha256:${'b'.repeat(64)}`]);
     await pool.query("INSERT INTO jobs(id,buyer_account_id,capability_version_id,worker_device_id,status,contract_snapshot) VALUES($1,$2,$3,$4,'CREATED','{}')", [job, buyer, version, worker]);
     await pool.query(`INSERT INTO job_input_manifests(id,job_id,schema_hash,manifest_hash,payload,total_bytes,file_count)
       VALUES($1,$2,$3,$4,'{}',0,0)`, [randomUUID(), job,
@@ -57,6 +58,13 @@ if (!process.env.M07_DATABASE_URL) {
   });
 
   test('competing offers produce exactly one active execution and durable transition', async () => {
+    await pool.query('UPDATE accounts SET email_verified_at=now() WHERE id=$1',[sellerAccount]);
+    await pool.query(`INSERT INTO operator_grants(account_id,granted_by) VALUES($1,'TEST_DB_ADMIN')`,
+      [sellerAccount]);
+    const operations=new PlatformOperationsRepository(pool);
+    await operations.setDispatchHalt(sellerAccount,true,1,'ABUSE_RESPONSE');
+    await assert.rejects(repo.offer(job,worker,plane,60),{code:'NOT_ELIGIBLE'});
+    await operations.setDispatchHalt(sellerAccount,false,2,'REMEDIATED');
     const outcomes = await Promise.allSettled(Array.from({ length: 5 }, () => repo.offer(job, worker, plane, 60)));
     assert.equal(outcomes.filter((outcome) => outcome.status === 'fulfilled').length, 1);
     const offer = outcomes.find((outcome) => outcome.status === 'fulfilled').value;
@@ -66,6 +74,24 @@ if (!process.env.M07_DATABASE_URL) {
     assert.equal(executions.rows[0].control_plane_id, plane);
     assert.equal(executions.rows[0].attempt_id, offer.attemptId);
     globalThis.offer = offer;
+  });
+
+  test('a halt or suspension after offer blocks acceptance and start',async()=>{
+    const operations=new PlatformOperationsRepository(pool);
+    const offer=globalThis.offer;
+    const before=await operations.dispatchState(sellerAccount);
+    await operations.setDispatchHalt(sellerAccount,true,before.revision,'ABUSE_RESPONSE');
+    await assert.rejects(repo.accept(offer.executionId,worker,plane,offer.leaseToken,randomUUID()),
+      {code:'NOT_ELIGIBLE'});
+    await operations.setDispatchHalt(sellerAccount,false,before.revision+1,'REMEDIATED');
+    await operations.setSuspension(sellerAccount,'CAPABILITY',capability,true,'ABUSE_RESPONSE');
+    await assert.rejects(repo.accept(offer.executionId,worker,plane,offer.leaseToken,randomUUID()),
+      {code:'NOT_ELIGIBLE'});
+    await operations.setSuspension(sellerAccount,'CAPABILITY',capability,false,'REMEDIATED');
+    await operations.setSuspension(sellerAccount,'ACCOUNT',buyer,true,'ABUSE_RESPONSE');
+    await assert.rejects(repo.accept(offer.executionId,worker,plane,offer.leaseToken,randomUUID()),
+      {code:'NOT_ELIGIBLE'});
+    await operations.setSuspension(sellerAccount,'ACCOUNT',buyer,false,'REMEDIATED');
   });
 
   test('acceptance is worker/plane/lease scoped and idempotent', async () => {
@@ -150,7 +176,9 @@ if (!process.env.M07_DATABASE_URL) {
   });
 
   test('one-time pairing binds a proved Ed25519 device key and revocation is seller-scoped', async () => {
-    await pool.query('UPDATE accounts SET email_verified_at=now() WHERE id=$1', [sellerAccount]);
+    await pool.query('UPDATE accounts SET auth_email_verified=true WHERE id=$1', [sellerAccount]);
+    await pool.query(`INSERT INTO seller_execution_model_acknowledgements
+      (seller_profile_id,statement_version) VALUES($1,1)`,[seller]);
     const pairing = new PostgresWorkerPairingRepository(pool);
     await assert.rejects(pairing.issue(buyer, seller), { code: 'NOT_ELIGIBLE' });
     const issued = await pairing.issue(sellerAccount, seller, 120);
@@ -165,8 +193,15 @@ if (!process.env.M07_DATABASE_URL) {
     await assert.rejects(pairing.redeem({ ...input, possessionSignature: sign(null,
       Buffer.from('wrong challenge'), privateKey).toString('base64url') }), { code: 'INVALID_PROOF' });
     const races = await Promise.allSettled([pairing.redeem(input), pairing.redeem(input)]);
-    assert.equal(races.filter((entry) => entry.status === 'fulfilled').length, 1);
-    assert.equal(races.find((entry) => entry.status === 'rejected').reason.code, 'INVALID_CODE');
+    assert.equal(races.filter((entry) => entry.status === 'fulfilled').length, 2,
+      'an exact replay after commit must report the same durable pairing');
+    assert.equal(races[0].value.deviceId,deviceId);
+    assert.equal(races[1].value.deviceId,deviceId);
+    assert.equal(races[0].value.sellerAccountId,sellerAccount);
+    assert.equal(races[1].value.sellerAccountId,sellerAccount);
+    assert.equal(races[0].value.sellerProfileId,seller);
+    await assert.rejects(pairing.redeem({...input,deviceId:randomUUID()}),
+      {code:'INVALID_PROOF'});
     const device = await pool.query('SELECT public_key,status FROM worker_devices WHERE id=$1', [deviceId]);
     assert.equal(device.rows[0].public_key, publicKeyPem);
     assert.equal(device.rows[0].status, 'PAIRED');
@@ -175,6 +210,7 @@ if (!process.env.M07_DATABASE_URL) {
     await assert.rejects(pairing.revoke(buyer, deviceId), { code: 'NOT_ELIGIBLE' });
     await pairing.revoke(sellerAccount, deviceId);
     await pairing.revoke(sellerAccount, deviceId);
+    await assert.rejects(pairing.redeem(input),{code:'INVALID_CODE'});
     assert.equal((await pool.query('SELECT status FROM worker_devices WHERE id=$1', [deviceId])).rows[0].status,
       'REVOKED');
   });

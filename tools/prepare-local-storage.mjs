@@ -10,9 +10,11 @@ const directory = resolve('.local/seaweedfs');
 const configPath = resolve('.local/seaweedfs/s3.json');
 const expected = {
   OBJECT_STORAGE_ENDPOINT: 'http://127.0.0.1:18333',
+  KIVRO_STORAGE_ORIGIN: 'http://127.0.0.1:18333',
   OBJECT_STORAGE_REGION: 'us-east-1',
   OBJECT_STORAGE_BUCKET: 'kivro-local-private',
   OBJECT_STORAGE_ACCESS_KEY_ID: 'kivrolocal',
+  KIVRO_CLAMAV_SOCKET: 'tcp://127.0.0.1:13310',
 };
 
 async function privateFile(path) {

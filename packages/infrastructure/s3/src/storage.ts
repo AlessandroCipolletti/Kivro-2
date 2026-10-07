@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand,
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, HeadObjectCommand,
   PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { z } from 'zod';
@@ -44,6 +44,11 @@ export class S3PrivateObjectStorage implements ObjectStoragePort {
       ...(options.accessKeyId && options.secretAccessKey ? { credentials: {
         accessKeyId: options.accessKeyId, secretAccessKey: options.secretAccessKey,
       } } : {}) });
+  }
+
+  /** Provider readiness only; never lists or reads private buyer objects. */
+  async checkAvailable(): Promise<void> {
+    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 
   async putPrivateObject(key: string, body: AsyncIterable<Uint8Array>, options: {
@@ -95,6 +100,7 @@ export class S3PrivateObjectStorage implements ObjectStoragePort {
       unhoistableHeaders: new Set(['x-amz-checksum-sha256', 'x-amz-meta-sha256']),
     });
     return { url, headers: Object.freeze({ 'content-type': options.contentType,
+      'content-length': String(options.sizeBytes),
       'x-amz-checksum-sha256': checksum, 'x-amz-meta-sha256': options.sha256 }) };
   }
 

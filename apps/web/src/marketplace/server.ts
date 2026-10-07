@@ -8,6 +8,7 @@ import { MarketplaceAssetRepository } from '../../../../packages/persistence/src
 import { leaseTokenIssuerFromEnvironment } from '../../../../packages/application/src/lease-token.js';
 import { S3PrivateObjectStorage } from '../../../../packages/infrastructure/s3/src/storage.js';
 import { getAuthService } from '../auth/server.js';
+import { ClamAvSocketScanner } from '../../../../packages/infrastructure/adapters/src/clamav-scanner.js';
 
 function required(key:string):string {
   const value=process.env[key];if(!value)throw new Error(`Missing marketplace configuration: ${key}`);
@@ -32,7 +33,9 @@ function construct(){
   let storage:S3PrivateObjectStorage|undefined;
   let assets:MarketplaceAssetRepository|undefined;
   const getJobs=()=>jobs??=new PostgresJobExecutionRepository(pool,finance,
-    leaseTokenIssuerFromEnvironment(process.env),availability);
+    leaseTokenIssuerFromEnvironment(process.env),availability,
+    process.env.KIVRO_CLAMAV_SOCKET?
+      new ClamAvSocketScanner(process.env.KIVRO_CLAMAV_SOCKET):undefined);
   const getBuyer=()=>buyer??=new MarketplaceBuyerRepository(pool,availability,finance,getJobs());
   const getStorage=()=>storage??=new S3PrivateObjectStorage({
     bucket:required('OBJECT_STORAGE_BUCKET'),region:required('OBJECT_STORAGE_REGION'),

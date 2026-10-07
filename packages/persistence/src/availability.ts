@@ -43,7 +43,7 @@ type PlanRow = { job_id: string; quote_id: string; capability_id: string; execut
 export class AvailabilityError extends Error {
   constructor(readonly code: 'NOT_FOUND' | 'NOT_ELIGIBLE' | 'STALE_QUOTE' | 'CAPACITY_FULL' |
     'QUEUE_FULL' | 'NO_FUTURE_WINDOW' | 'NOT_READY' | 'CONFLICT' | 'EXPIRED' |
-    'SCHEDULED_OFFLINE', readonly nextAvailableAt: string | null = null) {
+    'SCHEDULED_OFFLINE' | 'BUYER_LIMIT', readonly nextAvailableAt: string | null = null) {
     super(code); this.name = 'AvailabilityError';
   }
 }
@@ -418,6 +418,20 @@ export class PostgresAvailabilityRepository {
           acceptingQueue:false,canSchedule:false,nextAvailableAt:null,nextScheduleWindowAt:null,
           scheduleOpen:false,workerReachable:false,readinessReady:false,reason:'NOT_VISIBLE' });
       }
+      if(PublishedCapabilityVersionSchema.parse(cap.version_snapshot).externalProcessors===null){
+        return PublicAvailabilitySchema.parse({status:'READINESS_BLOCKED',
+          acceptingImmediate:false,acceptingQueue:false,canSchedule:false,nextAvailableAt:null,
+          nextScheduleWindowAt:null,scheduleOpen:false,workerReachable:false,readinessReady:false,
+          reason:'PROCESSOR_DECLARATION_MISSING'});
+      }
+      const dispatch=await client.query<{halted:boolean}>(
+        'SELECT halted FROM platform_dispatch_control WHERE singleton=true');
+      if(dispatch.rows[0]?.halted!==false){
+        return PublicAvailabilitySchema.parse({status:'READINESS_BLOCKED',
+          acceptingImmediate:false,acceptingQueue:false,canSchedule:false,nextAvailableAt:null,
+          nextScheduleWindowAt:null,scheduleOpen:false,workerReachable:false,readinessReady:false,
+          reason:'PLATFORM_BLOCKED'});
+      }
       let p: PolicyRow, w: WorkerScheduleRow;
       try { p=await this.policy(client,cap.id,false);
         w=await this.workerSchedule(client,cap.worker_device_id); }
@@ -488,6 +502,24 @@ export class PostgresAvailabilityRepository {
     uuid.parse(input.id);uuid.parse(input.buyerAccountId);uuid.parse(input.capabilityId);
     ExecutionPreferenceSchema.parse(input.executionMode);
     if (input.latestAcceptableStartAt) z.iso.datetime().parse(input.latestAcceptableStartAt);
+    const claimed=await this.pool.query<{buyer_account_id:string}>(
+      'SELECT buyer_account_id FROM job_schedule_quotes WHERE id=$1',[input.id]);
+    if(claimed.rows[0]&&claimed.rows[0].buyer_account_id!==input.buyerAccountId)
+      throw new AvailabilityError('CONFLICT');
+    // An invalid or unavailable quote rolls back its business transaction.
+    // Count the attempt separately so hostile retries cannot avoid the limit.
+    const rate=await this.pool.query<{quote_count:number;max_quotes_per_minute:number}>(`
+      INSERT INTO buyer_quote_rate(account_id,window_started_at,quote_count)
+      VALUES($1,now(),1)
+      ON CONFLICT(account_id) DO UPDATE SET
+        window_started_at=CASE WHEN buyer_quote_rate.window_started_at < now()-interval '1 minute'
+          THEN now() ELSE buyer_quote_rate.window_started_at END,
+        quote_count=CASE WHEN buyer_quote_rate.window_started_at < now()-interval '1 minute'
+          THEN 1 ELSE buyer_quote_rate.quote_count+1 END
+      RETURNING quote_count,(SELECT max_quotes_per_minute FROM platform_buyer_limits
+        WHERE singleton=true)`,[input.buyerAccountId]);
+    if(!rate.rows[0]||rate.rows[0].quote_count>rate.rows[0].max_quotes_per_minute)
+      throw new AvailabilityError('BUYER_LIMIT');
     try { return await this.tx(async (client) => {
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',[input.id]);
       const prior = await client.query<{ buyer_account_id: string; capability_id: string;
@@ -516,6 +548,9 @@ export class PostgresAvailabilityRepository {
           estimatedStartAt:null,estimatedDeliveryAt:null });
       }
       const cap = await this.capability(client,input.capabilityId);
+      const dispatch=await client.query<{halted:boolean}>(
+        'SELECT halted FROM platform_dispatch_control WHERE singleton=true FOR SHARE');
+      if(dispatch.rows[0]?.halted!==false)throw new AvailabilityError('NOT_ELIGIBLE');
       if (!await this.visibleTo(client,cap,input.buyerAccountId)) throw new AvailabilityError('NOT_ELIGIBLE');
       const p = await this.policy(client,cap.id,true);
       const w = await this.workerSchedule(client,cap.worker_device_id);
@@ -554,6 +589,7 @@ export class PostgresAvailabilityRepository {
         }
       }
       const version = PublishedCapabilityVersionSchema.parse(cap.version_snapshot);
+      if(version.externalProcessors===null)throw new AvailabilityError('NOT_READY');
       const expires = new Date(now.getTime()+2*60_000);
       await client.query(`INSERT INTO job_schedule_quotes(id,buyer_account_id,capability_id,
         capability_version_id,worker_device_id,execution_mode,price_snapshot,worker_state_at_quote,
@@ -642,7 +678,37 @@ export class PostgresAvailabilityRepository {
         if (!secured) throw new AvailabilityError('CONFLICT');
         return this.timing(existing.rows[0]);
       }
+      // Serialize different capability purchases by the same buyer before
+      // applying rolling spend/frequency limits and before reserving credits.
+      const buyer=await client.query<{status:string}>(
+        'SELECT status FROM accounts WHERE id=$1 FOR UPDATE',[input.buyerAccountId]);
+      if(buyer.rows[0]?.status!=='ACTIVE')throw new AvailabilityError('NOT_ELIGIBLE');
+      const limits=await client.query<{max_jobs_per_hour:number;
+        max_spend_minor_per_day:string;max_active_jobs:number}>(
+        'SELECT * FROM platform_buyer_limits WHERE singleton=true FOR SHARE');
+      if(!limits.rows[0])throw new AvailabilityError('NOT_ELIGIBLE');
+      const usage=await client.query<{jobs_hour:string;spend_day:string;active_jobs:string}>(`
+        SELECT count(*) FILTER(WHERE r.created_at>=now()-interval '1 hour') AS jobs_hour,
+          coalesce(sum(r.amount_minor) FILTER(WHERE r.created_at>=now()-interval '1 day'),0)
+            AS spend_day,
+          count(*) FILTER(WHERE j.status IN ('PAYMENT_RESERVED','WAITING_FOR_AVAILABILITY',
+            'QUEUED','WAITING_FOR_WORKER','DISPATCHED','ACCEPTED','STARTING','RUNNING',
+            'UPLOADING_RESULT','PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED',
+            'SECURITY_PAUSED','CANCEL_REQUESTED')) AS active_jobs
+        FROM payment_reservations r JOIN jobs j ON j.id=r.job_id
+        WHERE r.buyer_account_id=$1`,[input.buyerAccountId]);
+      const prior=usage.rows[0];
+      const ceiling=limits.rows[0];
+      const proposed=z.object({buyerAmountMinor:z.number().int().positive()})
+        .parse(q.price_snapshot).buyerAmountMinor;
+      if(!prior||Number(prior.jobs_hour)>=ceiling.max_jobs_per_hour||
+        Number(prior.spend_day)+proposed>Number(ceiling.max_spend_minor_per_day)||
+        Number(prior.active_jobs)>=ceiling.max_active_jobs)
+        throw new AvailabilityError('BUYER_LIMIT');
       if (q.expires_at.getTime()<=Date.now()) throw new AvailabilityError('STALE_QUOTE');
+      const dispatch=await client.query<{halted:boolean}>(
+        'SELECT halted FROM platform_dispatch_control WHERE singleton=true FOR SHARE');
+      if(dispatch.rows[0]?.halted!==false)throw new AvailabilityError('STALE_QUOTE');
       const cap=await this.capability(client,q.capability_id);
       if (!await this.visibleTo(client,cap,input.buyerAccountId)) throw new AvailabilityError('STALE_QUOTE');
       const w=await this.workerSchedule(client,cap.worker_device_id);
@@ -658,6 +724,7 @@ export class PostgresAvailabilityRepository {
         throw new AvailabilityError('STALE_QUOTE');
       }
       const version=PublishedCapabilityVersionSchema.parse(cap.version_snapshot);
+      if(version.externalProcessors===null)throw new AvailabilityError('STALE_QUOTE');
       if (canonicalJson(version.price)!==canonicalJson(q.price_snapshot)) throw new AvailabilityError('STALE_QUOTE');
       const schedule=this.effective(p,w);
       const now=new Date();

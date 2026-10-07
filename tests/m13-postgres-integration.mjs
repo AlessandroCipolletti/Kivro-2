@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { createHash,generateKeyPairSync,randomUUID,sign } from 'node:crypto';
+import { createServer } from 'node:net';
 import process from 'node:process';
 import test from 'node:test';
 import pg from 'pg';
@@ -26,8 +27,7 @@ import { WORKER_PROTOCOL_VERSION } from '../dist/packages/worker-protocol/src/me
 import { workerMessageHash,workerSignatureBytes } from '../dist/packages/worker-protocol/src/auth.js';
 import { handleBuyerV1 } from '../dist/apps/web/src/buyer-api/handler.js';
 import { handleWorkerJobRpc } from '../dist/apps/web/src/worker/control-handler.js';
-import { getMarketplaceService } from '../dist/apps/web/src/marketplace/server.js';
-import { newPrivateAssetKey } from '../dist/packages/contracts/src/assets.js';
+import { runM16CoreWorkerSlice } from './m16-core-worker-integration.mjs';
 
 if(!process.env.M13_DATABASE_URL){
   test('M13 requires disposable PostgreSQL',{skip:true},()=>{});
@@ -237,6 +237,27 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
     const worker=randomUUID(),capability=randomUUID(),versionId=randomUUID();
     const {publicKey,privateKey}=generateKeyPairSync('ed25519');
     const hash=`sha256:${'a'.repeat(64)}`,plane='m13-test-plane';
+    // This M13 API regression exercises the scanner port with a local clamd
+    // protocol fixture. M15 malware-detection and live-service gates are
+    // separately tested; this fixture is not their acceptance evidence.
+    const scannerServer=createServer((socket)=>{
+      let received=Buffer.alloc(0);
+      socket.on('data',(part)=>{
+        received=Buffer.concat([received,part]);
+        if(received.subarray(0,10).toString('binary')!=='zINSTREAM\0')return;
+        let offset=10;
+        while(offset+4<=received.length){
+          const length=received.readUInt32BE(offset);offset+=4;
+          if(length===0){socket.end('stream: OK\0');return;}
+          if(offset+length>received.length)return;
+          offset+=length;
+        }
+      });
+    });
+    await new Promise((resolve,reject)=>{scannerServer.once('error',reject);
+      scannerServer.listen(0,'127.0.0.1',resolve);});
+    const scannerAddress=scannerServer.address();
+    if(!scannerAddress||typeof scannerAddress==='string')throw new Error('SCANNER_FIXTURE');
     Object.assign(process.env,{DATABASE_URL:process.env.M13_DATABASE_URL,
       APP_ORIGIN:'http://127.0.0.1:9876',
       BETTER_AUTH_SECRET:'m13-test-auth-secret-at-least-32-characters',
@@ -244,6 +265,8 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       KIVRO_STRIPE_MODE:'test',KIVRO_LEASE_KEY_VERSION:'v1',
       KIVRO_CONTROL_PLANE_ID:plane,KIVRO_CONTROL_PLANE_STATE:'ACTIVE',
       KIVRO_LEASE_KEY_BASE64:Buffer.alloc(32,17).toString('base64'),
+      KIVRO_CLAMAV_SOCKET:process.env.KIVRO_M16_LIVE_CLAMAV_SOCKET??
+        `tcp://127.0.0.1:${scannerAddress.port}`,
       KIVRO_WEBHOOK_ENCRYPTION_KEY:Buffer.alloc(32,13).toString('hex'),
       OBJECT_STORAGE_BUCKET:process.env.OBJECT_STORAGE_BUCKET,
       OBJECT_STORAGE_REGION:process.env.OBJECT_STORAGE_REGION,
@@ -554,11 +577,18 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       assert.equal((await sendTransition('STARTING','RUNNING')).status,200);
       assert.equal((await sendTransition('RUNNING','UPLOADING_RESULT')).status,200);
       const resultFile=Buffer.from('Durable M13 report\n');
-      const resultAssetId=randomUUID(),objectKey=newPrivateAssetKey(resultAssetId);
+      const resultAssetId=randomUUID();
       const resultDigest=`sha256:${createHash('sha256').update(resultFile).digest('hex')}`;
-      const storage=getMarketplaceService().getStorage();
-      await storage.putPrivateObject(objectKey,(async function*(){yield resultFile;})(),{
-        contentType:'text/plain',sizeBytes:resultFile.length,sha256:resultDigest});
+      const preparedResponse=await rpc('PREPARE_RESULT_ASSET',{...binding,assetId:resultAssetId,
+        fieldKey:'report',extension:'.txt',sizeBytes:resultFile.length,sha256:resultDigest,
+        detectedMimeType:'text/plain'});
+      assert.equal(preparedResponse.status,200);
+      const prepared=await preparedResponse.json();
+      const objectKey=prepared.objectKey;
+      assert.equal(prepared.assetId,resultAssetId);
+      const uploaded=await globalThis.fetch(prepared.uploadUrl,{method:'PUT',headers:prepared.uploadHeaders,
+        body:resultFile,redirect:'manual'});
+      assert.equal(uploaded.status,200);
       const resultManifestId=randomUUID();
       const resultSubmission={...binding,resultManifestId,
         retainUntil:new Date(Date.now()+365*86_400_000).toISOString(),
@@ -594,6 +624,11 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       assert.equal((await call('GET',`assets/${resultAssetId}`,null,null,
         otherKey.secret)).status,404);
       assert.equal((await finance.buyerBalance(buyer)).reservedMinor,0);
+      if(process.env.M16_REAL_OPENCLAW==='1'){
+        await runM16CoreWorkerSlice({pool,buyer,otherToken:otherKey.secret,seller,worker,
+          capability,originalPackage:localPackage,policyValidationHash:hash,plane,
+          inputAssetId:intent.id,call,rpc,execution,finance});
+      }
       const availabilityKey=await keys.create(buyer,{name:'Availability checks',
         scopes:['jobs:create']});
       const failedResponse=await call('POST',jobPath,body,'failed-job-0001',
@@ -640,7 +675,8 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       const closedBody=await closed.json();
       assert.equal(closedBody.code,'CAPABILITY_SCHEDULED_OFFLINE');
       assert.equal(closedBody.availability.status,'SCHEDULED_OFFLINE');
-      assert.ok(Date.parse(closedBody.availability.nextAvailableAt)>Date.now());
+      assert.ok(Date.parse(closedBody.availability.nextAvailableAt)>Date.now(),
+        JSON.stringify(closedBody.availability));
       const publicClosed=await (await call('GET',`capabilities/${slug}`)).json();
       assert.equal(publicClosed.detail.availability.status,'SCHEDULED_OFFLINE');
       assert.equal(JSON.stringify(publicClosed).includes('weeklyWindows'),false,
@@ -668,12 +704,12 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
           'production Worker RPC refuses plaintext input release and job control');
       }finally{if(priorNodeEnv===undefined)delete process.env.NODE_ENV;
         else process.env.NODE_ENV=priorNodeEnv;}
-      const limited=await keys.create(buyer,{name:'rate test',scopes:['jobs:create']});
+      const limited=await keys.create(other,{name:'rate test',scopes:['jobs:create']});
       for(let n=0;n<12;n++)assert.equal((await call('GET',jobPath,null,null,
         limited.secret)).status,404);
       const tooMany=await call('GET',jobPath,null,null,limited.secret);
       assert.equal(tooMany.status,429);
       assert.equal((await tooMany.json()).code,'RATE_LIMITED');
       assert.equal(tooMany.headers.get('retry-after'),'60');
-    }finally{await pool.end();}
+    }finally{await pool.end();await new Promise((resolve)=>scannerServer.close(resolve));}
   });

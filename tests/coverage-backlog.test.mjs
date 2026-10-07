@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-test('every deferred verification row has one dependency and closing-evidence entry', () => {
+test('every open verification or implementation row has one dependency and closing-evidence entry', () => {
   const coverage = readFileSync(join(root, 'spec/COVERAGE.md'), 'utf8');
   const backlog = readFileSync(join(root, 'docs/verification-backlog.md'), 'utf8');
-  const deferred = [...coverage.matchAll(/^\s+`?([A-Z]+-\d+)`?\s+P\d+\s+(?:§\d+\s+)?`?DEFERRED_VERIFICATION`?/gm)]
+  const deferred = [...coverage.matchAll(/^\s+`?([A-Z]+-\d+)`?\s+P\d+\s+(?:§\d+\s+)?`?(?:DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION)`?/gm)]
     .map((match) => match[1]);
   const entries = [...backlog.matchAll(/^\| `([A-Z]+-\d+)` \(§\d+\) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gm)];
   assert.equal(new Set(deferred).size, deferred.length, 'coverage IDs must be unique');

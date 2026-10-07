@@ -165,5 +165,17 @@ export function validateInputPayload(contract: unknown, payload: unknown): Contr
 export function validateOutputPayload(contract: unknown, payload: unknown): ContractPayload {
   const parsed = OutputContractSchema.safeParse(contract);
   if (!parsed.success) throw new ContractValidationError('INVALID_CONTRACT');
-  return validatePayload(parsed.data.fields, payload);
+  const submitted=payloadSchema.safeParse(payload);
+  if(!submitted.success)throw new ContractValidationError('INVALID_PAYLOAD');
+  const values:Record<string,unknown>={...submitted.data.values};
+  for(const field of parsed.data.fields){
+    if(!['SHORT_TEXT','LONG_TEXT','MARKDOWN'].includes(field.type)||
+      typeof values[field.key]!=='string')continue;
+    const original=values[field.key] as string;
+    const normalized=original.replaceAll('\r\n','\n').replaceAll('\r','\n').normalize('NFC');
+    if(Buffer.from(normalized,'utf8').toString('utf8')!==normalized)
+      throw new ContractValidationError('INVALID_VALUE',field.key);
+    values[field.key]=normalized;
+  }
+  return validatePayload(parsed.data.fields,{values,assets:submitted.data.assets});
 }

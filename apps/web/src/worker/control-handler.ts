@@ -14,6 +14,12 @@ import { JobExecutionError } from '../../../../packages/persistence/src/job-exec
 import { SellerOperationsError } from '../../../../packages/persistence/src/seller-operations.js';
 import { JobStatusSchema } from '../../../../packages/contracts/src/job-lifecycle.js';
 import { FinanceError } from '../../../../packages/application/src/finance-policy.js';
+import { ObjectIntegrityError } from '../../../../packages/application/src/object-integrity.js';
+import { ResultFileSafetyError } from '../../../../packages/application/src/result-file-safety.js';
+import { MalwareScanError } from '../../../../packages/infrastructure/adapters/src/clamav-scanner.js';
+import { WorkerCapabilityReviewSchema } from '../../../../packages/contracts/src/seller-publication.js';
+import { PostgresSellerPublicationRepository, SellerPublicationError } from
+  '../../../../packages/persistence/src/seller-publication.js';
 
 const signedBody=z.strictObject({envelope:z.unknown(),body:z.unknown()});
 function json(value:unknown,status=200):Response{return Response.json(value,{status,
@@ -79,13 +85,16 @@ export async function handleWorkerMessage(request:Request):Promise<Response>{
     const input=signedBody.parse(await boundedJson(request));
     const configured=plane();
     const body=z.union([WorkerHeartbeatSchema,WorkerJobControlAckSchema,
-      JobAcceptedSchema,WorkerLocalJobControlReportSchema]).parse(input.body);
+      JobAcceptedSchema,WorkerLocalJobControlReportSchema,WorkerCapabilityReviewSchema]).parse(input.body);
     if(body.controlPlaneId!==configured.id)return json({code:'WRONG_CONTROL_PLANE'},403);
     const marketplace=getMarketplaceService();
     const identity=await new PostgresWorkerMessageAuthenticator(marketplace.pool)
       .verify(input.envelope,body);
     if(identity.workerDeviceId!==body.workerDeviceId)return json({code:'WRONG_WORKER'},403);
-    if(body.type==='WORKER_HEARTBEAT'){
+    if(body.type==='CAPABILITY_REVIEW'){
+      await new PostgresSellerPublicationRepository(marketplace.pool)
+        .stageFromAuthenticatedWorker(body,identity.workerDeviceId);
+    }else if(body.type==='WORKER_HEARTBEAT'){
       await new PostgresWorkerHeartbeatRepository(marketplace.pool).observe(body,
         identity.workerDeviceId,identity.controlPlaneId);
     }else if(body.type==='LOCAL_JOB_CONTROL_REPORT'){
@@ -116,7 +125,13 @@ const resultAsset=z.strictObject({id:uuid,fieldKey:z.string().min(1).max(160),
   objectKey:z.string().regex(/^private\/assets\/[a-f0-9-]{36}\/[a-f0-9-]{36}$/),
   sizeBytes:z.number().int().nonnegative(),sha256:z.string().regex(/^sha256:[a-f0-9]{64}$/),
   detectedMimeType:z.string().min(3).max(120)});
-export type WorkerJobRpcKind='ACCEPT'|'ACCEPTED_INPUT'|'TRANSITION'|'RENEW_LEASE'|'FINALIZE_RESULT';
+const outputIntent=binding.extend({assetId:uuid,fieldKey:z.string().min(1).max(160),
+  extension:z.string().regex(/^[.][a-z0-9]{1,16}$/),
+  sizeBytes:z.number().int().nonnegative().max(1_073_741_824),
+  sha256:z.string().regex(/^sha256:[a-f0-9]{64}$/),
+  detectedMimeType:z.string().min(3).max(120)});
+export type WorkerJobRpcKind='ACCEPT'|'ACCEPTED_INPUT'|'TRANSITION'|'RENEW_LEASE'|
+  'PREPARE_RESULT_ASSET'|'FINALIZE_RESULT';
 
 /** Fixed signed Worker RPCs call the same paid execution and ledger state machines as UI/API. */
 export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):Promise<Response>{
@@ -128,6 +143,7 @@ export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):
     const schema=kind==='ACCEPT'?binding.extend({messageId:uuid}):
       kind==='TRANSITION'?binding.extend({event:transition}):
       kind==='RENEW_LEASE'?binding.extend({ttlSeconds:z.number().int().min(5).max(3600)}):
+      kind==='PREPARE_RESULT_ASSET'?outputIntent:
       kind==='FINALIZE_RESULT'?binding.extend({resultManifestId:uuid,
         retainUntil:z.iso.datetime({offset:true}),payload:z.unknown(),
         assets:z.array(resultAsset).max(50)}):binding;
@@ -161,14 +177,33 @@ export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):
       return json({leaseExpiresAt:await jobs.renewLease(data.executionId,
         identity.workerDeviceId,identity.controlPlaneId,data.leaseToken,data.ttlSeconds)});
     }
+    if(kind==='PREPARE_RESULT_ASSET'){
+      const data=outputIntent.parse(body);
+      return json(await jobs.prepareResultAsset({...data,
+        workerDeviceId:identity.workerDeviceId,controlPlaneId:identity.controlPlaneId},
+      app.getStorage()));
+    }
     const data=binding.extend({resultManifestId:uuid,retainUntil:z.iso.datetime({offset:true}),
       payload:z.unknown(),assets:z.array(resultAsset).max(50)}).parse(body);
     // Worker-provided retention is ignored. Cloud owns the buyer privacy deadline.
-    await jobs.finalizeResult({resultManifestId:data.resultManifestId,jobId:data.jobId,
-      executionId:data.executionId,attemptId:data.attemptId,leaseToken:data.leaseToken,
-      payload:data.payload,assets:data.assets,workerDeviceId:identity.workerDeviceId,
-      controlPlaneId:identity.controlPlaneId},app.getStorage(),
-    new Date(Date.now()+30*86_400_000).toISOString());
+    try{
+      await jobs.finalizeResult({resultManifestId:data.resultManifestId,jobId:data.jobId,
+        executionId:data.executionId,attemptId:data.attemptId,leaseToken:data.leaseToken,
+        payload:data.payload,assets:data.assets,workerDeviceId:identity.workerDeviceId,
+        controlPlaneId:identity.controlPlaneId},app.getStorage(),
+      new Date(Date.now()+30*86_400_000).toISOString());
+    }catch(error){
+      const invalid=error instanceof ResultFileSafetyError||
+        error instanceof ObjectIntegrityError&&error.code!=='MISSING'||
+        error instanceof MalwareScanError&&error.code==='INFECTED';
+      if(!invalid)throw error;
+      await jobs.rejectInvalidResult({jobId:data.jobId,executionId:data.executionId,
+        attemptId:data.attemptId,workerDeviceId:identity.workerDeviceId,
+        controlPlaneId:identity.controlPlaneId,leaseToken:data.leaseToken});
+      // A terminal rejection is acknowledged so the Worker outbox does not
+      // retry the same unsafe artifact indefinitely. Credit release is atomic.
+      return json({ok:false,code:'RESULT_REJECTED'});
+    }
     await app.finance.settleDeliveredJob(data.jobId);
     return json({ok:true});
   }catch(error){
@@ -181,8 +216,11 @@ function workerError(error:unknown):Response{
   if(error instanceof z.ZodError||error instanceof TypeError||error instanceof SyntaxError)
     return json({code:'INVALID_INPUT'},400);
   if(error instanceof WorkerAuthenticationError)return json({code:error.code},403);
+  if(error instanceof SellerPublicationError)return json({code:error.code},
+    error.code==='NOT_FOUND'?404:error.code==='NOT_ELIGIBLE'?403:409);
   if(error instanceof JobExecutionError||error instanceof SellerOperationsError)
-    return json({code:error.code},['NOT_FOUND'].includes(error.code)?404:
+    return json({code:error.code},error.code==='SCAN_UNAVAILABLE'?503:
+      ['NOT_FOUND'].includes(error.code)?404:
       ['WRONG_WORKER','WRONG_CONTROL_PLANE','NOT_ELIGIBLE'].includes(error.code)?403:409);
   return json({code:'WORKER_CONTROL_UNAVAILABLE'},503);
 }

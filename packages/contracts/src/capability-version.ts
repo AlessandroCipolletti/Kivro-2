@@ -32,6 +32,8 @@ const versionFields = {
   publicPermissionManifest: PublicPermissionManifestSchema,
   price: PriceSnapshotSchema,
   dependencySnapshot: z.array(DependencySnapshotSchema).max(128),
+  /** Null means legacy/unknown, never an assertion that no processor exists. */
+  externalProcessors: z.array(z.string().trim().min(2).max(160)).max(16).nullable().default(null),
   resourceLimits: WorkerManifestSchema.shape.limits,
   concurrencyLimit: z.number().int().positive().max(64),
   pauseSupport: PauseSupportSchema,
@@ -68,6 +70,7 @@ export const JobContractSnapshotSchema = z.strictObject({
   outputContractSnapshot: CapabilityIOContractSchema.shape.output,
   priceSnapshot: PriceSnapshotSchema,
   pauseSupportSnapshot: PauseSupportSchema,
+  externalProcessorsSnapshot: versionFields.externalProcessors,
 });
 
 export type CapabilityVersionCandidate = z.infer<typeof CapabilityVersionCandidateSchema>;

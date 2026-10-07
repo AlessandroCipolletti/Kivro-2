@@ -14,8 +14,11 @@ import { JobControlCommandSchema, type PauseSupport } from '../../contracts/src/
 import { JobOfferSchema, WorkerLocalJobControlReportSchema, WORKER_PROTOCOL_VERSION,
   type JobOffer } from '../../worker-protocol/src/messages.js';
 import type { LeaseTokenIssuer } from '../../application/src/lease-token.js';
-import { SUPPORTED_FILE_TYPES } from '../../contracts/src/file-types.js';
+import { SUPPORTED_FILE_TYPES, isMatchingFileType } from '../../contracts/src/file-types.js';
 import { AvailabilityError } from './availability.js';
+import { newPrivateAssetKey } from '../../contracts/src/assets.js';
+import type { MalwareScannerPort } from '../../infrastructure/contracts/src/malware-ports.js';
+import { verifyResultFileType } from '../../application/src/result-file-safety.js';
 
 const uuid = z.uuid();
 const controlPlane = z.string().min(1).max(160);
@@ -42,7 +45,8 @@ export interface JobAvailabilityVerifier {
 
 export class JobExecutionError extends Error {
   constructor(readonly code: 'NOT_FOUND' | 'CONFLICT' | 'PAYMENT_NOT_SECURED' | 'NOT_ELIGIBLE' |
-    'LEASE_EXPIRED' | 'WRONG_WORKER' | 'WRONG_CONTROL_PLANE' | 'INVALID_LEASE') {
+    'LEASE_EXPIRED' | 'WRONG_WORKER' | 'WRONG_CONTROL_PLANE' | 'INVALID_LEASE' |
+    'SCAN_UNAVAILABLE' | 'ABUSE_DENIED') {
     super(code); this.name = 'JobExecutionError';
   }
 }
@@ -151,12 +155,35 @@ const submittedResultSchema = z.strictObject({
     detectedMimeType: z.string().min(3).max(120),
   })).max(50),
 });
+const outputIntentSchema=z.strictObject({
+  assetId:uuid,jobId:uuid,executionId:uuid,attemptId:uuid,workerDeviceId:uuid,
+  controlPlaneId:controlPlane,leaseToken:z.string().min(32).max(512),
+  fieldKey:z.string().min(1).max(160),
+  extension:z.string().regex(/^[.][a-z0-9]{1,16}$/),
+  sizeBytes:z.number().int().nonnegative().max(1_073_741_824),
+  sha256:z.string().regex(/^sha256:[a-f0-9]{64}$/),
+  detectedMimeType:z.string().min(3).max(120),
+});
+type StoredOutputIntent={asset_id:string;job_id:string;execution_id:string;attempt_id:string;
+  worker_device_id:string;object_key:string;field_key:string;extension:string;size_bytes:string;
+  sha256:string;detected_mime_type:string;expires_at:Date;consumed_at:Date|null};
+function matchesOutputIntent(intent:StoredOutputIntent,asset:{id:string;fieldKey:string;
+  objectKey:string;sizeBytes:number;sha256:string;detectedMimeType:string},
+  binding:{jobId:string;executionId:string;attemptId:string;workerDeviceId:string}):boolean{
+  return intent.asset_id===asset.id&&intent.job_id===binding.jobId&&
+    intent.execution_id===binding.executionId&&intent.attempt_id===binding.attemptId&&
+    intent.worker_device_id===binding.workerDeviceId&&intent.object_key===asset.objectKey&&
+    intent.field_key===asset.fieldKey&&Number(intent.size_bytes)===asset.sizeBytes&&
+    intent.sha256===asset.sha256&&intent.detected_mime_type===asset.detectedMimeType&&
+    intent.expires_at.getTime()>Date.now()&&intent.consumed_at===null;
+}
 
 /** One shared transaction boundary for both provider composition roots. */
 export class PostgresJobExecutionRepository {
   constructor(private readonly pool: Pool, private readonly payment: PaymentReservationVerifier,
     private readonly leaseIssuer: LeaseTokenIssuer,
-    private readonly availability?: JobAvailabilityVerifier) {}
+    private readonly availability?: JobAvailabilityVerifier,
+    private readonly malwareScanner?: MalwareScannerPort) {}
 
   private async mustBeEligible(client: PoolClient, jobId: string,
     stage: 'OFFER' | 'ACCEPT' | 'START'): Promise<void> {
@@ -166,13 +193,32 @@ export class PostgresJobExecutionRepository {
       if (error instanceof AvailabilityError) throw new JobExecutionError('NOT_ELIGIBLE');
       throw error;
     }
+    // The switch and actor rows are locked against operator mutations. An
+    // offer created before suspension must not be accepted or started later.
+    const control=await client.query<{halted:boolean}>(
+      'SELECT halted FROM platform_dispatch_control WHERE singleton=true FOR SHARE');
+    if(control.rows[0]?.halted!==false)throw new JobExecutionError('NOT_ELIGIBLE');
+    const actors=await client.query(`SELECT 1 FROM jobs j
+      JOIN accounts buyer ON buyer.id=j.buyer_account_id
+      JOIN capability_versions v ON v.id=j.capability_version_id
+      JOIN capabilities c ON c.id=v.capability_id
+      JOIN seller_profiles seller ON seller.id=c.seller_profile_id
+      JOIN accounts seller_account ON seller_account.id=seller.account_id
+      JOIN worker_devices worker ON worker.id=j.worker_device_id
+      WHERE j.id=$1 AND buyer.status='ACTIVE' AND seller_account.status='ACTIVE'
+        AND seller.status='ACTIVE' AND c.status='PUBLISHED' AND worker.status='ONLINE'
+        AND jsonb_typeof(v.version_snapshot->'externalProcessors')='array'
+      FOR SHARE OF buyer,seller_account,seller,c,worker`,[jobId]);
+    if(!actors.rowCount)throw new JobExecutionError('NOT_ELIGIBLE');
   }
 
-  private async transaction<T>(operation: (client: PoolClient) => Promise<T>): Promise<T> {
+  private async transaction<T>(operation: (client: PoolClient) => Promise<T>,
+    beforeCommit?: () => void): Promise<T> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const result = await operation(client);
+      beforeCommit?.();
       await client.query('COMMIT');
       return result;
     } catch (error) {
@@ -233,6 +279,13 @@ export class PostgresJobExecutionRepository {
         return {id:prior.id,schemaHash,manifestHash:prior.manifest_hash,
           totalBytes:Number(prior.total_bytes),fileCount:prior.file_count};
       }
+      const rules=await client.query<{normalized_pattern:string}>(
+        'SELECT normalized_pattern FROM abuse_content_rules WHERE active=true LIMIT 201');
+      if(rules.rows.length>200)throw new JobExecutionError('ABUSE_DENIED');
+      const normalizedValues=canonicalJson(payload.values).normalize('NFKC')
+        .toLocaleLowerCase('en-US');
+      if(rules.rows.some((rule)=>normalizedValues.includes(rule.normalized_pattern)))
+        throw new JobExecutionError('ABUSE_DENIED');
       const ids = Object.values(payload.assets).flat();
       if (new Set(ids).size !== ids.length || ids.length > 50) throw new JobExecutionError('NOT_ELIGIBLE');
       const versionResult = await client.query<{ version_snapshot: unknown }>(
@@ -393,6 +446,21 @@ export class PostgresJobExecutionRepository {
       await this.mustBeEligible(client, jobId, 'OFFER');
       const job = await this.lockJob(client, jobId);
       if (job.status !== 'QUEUED' || job.worker_device_id !== workerDeviceId) throw new JobExecutionError('NOT_ELIGIBLE');
+      // Serialize every offer against the operator's global dispatch switch.
+      // Missing control state is a denial, never an implicit "on" state.
+      const control = await client.query<{ halted: boolean }>(
+        'SELECT halted FROM platform_dispatch_control WHERE singleton=true FOR SHARE');
+      if (control.rows[0]?.halted !== false) throw new JobExecutionError('NOT_ELIGIBLE');
+      const actors = await client.query(`SELECT 1 FROM jobs j
+        JOIN accounts buyer ON buyer.id=j.buyer_account_id
+        JOIN capability_versions v ON v.id=j.capability_version_id
+        JOIN capabilities c ON c.id=v.capability_id
+        JOIN seller_profiles seller ON seller.id=c.seller_profile_id
+        JOIN accounts seller_account ON seller_account.id=seller.account_id
+        WHERE j.id=$1 AND buyer.status='ACTIVE' AND seller_account.status='ACTIVE'
+          AND seller.status='ACTIVE' AND c.status='PUBLISHED'
+          AND jsonb_typeof(v.version_snapshot->'externalProcessors')='array'`,[jobId]);
+      if (!actors.rowCount) throw new JobExecutionError('NOT_ELIGIBLE');
       if (!job.payment_reservation_id || !await this.payment.isSecured(client, jobId, job.payment_reservation_id)) {
         throw new JobExecutionError('PAYMENT_NOT_SECURED');
       }
@@ -738,23 +806,164 @@ export class PostgresJobExecutionRepository {
   }
 
   /** Only validated, private, durable deliverables can make a buyer-visible COMPLETED state. */
+  async prepareResultAsset(raw:unknown,storage:ObjectStoragePort):Promise<{
+    assetId:string;objectKey:string;uploadUrl:string;uploadHeaders:Readonly<Record<string,string>>}>{
+    const input=outputIntentSchema.parse(raw);
+    const objectKey=await this.transaction(async(client)=>{
+      const job=await this.lockJob(client,input.jobId);
+      if(job.status!=='UPLOADING_RESULT'||job.worker_device_id!==input.workerDeviceId)
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const found=await client.query<ExecutionRow>(
+        'SELECT * FROM job_executions WHERE id=$1 FOR UPDATE',[input.executionId]);
+      const execution=found.rows[0];
+      if(!execution||execution.job_id!==job.id||execution.attempt_id!==input.attemptId||
+        execution.worker_device_id!==input.workerDeviceId||
+        execution.control_plane_id!==input.controlPlaneId||execution.completed_at||
+        execution.lease_expires_at.getTime()<=Date.now()||
+        !equalDigest(execution.lease_token_hash,digest(input.leaseToken)))
+        throw new JobExecutionError('INVALID_LEASE');
+      if(!job.payment_reservation_id||
+        !await this.payment.isSecured(client,job.id,job.payment_reservation_id))
+        throw new JobExecutionError('PAYMENT_NOT_SECURED');
+      const snapshot=JobContractSnapshotSchema.parse(job.contract_snapshot);
+      const field=snapshot.outputContractSnapshot.fields.find((item)=>item.key===input.fieldKey);
+      if(!field||(field.type!=='FILE'&&field.type!=='FILES')||
+        input.sizeBytes>field.constraints.maxFileSizeBytes||
+        !isMatchingFileType(`result${input.extension}`,input.detectedMimeType,
+          field.constraints.allowedMimeTypes,field.constraints.allowedExtensions))
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const prior=await client.query<StoredOutputIntent>(
+        'SELECT * FROM job_result_upload_intents WHERE asset_id=$1 FOR UPDATE',[input.assetId]);
+      if(prior.rows[0]){
+        const existing=prior.rows[0];
+        if(!matchesOutputIntent(existing,{id:input.assetId,fieldKey:input.fieldKey,
+          objectKey:existing.object_key,sizeBytes:input.sizeBytes,sha256:input.sha256,
+          detectedMimeType:input.detectedMimeType},input)||existing.extension!==input.extension)
+          throw new JobExecutionError('CONFLICT');
+        await client.query(`UPDATE job_result_upload_intents SET last_signed_at=now()
+          WHERE asset_id=$1`,[input.assetId]);
+        return existing.object_key;
+      }
+      const count=await client.query<{n:number}>(`SELECT count(*)::int AS n
+        FROM job_result_upload_intents WHERE job_id=$1`,[job.id]);
+      if((count.rows[0]?.n??50)>=50)throw new JobExecutionError('NOT_ELIGIBLE');
+      const key=newPrivateAssetKey(input.assetId);
+      await client.query(`INSERT INTO job_result_upload_intents(asset_id,job_id,execution_id,
+        attempt_id,worker_device_id,object_key,field_key,size_bytes,sha256,
+        detected_mime_type,extension,expires_at)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now()+interval '1 hour')`,
+      [input.assetId,job.id,input.executionId,input.attemptId,input.workerDeviceId,key,
+        input.fieldKey,input.sizeBytes,input.sha256,input.detectedMimeType,input.extension]);
+      return key;
+    });
+    const signed=await storage.presignPrivateUpload(objectKey,{contentType:input.detectedMimeType,
+      sizeBytes:input.sizeBytes,sha256:input.sha256 as `sha256:${string}`,expiresSeconds:600});
+    return {assetId:input.assetId,objectKey,uploadUrl:signed.url,uploadHeaders:signed.headers};
+  }
+
+  /** Remove private staging objects only after every issued signed PUT has
+   * expired. A restart can repeat deletion; the delivered cloud copy stays. */
+  async reconcileOutputStaging(storage:ObjectStoragePort,limit=100):Promise<number>{
+    if(!Number.isSafeInteger(limit)||limit<1||limit>500)throw new RangeError('Invalid cleanup limit');
+    const rows=await this.pool.query<{asset_id:string;object_key:string}>(`
+      SELECT i.asset_id,i.object_key FROM job_result_upload_intents i
+      JOIN jobs j ON j.id=i.job_id
+      WHERE i.source_deleted_at IS NULL AND
+        i.last_signed_at<now()-interval '11 minutes' AND
+        (i.consumed_at IS NOT NULL OR i.expires_at<now() OR
+          j.status IN ('COMPLETED','REJECTED','EXPIRED','CANCELLED','FAILED_STARTUP',
+            'FAILED_POLICY','FAILED_EXECUTION','TIMED_OUT','WORKER_OFFLINE','RESULT_REJECTED'))
+      ORDER BY i.created_at LIMIT $1`,[limit]);
+    let removed=0;
+    for(const row of rows.rows){
+      const client=await this.pool.connect();
+      try{
+        await client.query('BEGIN');
+        const current=await client.query<{object_key:string}>(`
+          SELECT i.object_key FROM job_result_upload_intents i JOIN jobs j ON j.id=i.job_id
+          WHERE i.asset_id=$1 AND i.source_deleted_at IS NULL AND
+            i.last_signed_at<now()-interval '11 minutes' AND
+            (i.consumed_at IS NOT NULL OR i.expires_at<now() OR
+              j.status IN ('COMPLETED','REJECTED','EXPIRED','CANCELLED','FAILED_STARTUP',
+                'FAILED_POLICY','FAILED_EXECUTION','TIMED_OUT','WORKER_OFFLINE','RESULT_REJECTED'))
+          FOR UPDATE OF i`,[row.asset_id]);
+        if(current.rows[0]){
+          await storage.deletePrivateObject(current.rows[0].object_key);
+          await client.query(`UPDATE job_result_upload_intents SET source_deleted_at=now()
+            WHERE asset_id=$1`,[row.asset_id]);
+          removed++;
+        }
+        await client.query('COMMIT');
+      }catch(error){await client.query('ROLLBACK');throw error;}
+      finally{client.release();}
+    }
+    return removed;
+  }
+
+  /** Only validated, private, durable deliverables can make a buyer-visible COMPLETED state. */
   async finalizeResult(raw: unknown, storage: ObjectStoragePort, retainUntil: string): Promise<DurableJobView> {
     const submitted = submittedResultSchema.parse(raw);
     const retention = z.iso.datetime({ offset: true }).parse(retainUntil);
     if (Date.parse(retention) <= Date.now()) throw new JobExecutionError('NOT_ELIGIBLE');
+    // Authenticate the exact leased attempt before any cloud-side object read
+    // or copy. Terminal retries may use an expired lease, but never a foreign one.
+    const owned=await this.pool.query<ExecutionRow>(
+      'SELECT * FROM job_executions WHERE id=$1',[submitted.executionId]);
+    const candidate=owned.rows[0];
+    if(!candidate||candidate.job_id!==submitted.jobId||
+      candidate.attempt_id!==submitted.attemptId||
+      candidate.worker_device_id!==submitted.workerDeviceId||
+      candidate.control_plane_id!==submitted.controlPlaneId||
+      !equalDigest(candidate.lease_token_hash,digest(submitted.leaseToken)))
+      throw new JobExecutionError('INVALID_LEASE');
     const preliminary = await this.pool.query<{ version_snapshot: unknown }>(
       'SELECT v.version_snapshot FROM jobs j JOIN capability_versions v ON v.id=j.capability_version_id WHERE j.id=$1',
       [submitted.jobId]);
     const version = PublishedCapabilityVersionSchema.parse(preliminary.rows[0]?.version_snapshot);
+    const prior=await this.pool.query<{status:JobStatus;result_manifest_id:string|null;
+      payload:unknown}>(`SELECT j.status,j.result_manifest_id,m.payload FROM jobs j
+      LEFT JOIN job_result_manifests m ON m.id=j.result_manifest_id WHERE j.id=$1`,[submitted.jobId]);
+    if(prior.rows[0]?.status==='COMPLETED'&&
+      prior.rows[0].result_manifest_id===submitted.resultManifestId){
+      if(canonicalJson(prior.rows[0].payload)!==canonicalJson(submitted.payload))
+        throw new JobExecutionError('CONFLICT');
+      return this.load(submitted.jobId);
+    }
+    if(candidate.completed_at||candidate.lease_expires_at.getTime()<=Date.now())
+      throw new JobExecutionError('NOT_ELIGIBLE');
+    if(new Set(submitted.assets.map((asset)=>asset.id)).size!==submitted.assets.length)
+      throw new JobExecutionError('CONFLICT');
+    if(submitted.assets.length){
+      const intents=await this.pool.query<StoredOutputIntent>(
+        'SELECT * FROM job_result_upload_intents WHERE asset_id=ANY($1::uuid[])',
+        [submitted.assets.map((asset)=>asset.id)]);
+      const byId=new Map(intents.rows.map((row)=>[row.asset_id,row]));
+      if(submitted.assets.some((asset)=>!byId.get(asset.id)||
+        !matchesOutputIntent(byId.get(asset.id)!,asset,submitted)))
+        throw new JobExecutionError('NOT_ELIGIBLE');
+    }
     let total = 0;
+    const trustedKeys=new Map<string,string>();
+    const copiedKeys:string[]=[];
+    let reused=false;
+    let commitAttempted=false;
+    try {
     for (const asset of submitted.assets) {
       if (asset.objectKey.split('/')[2] !== asset.id) throw new JobExecutionError('NOT_ELIGIBLE');
       total += asset.sizeBytes;
       if (total > version.resourceLimits.maxOutputBytes) throw new JobExecutionError('NOT_ELIGIBLE');
-      await verifyStoredObject(storage, { key: asset.objectKey, sizeBytes: asset.sizeBytes,
+      // A Worker-held signed PUT may be replayed. Copy first to a fresh key
+      // never disclosed to the Worker, then verify and scan those exact bytes.
+      if(!this.malwareScanner)throw new JobExecutionError('SCAN_UNAVAILABLE');
+      const trustedKey=newPrivateAssetKey(asset.id);
+      await storage.copyPrivateObject(asset.objectKey,trustedKey);
+      copiedKeys.push(trustedKey);trustedKeys.set(asset.id,trustedKey);
+      await verifyStoredObject(storage, { key: trustedKey, sizeBytes: asset.sizeBytes,
         sha256: asset.sha256, maxAllowedBytes: version.resourceLimits.maxOutputBytes });
+      await verifyResultFileType(storage,trustedKey,asset.detectedMimeType);
+      await this.malwareScanner.scan(await storage.readPrivateObject(trustedKey),asset.sizeBytes);
     }
-    return this.transaction(async (client) => {
+    const result=await this.transaction(async (client) => {
       const job = await this.lockJob(client, submitted.jobId);
       if (job.status === 'COMPLETED' && job.result_manifest_id === submitted.resultManifestId) {
         const existing = await client.query<{ payload: unknown }>('SELECT payload FROM job_result_manifests WHERE id=$1',
@@ -762,6 +971,7 @@ export class PostgresJobExecutionRepository {
         if (canonicalJson(existing.rows[0]?.payload) !== canonicalJson(submitted.payload)) {
           throw new JobExecutionError('CONFLICT');
         }
+        reused=true;
         return { jobId: job.id, status: job.status, paymentReservationId: job.payment_reservation_id,
           transitions: await this.loadTransitions(client, job.id) };
       }
@@ -785,9 +995,16 @@ export class PostgresJobExecutionRepository {
       const payload = validateOutputPayload(snapshot.outputContractSnapshot, submitted.payload);
       for (const asset of submitted.assets) {
         const field = snapshot.outputContractSnapshot.fields.find((item) => item.key === asset.fieldKey);
+        const format=SUPPORTED_FILE_TYPES.find((item)=>item.mime===asset.detectedMimeType);
         if (!field || (field.type !== 'FILE' && field.type !== 'FILES') ||
           !field.constraints.allowedMimeTypes.includes(asset.detectedMimeType) ||
+          !format || !format.extensions.some((extension)=>
+            field.constraints.allowedExtensions.includes(extension)) ||
           asset.sizeBytes > field.constraints.maxFileSizeBytes) throw new JobExecutionError('NOT_ELIGIBLE');
+        const intent=await client.query<StoredOutputIntent>(
+          'SELECT * FROM job_result_upload_intents WHERE asset_id=$1 FOR UPDATE',[asset.id]);
+        if(!intent.rows[0]||!matchesOutputIntent(intent.rows[0],asset,submitted))
+          throw new JobExecutionError('NOT_ELIGIBLE');
       }
       const suppliedIds = submitted.assets.map((asset) => asset.id).sort();
       const referencedIds = Object.values(payload.assets).flat().sort();
@@ -796,10 +1013,12 @@ export class PostgresJobExecutionRepository {
       await client.query(`INSERT INTO job_result_manifests(id,job_id,execution_id,attempt_id,schema_version,payload)
         VALUES($1,$2,$3,$4,1,$5)`, [submitted.resultManifestId, job.id, execution.id, execution.attempt_id, payload]);
       for (const asset of submitted.assets) {
+        await client.query(`UPDATE job_result_upload_intents SET consumed_at=now()
+          WHERE asset_id=$1 AND consumed_at IS NULL`,[asset.id]);
         await client.query(`INSERT INTO assets(id,owner_account_id,source_job_id,kind,state,object_key,
           size_bytes,sha256,detected_mime_type,retain_until,finalized_at)
           VALUES($1,$2,$3,'JOB_OUTPUT','READY',$4,$5,$6,$7,$8,now())`,
-        [asset.id, job.buyer_account_id, job.id, asset.objectKey, asset.sizeBytes,
+        [asset.id, job.buyer_account_id, job.id, trustedKeys.get(asset.id), asset.sizeBytes,
           asset.sha256, asset.detectedMimeType, retention]);
         await client.query('INSERT INTO job_result_assets(manifest_id,asset_id,field_key) VALUES($1,$2,$3)',
           [submitted.resultManifestId, asset.id, asset.fieldKey]);
@@ -809,6 +1028,46 @@ export class PostgresJobExecutionRepository {
         reason: 'RESULT_DURABLY_FINALIZED', attemptId: execution.attempt_id,
         correlationId: execution.id, paymentReservationId: null,
         resultManifestId: submitted.resultManifestId }));
+    }, () => { commitAttempted=true; });
+    if(reused)await Promise.allSettled(copiedKeys.map((key)=>storage.deletePrivateObject(key)));
+    return result;
+    } catch(error){
+      // A lost COMMIT acknowledgement is ambiguous: PostgreSQL may already
+      // reference these exact copied objects. Preserve them for a safe replay
+      // rather than turning a committed COMPLETED job into missing output.
+      if(!commitAttempted)
+        await Promise.allSettled(copiedKeys.map((key)=>storage.deletePrivateObject(key)));
+      throw error;
+    }
+  }
+
+  /** A cloud validator may terminally reject only an owned, live result lease. */
+  async rejectInvalidResult(input:{jobId:string;executionId:string;attemptId:string;
+    workerDeviceId:string;controlPlaneId:string;leaseToken:string}):Promise<DurableJobView>{
+    uuid.parse(input.jobId);uuid.parse(input.executionId);uuid.parse(input.attemptId);
+    uuid.parse(input.workerDeviceId);controlPlane.parse(input.controlPlaneId);
+    return this.transaction(async(client)=>{
+      const job=await this.lockJob(client,input.jobId);
+      if(job.worker_device_id!==input.workerDeviceId)
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const found=await client.query<ExecutionRow>(
+        'SELECT * FROM job_executions WHERE id=$1 FOR UPDATE',[input.executionId]);
+      const execution=found.rows[0];
+      if(!execution||execution.job_id!==job.id||execution.attempt_id!==input.attemptId||
+        execution.worker_device_id!==input.workerDeviceId||
+        execution.control_plane_id!==input.controlPlaneId||
+        !equalDigest(execution.lease_token_hash,digest(input.leaseToken)))
+        throw new JobExecutionError('INVALID_LEASE');
+      if(job.status==='RESULT_REJECTED')return {jobId:job.id,status:job.status,
+        paymentReservationId:job.payment_reservation_id,
+        transitions:await this.loadTransitions(client,job.id)};
+      if(job.status!=='UPLOADING_RESULT'||execution.completed_at||
+        execution.lease_expires_at.getTime()<=Date.now())
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      return this.transitionLocked(client,JobTransitionSchema.parse({id:randomUUID(),jobId:job.id,
+        from:'UPLOADING_RESULT',to:'RESULT_REJECTED',at:new Date().toISOString(),actor:'CLOUD',
+        reason:'OUTPUT_VALIDATION_FAILED',attemptId:execution.attempt_id,
+        correlationId:execution.id,paymentReservationId:null,resultManifestId:null}));
     });
   }
 

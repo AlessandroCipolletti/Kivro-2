@@ -25,6 +25,15 @@ export const SUPPORTED_FILE_TYPES = Object.freeze([
 
 export type SupportedFileMime = (typeof SUPPORTED_FILE_TYPES)[number]['mime'];
 
+/** A stored result has an opaque object key; derive a safe download extension
+ * from the independently validated MIME rather than a Worker-supplied name. */
+export function safeResultFileName(assetId:string,mime:string):string{
+  if(!/^[a-f0-9-]{36}$/.test(assetId))throw new TypeError('Invalid asset ID');
+  const format=SUPPORTED_FILE_TYPES.find((candidate)=>candidate.mime===mime);
+  if(!format)throw new TypeError('Unsupported result MIME');
+  return `kivro-result-${assetId}${format.extensions[0]}`;
+}
+
 function isWebmHeader(bytes: Buffer): boolean {
   if (!bytes.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) return false;
   for (let offset = 4; offset + 7 <= bytes.length; offset += 1) {

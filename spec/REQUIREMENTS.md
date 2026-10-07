@@ -19846,3 +19846,24 @@
   SELLERUX-041            P0                      Seller experience business semantics are shared and pass
                                                   equivalent Netsons/AWS conformance scenarios.
   -----------------------------------------------------------------------------------------------------------
+
+## Curated requirement source-section crosswalk
+
+The curated tables above predate a per-row source column for several
+portability requirements. This crosswalk records their Master Spec source
+without changing the normative requirement text or priority. One requirement
+may cover more than one source section.
+
+- §554: `DEV-LOCAL-002`
+- §608: `PORT-001`
+- §609: `PORT-002`, `PORT-017`
+- §610: `PORT-003`, `PORT-018`
+- §611: `PORT-004`
+- §612: `PORT-005`
+- §613: `PORT-006`, `PORT-007`, `PORT-008`, `PORT-009`
+- §614: `PORT-010`
+- §615: `PORT-011`
+- §616: `PORT-012`
+- §617: `PORT-013`
+- §618: `PORT-014`
+- §619: `PORT-015`, `PORT-016`

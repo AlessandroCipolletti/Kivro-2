@@ -23,18 +23,27 @@ if (!process.env.M07_DATABASE_URL) {
     const assetId = randomUUID();
     const bytes = Buffer.from('Kivro durable result\n');
     const sha256 = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-    const objectKey = `private/assets/${assetId}/${randomUUID()}`;
+    const securedJobs=new Map([[jobId,reservation]]);
+    let releases=0;
+    let objectKey;
+    const objects=new Map();
     const storage = {
-      async headPrivateObject(key) { return key === objectKey ? { sizeBytes: bytes.length, claimedSha256: sha256 } : null; },
+      async presignPrivateUpload(){return {url:'https://storage.example.test/put',headers:{}};},
+      async headPrivateObject(key) { const value=objects.get(key);return value ?
+        { sizeBytes: value.length, claimedSha256: sha256 } : null; },
       async readPrivateObject(key) {
-        if (key !== objectKey) throw new Error('missing');
-        return (async function* () { yield bytes; })();
+        const value=objects.get(key);if(!value)throw new Error('missing');
+        return (async function* () { yield value; })();
       },
+      async copyPrivateObject(source,target){const value=objects.get(source);
+        if(!value)throw new Error('missing');objects.set(target,Buffer.from(value));},
+      async deletePrivateObject(key){objects.delete(key);},
     };
     const repo = new PostgresJobExecutionRepository(pool, {
-      async isSecured(_client, id, reservationId) { return id === jobId && reservationId === reservation; },
+      async isSecured(_client, id, reservationId) {return securedJobs.get(id)===reservationId;},
+      async releaseFailedJobInTransaction(){releases++;},
     }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7) }, 'v1'),
-    { async assertEligible() {} });
+    { async assertEligible() {} },{async scan(){return 'CLEAN';}});
     const event = (from, to, actor, attemptId = null, extra = {}) => ({
       id: randomUUID(), jobId, from, to, actor, reason: to, attemptId,
       correlationId: randomUUID(), paymentReservationId: null, resultManifestId: null, ...extra,
@@ -95,6 +104,11 @@ if (!process.env.M07_DATABASE_URL) {
         VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())`,
       [versionId, capability, published, published.workerManifestHash, hash]);
       assert.equal((await repo.createJob(snapshot)).status, 'CREATED');
+      await pool.query(`INSERT INTO abuse_content_rules(id,normalized_pattern,created_by)
+        VALUES($1,'please create a report',$2)`,[randomUUID(),sellerAccount]);
+      await assert.rejects(repo.finalizeInputManifest(jobId,randomUUID(),
+        {values:{question:'Please Create A Report'},assets:{}}),{code:'ABUSE_DENIED'});
+      await pool.query('UPDATE abuse_content_rules SET active=false');
       const input = await repo.finalizeInputManifest(jobId, randomUUID(),
         { values: { question: 'Please create a report' }, assets: {} });
       assert.match(input.manifestHash, /^sha256:/);
@@ -185,6 +199,23 @@ if (!process.env.M07_DATABASE_URL) {
       assert.equal((await repo.acknowledgeJobControl({ ...pausedAck, commandId: resume.commandId,
         status: 'RUNNING', localRevision: 5 }, worker, 'plane-a')).status, 'RUNNING');
       await workerEvent(event('RUNNING', 'UPLOADING_RESULT', 'WORKER', offered.attemptId));
+      await assert.rejects(repo.prepareResultAsset({assetId,jobId,
+        executionId:offered.executionId,attemptId:offered.attemptId,
+        workerDeviceId:worker,controlPlaneId:'plane-a',leaseToken:'x'.repeat(32),
+        fieldKey:'report',extension:'.txt',sizeBytes:bytes.length,sha256,
+        detectedMimeType:'text/plain'},storage),{code:'INVALID_LEASE'});
+      const prepared=await repo.prepareResultAsset({assetId,jobId,
+        executionId:offered.executionId,attemptId:offered.attemptId,
+        workerDeviceId:worker,controlPlaneId:'plane-a',leaseToken:offered.leaseToken,
+        fieldKey:'report',extension:'.txt',sizeBytes:bytes.length,sha256,
+        detectedMimeType:'text/plain'},storage);
+      objectKey=prepared.objectKey;
+      objects.set(objectKey,bytes);
+      assert.equal((await repo.prepareResultAsset({assetId,jobId,
+        executionId:offered.executionId,attemptId:offered.attemptId,
+        workerDeviceId:worker,controlPlaneId:'plane-a',leaseToken:offered.leaseToken,
+        fieldKey:'report',extension:'.txt',sizeBytes:bytes.length,sha256,
+        detectedMimeType:'text/plain'},storage)).objectKey,objectKey);
       await assert.rejects(repo.transition(event('UPLOADING_RESULT', 'COMPLETED', 'CLOUD', offered.attemptId,
         { resultManifestId: resultId })), { code: 'NOT_ELIGIBLE' });
       const submission = { resultManifestId: resultId, jobId, executionId: offered.executionId,
@@ -194,20 +225,113 @@ if (!process.env.M07_DATABASE_URL) {
         assets: [{ id: assetId, fieldKey: 'report', objectKey, sizeBytes: bytes.length,
           sha256, detectedMimeType: 'text/plain' }] };
       const retention = new Date(Date.now() + 86_400_000).toISOString();
-      await assert.rejects(repo.finalizeResult({ ...submission,
-        assets: [{ ...submission.assets[0], sha256: `sha256:${'0'.repeat(64)}` }] }, storage, retention),
-      { code: 'HASH_MISMATCH' });
+      await assert.rejects(repo.finalizeResult({...submission,assets:[{
+        ...submission.assets[0],objectKey:`private/assets/${assetId}/${randomUUID()}`}]},storage,retention),
+      {code:'NOT_ELIGIBLE'});
+      await assert.rejects(repo.finalizeResult({...submission,leaseToken:'x'.repeat(32)},
+        storage,retention),{code:'INVALID_LEASE'});
+      objects.set(objectKey,Buffer.from('Xivro durable result\n'));
+      await assert.rejects(repo.finalizeResult(submission,storage,retention),
+        {code:'HASH_MISMATCH'});
+      objects.set(objectKey,bytes);
+      const unsafeRepo=new PostgresJobExecutionRepository(pool,{
+        async isSecured(_client,id,reservationId){return id===jobId&&reservationId===reservation;},
+      },new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,7)},'v1'),
+      {async assertEligible(){} });
+      await assert.rejects(unsafeRepo.finalizeResult(submission,storage,retention),
+        {code:'SCAN_UNAVAILABLE'});
+      await assert.rejects(repo.finalizeResult({...submission,assets:[
+        {...submission.assets[0],detectedMimeType:'image/jpeg'}]},storage,retention),
+        {code:'NOT_ELIGIBLE'});
+      const infectedRepo=new PostgresJobExecutionRepository(pool,{
+        async isSecured(_client,id,reservationId){return id===jobId&&reservationId===reservation;},
+      },new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,7)},'v1'),
+      {async assertEligible(){} },{async scan(){throw new Error('INFECTED');}});
+      await assert.rejects(infectedRepo.finalizeResult(submission,storage,retention),/INFECTED/);
       assert.equal((await repo.load(jobId)).status, 'UPLOADING_RESULT');
+      // Simulate PostgreSQL committing the manifest and losing the COMMIT
+      // acknowledgement. The cloud must retain the copied private output.
+      let loseCommitAck = true;
+      const ambiguousPool = {
+        query: (...args) => pool.query(...args),
+        async connect() {
+          const client = await pool.connect();
+          return {
+            query: async (...args) => {
+              const result = await client.query(...args);
+              if (args[0] === 'COMMIT' && loseCommitAck) {
+                loseCommitAck = false;
+                throw new Error('COMMIT_ACK_LOST');
+              }
+              return result;
+            },
+            release: () => client.release(),
+          };
+        },
+      };
+      const ambiguousRepo = new PostgresJobExecutionRepository(ambiguousPool, {
+        async isSecured(_client, id, reservationId) {
+          return id === jobId && reservationId === reservation;
+        },
+      }, new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7) }, 'v1'),
+      { async assertEligible() {} }, { async scan() { return 'CLEAN'; } });
+      await assert.rejects(ambiguousRepo.finalizeResult(submission, storage, retention),
+        /COMMIT_ACK_LOST/);
+      const committed = await pool.query(`SELECT a.object_key FROM jobs j
+        JOIN job_result_assets ra ON ra.manifest_id=j.result_manifest_id
+        JOIN assets a ON a.id=ra.asset_id WHERE j.id=$1 AND j.status='COMPLETED'`, [jobId]);
+      assert.equal(committed.rowCount, 1);
+      assert.deepEqual(objects.get(committed.rows[0].object_key), bytes);
       assert.equal((await repo.finalizeResult(submission, storage, retention)).status, 'COMPLETED');
       assert.equal((await repo.finalizeResult(submission, storage, retention)).status, 'COMPLETED');
-      const row = await pool.query(`SELECT m.payload,a.state,a.sha256,j.status FROM job_result_manifests m
+      const row = await pool.query(`SELECT m.payload,a.state,a.sha256,a.object_key,j.status FROM job_result_manifests m
         JOIN jobs j ON j.id=m.job_id JOIN job_result_assets ra ON ra.manifest_id=m.id
         JOIN assets a ON a.id=ra.asset_id WHERE m.id=$1`, [resultId]);
       assert.equal(row.rowCount, 1);
       assert.equal(row.rows[0].state, 'READY');
       assert.equal(row.rows[0].sha256, sha256);
       assert.equal(row.rows[0].status, 'COMPLETED');
+      assert.notEqual(row.rows[0].object_key,objectKey);
+      objects.set(objectKey,Buffer.from('rewritten by Worker after signed upload'));
+      assert.deepEqual(objects.get(row.rows[0].object_key),bytes);
       assert.deepEqual(row.rows[0].payload.values, { answer: 'Done' });
+      await pool.query(`UPDATE job_result_upload_intents
+        SET last_signed_at=now()-interval '12 minutes' WHERE asset_id=$1`,[assetId]);
+      assert.equal(await repo.reconcileOutputStaging(storage,10),1);
+      assert.equal(objects.has(objectKey),false);
+      assert.deepEqual(objects.get(row.rows[0].object_key),bytes);
+      assert.equal(await repo.reconcileOutputStaging(storage,10),0);
+      const rejectedJob=randomUUID(),rejectedReservation=randomUUID();
+      securedJobs.set(rejectedJob,rejectedReservation);
+      await new PostgresWorkerHeartbeatRepository(pool).observe({
+        type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+        messageId:randomUUID(),controlPlaneId:'plane-a',workerDeviceId:worker,
+        workerRelease:'0.0.0-dev',openClawVersion:null,status:'ONLINE',
+        sentAt:new Date(Date.now()+1000).toISOString(),runningJobs:0,capacity:1,
+        policyVersion:1,localRevision:0},worker,'plane-a');
+      await repo.createJob(createJobContractSnapshot(published,rejectedJob,buyer,
+        new Date().toISOString()));
+      await repo.finalizeInputManifest(rejectedJob,randomUUID(),
+        {values:{question:'Second job'},assets:{}});
+      const rejectedEvent=(from,to,actor,attemptId=null,extra={})=>({
+        ...event(from,to,actor,attemptId,extra),jobId:rejectedJob});
+      await repo.transition(rejectedEvent('CREATED','PAYMENT_RESERVED','PAYMENT',null,
+        {paymentReservationId:rejectedReservation}));
+      await repo.transition(rejectedEvent('PAYMENT_RESERVED','QUEUED','CLOUD'));
+      const secondOffer=await repo.offer(rejectedJob,worker,'plane-a',60);
+      await repo.accept(secondOffer.executionId,worker,'plane-a',secondOffer.leaseToken,randomUUID());
+      for(const [from,to] of [['ACCEPTED','STARTING'],['STARTING','RUNNING'],
+        ['RUNNING','UPLOADING_RESULT']])await repo.workerTransition(
+        rejectedEvent(from,to,'WORKER',secondOffer.attemptId),secondOffer.executionId,
+        worker,'plane-a',secondOffer.leaseToken);
+      const rejection={jobId:rejectedJob,executionId:secondOffer.executionId,
+        attemptId:secondOffer.attemptId,workerDeviceId:worker,controlPlaneId:'plane-a',
+        leaseToken:secondOffer.leaseToken};
+      await assert.rejects(repo.rejectInvalidResult({...rejection,
+        workerDeviceId:randomUUID()}),{code:'NOT_ELIGIBLE'});
+      assert.equal((await repo.rejectInvalidResult(rejection)).status,'RESULT_REJECTED');
+      assert.equal((await repo.rejectInvalidResult(rejection)).status,'RESULT_REJECTED');
+      assert.equal(releases,1);
     } finally { await pool.end(); }
   });
 }

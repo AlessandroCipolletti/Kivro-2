@@ -8,6 +8,7 @@ import { PostgresWorkerHeartbeatRepository } from '../dist/packages/persistence/
 import { PostgresSellerOperations } from '../dist/packages/persistence/src/seller-operations.js';
 import { leaseTokenIssuerFromEnvironment } from '../dist/packages/application/src/lease-token.js';
 import { runAvailabilityScheduler } from '../dist/packages/application/src/scheduler-loop.js';
+import { S3PrivateObjectStorage } from '../dist/packages/infrastructure/s3/src/storage.js';
 
 const url=process.env.DATABASE_URL;
 const mode=process.env.KIVRO_STRIPE_MODE;
@@ -26,13 +27,26 @@ const jobs=new PostgresJobExecutionRepository(database,finance,
   leaseTokenIssuerFromEnvironment(process.env),repository);
 const health=new PostgresWorkerHeartbeatRepository(database);
 const sellerOperations=new PostgresSellerOperations(database,repository,finance);
+const storageConfigured=!!process.env.OBJECT_STORAGE_BUCKET&&!!process.env.OBJECT_STORAGE_REGION&&
+  (!!process.env.OBJECT_STORAGE_ACCESS_KEY_ID===!!process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY);
+if(process.env.NODE_ENV==='production'&&!storageConfigured)
+  throw new Error('OUTPUT_STORAGE_CLEANUP_NOT_CONFIGURED');
+const storage=storageConfigured?new S3PrivateObjectStorage({
+  bucket:process.env.OBJECT_STORAGE_BUCKET,region:process.env.OBJECT_STORAGE_REGION,
+  ...(process.env.OBJECT_STORAGE_ENDPOINT?{endpoint:process.env.OBJECT_STORAGE_ENDPOINT}:{}),
+  ...(process.env.OBJECT_STORAGE_ACCESS_KEY_ID?{
+    accessKeyId:process.env.OBJECT_STORAGE_ACCESS_KEY_ID,
+    secretAccessKey:process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY}:{}),
+  allowInsecureLoopback:process.env.NODE_ENV!=='production'}):null;
 const maintenance=async(limit)=>{
   const availabilitySamples=await metrics.sample(limit);
   const maintenanceResumed=await sellerOperations.expireMaintenance(limit);
   const timedOut=await jobs.expireOverduePausedJobs(maxPauseSeconds,limit);
   const staleWorkers=await health.recordStaleWorkers(limit);
   const financeResult=await finance.reconcileTerminalJobs(limit);
-  return {availabilitySamples,maintenanceResumed,timedOut,staleWorkers,...financeResult};
+  const outputStagingRemoved=storage?await jobs.reconcileOutputStaging(storage,limit):null;
+  return {availabilitySamples,maintenanceResumed,timedOut,staleWorkers,
+    outputStagingRemoved,...financeResult};
 };
 const abort=new globalThis.AbortController();
 process.once('SIGINT',()=>abort.abort());

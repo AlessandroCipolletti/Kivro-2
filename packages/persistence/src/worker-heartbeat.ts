@@ -133,7 +133,10 @@ export class PostgresWorkerHeartbeatRepository {
            WHERE v.id=$1 AND v.publication_state='PUBLISHED'`,
         [report.capabilityVersionId]);
         const row = selected.rows[0];
-        if (!row) throw new Error('READINESS_VERSION_NOT_PUBLISHED');
+        // Local review installs immutable bytes before the seller can publish.
+        // An unpublished version has no public readiness to record; it must not
+        // block health reports for already published capabilities.
+        if (!row) continue;
         const version = PublishedCapabilityVersionSchema.parse(row.version_snapshot);
         if (version.workerDeviceId !== beat.workerDeviceId ||
           (report.policyValidationHash !== null &&

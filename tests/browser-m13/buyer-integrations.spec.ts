@@ -38,7 +38,7 @@ test('buyer account manages one-time API secrets and signed webhook endpoints',a
   await expect(page).toHaveURL('/account');
   await Promise.all([page.waitForResponse((response)=>response.url().endsWith(
     '/api/buyer/integrations/keys')&&response.status()===200),page.reload()]);
-  await expect(page.getByRole('heading',{name:'Make Kivro part of your workflow.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'API keys and webhooks'})).toBeVisible();
   await page.getByPlaceholder('Production automation').fill('Build client');
   await page.getByRole('button',{name:'Create key'}).click();
   const secret=await page.locator('.integration-secret code').innerText();
@@ -91,6 +91,10 @@ test('buyer account manages one-time API secrets and signed webhook endpoints',a
     FROM buyer_webhook_endpoints WHERE account_id=$1`,[account])).rows[0]!.events;
   expect(subscriptions).toEqual(['job.completed']);
   await page.screenshot({path:'test-results/m13-buyer-integrations-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:768,height:900});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(768);
+  await page.screenshot({path:'test-results/m14-account-tablet.png',
     fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>new Promise<void>((resolve)=>requestAnimationFrame(()=>resolve())));

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
 import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -115,6 +116,28 @@ test('read-only scanner finds file-backed skill and configured references withou
     assert.deepEqual(snapshot(f.homeDir), before, 'scan must preserve file bytes, modes and mtimes');
     assert.doesNotMatch(JSON.stringify(result), /PRIVATE|client data|\.env|openclaw\.json|extra-skills/);
   } finally { f.cleanup(); }
+});
+
+test('seller-selected skill snapshot is bounded, lossless and read-only; unsafe descendants fail closed',async()=>{
+  const f=fixture();
+  try{
+    writeFileSync(f.configPath,'{}');
+    const root=join(f.workspaceDir,'skills');
+    skill(root,'reviewed','name: reviewed');
+    const selected=join(root,'reviewed');
+    writeFileSync(join(selected,'helper.txt'),'reviewed helper data\n');
+    const before=snapshot(f.homeDir);
+    const captured=await f.scanner.snapshotSelectedSkill('reviewed');
+    assert.deepEqual(captured.files.map((item)=>item.path),['helper.txt','SKILL.md']);
+    assert.equal(Buffer.from(captured.files[1].bytesBase64,'base64').toString(),
+      readFileSync(join(selected,'SKILL.md'),'utf8'));
+    assert.match(captured.contentHash,/^sha256:[a-f0-9]{64}$/);
+    assert.doesNotMatch(JSON.stringify(await f.scanner.scan()),/reviewed helper data|Private body|workspace\/skills/);
+    assert.deepEqual(snapshot(f.homeDir),before,'snapshot must leave personal OpenClaw files untouched');
+    symlinkSync(f.configPath,join(selected,'linked-secret'));
+    await assert.rejects(f.scanner.snapshotSelectedSkill('reviewed'),
+      /SELECTED_SKILL_CONTENT_UNSUPPORTED/);
+  }finally{f.cleanup();}
 });
 
 test('symlinked roots and skill files are skipped, with uncertainty reported', async () => {

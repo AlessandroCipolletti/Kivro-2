@@ -188,6 +188,13 @@ if (!process.env.M08_DATABASE_URL) {
       await assert.rejects(catalog.revise({price:{tier:'USD_999',currency:'USD',
         buyerAmountMinor:999,platformFeeMinor:199,sellerEarningMinor:800},
         enabled:true,sortOrder:4,expectedRevision:1}),{code:'CONFLICT'});
+      // Cloud output can commit just before the response is lost. A fresh
+      // finance service must settle that durable terminal state once.
+      const restartedFinance = new PostgresFinanceRepository(pool, 'test');
+      assert.deepEqual(await restartedFinance.reconcileTerminalJobs(100),
+        { released: 0, settled: 1 });
+      assert.deepEqual(await restartedFinance.reconcileTerminalJobs(100),
+        { released: 0, settled: 0 });
       await Promise.all(Array.from({length:5}, () => finance.settleDeliveredJob(jobId)));
       assert.equal((await finance.sellerEarnings(seller)).pendingMinor, 800);
       assert.deepEqual(await finance.sellerSettledSales(seller),

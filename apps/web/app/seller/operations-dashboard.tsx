@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
+import { PublicPermissionManifestSchema } from '../../../../packages/contracts/src/permission-policy.js';
+import { permissionCategoryLabel,permissionStateLabel } from '../ui/permission-copy';
+import { availabilityLabel,availabilityReasonLabel,jobStatusLabel } from '../discover/marketplace-ui';
 
 const windowSchema=z.object({dayOfWeek:z.number(),startLocalTime:z.string(),endLocalTime:z.string()});
 const scheduleSchema=z.object({mode:z.enum(['ALWAYS_AVAILABLE','CUSTOM_SCHEDULE']),
@@ -37,6 +40,7 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
   name:z.string(),status:z.string(),worker_device_id:z.string().nullable(),
   price:z.object({buyerAmountMinor:z.number(),platformFeeMinor:z.number(),
     sellerEarningMinor:z.number()}).nullable(),
+  permission_manifest:PublicPermissionManifestSchema.nullable(),
   readiness_state:z.string().nullable(),readinessAt:z.string().nullable(),
   maintenanceUntil:z.string().nullable(),
   runningCount:z.number(),lastSuccessAt:z.string().nullable(),
@@ -57,6 +61,8 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
     started_at:z.string().nullable(),completed_at:z.string().nullable(),capability_name:z.string(),
     worker_device_id:z.string(),
     payment_state:z.string().nullable(),pause_support:z.string().nullable(),
+    audit:z.array(z.object({at:z.string(),kind:z.string(),code:z.string(),
+      correlationId:z.string().nullable()})).default([]),
     execution_id:z.string().nullable(),attempt_id:z.string().nullable(),
     control_plane_id:z.string().nullable(),economics:z.object({buyerPriceMinor:z.number(),
       marketplaceFeeMinor:z.number(),sellerProceedsMinor:z.number(),
@@ -151,7 +157,7 @@ function ScheduleEditor({capability,onSaved}:{capability:Capability;onSaved:()=>
             const next=[...prior];const target=next.findIndex((entry,at)=>entry.dayOfWeek===index+1&&
               prior.slice(0,at).filter((other)=>other.dayOfWeek===index+1).length===position);
             if(target>=0)next[target]={...next[target]!,startLocalTime:event.target.value};return next;})}/>
-        <span>→</span>{item.endLocalTime==='24:00'?<span>Midnight (all day)</span>:<input
+        <span aria-hidden="true">to</span>{item.endLocalTime==='24:00'?<span>Midnight (all day)</span>:<input
           aria-label={`${day} end ${position+1}`} type="time" value={item.endLocalTime}
           onChange={(event)=>setWindows((prior)=>{
             const next=[...prior];const target=next.findIndex((entry,at)=>entry.dayOfWeek===index+1&&
@@ -178,7 +184,9 @@ function ScheduleEditor({capability,onSaved}:{capability:Capability;onSaved:()=>
 export default function OperationsDashboard({supportedOpenClawVersion}:{supportedOpenClawVersion:string}){
   const [data,setData]=useState<Dashboard|null>(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState<string|null>(null),[busy,setBusy]=useState<string|null>(null);
+  const [notice,setNotice]=useState<string|null>(null);
   const [maintenance,setMaintenance]=useState<Record<string,string>>({});
+  const [reportCategories,setReportCategories]=useState<Record<string,string>>({});
   const load=useCallback(async()=>{
     try{const response=await fetch('/api/seller/operations/dashboard',{cache:'no-store'});
       if(!response.ok){const body=await response.json() as {code?:string};
@@ -190,8 +198,9 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
   useEffect(()=>{void load();const timer=setInterval(()=>void load(),30_000);
     return ()=>clearInterval(timer);},[load]);
   const action=async(key:string,path:string,body:unknown)=>{
-    setBusy(key);setError(null);
-    try{await request(path,body);await load();}
+    setBusy(key);setError(null);setNotice(null);
+    try{await request(path,body);await load();
+      if(path==='report-abuse')setNotice('Safety report received for review.');}
     catch(cause){setError(cause instanceof Error?cause.message:'Control failed');}
     finally{setBusy(null);}
   };
@@ -201,28 +210,19 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
     <button type="button" className="ops-link" onClick={()=>void load()}>Refresh status</button></div>
     {loading&&<p role="status">Loading operational state…</p>}
     {error&&<p role="alert" className="ops-error">{error}</p>}
+    {notice&&<p role="status" className="notice success">{notice}</p>}
     {data&&<>
-      <div className="ops-summary"><div><span>Settled buyer sales</span><strong>{money(data.settledSales.buyerSalesMinor)}</strong></div>
-        <div><span>Marketplace fees</span><strong>{money(data.settledSales.marketplaceFeesMinor)}</strong></div>
-        <div><span>Pending earnings</span><strong>{money(data.earnings.pendingMinor)}</strong></div>
-        <div><span>Available</span><strong>{money(data.earnings.availableMinor)}</strong></div>
-        <div><span>Transferred</span><strong>{money(data.earnings.transferredMinor)}</strong></div>
-        <div><span>Paid out</span><strong>{money(data.earnings.paidOutMinor)}</strong></div></div>
-      <p className="ops-finance-note">Settled sales exclude refunded jobs. Earnings can change after a refund or payment dispute.</p>
       <div className="ops-grid"><section className="ops-panel"><div className="ops-panel-head"><h3>Worker health</h3>
         <small>Heartbeat must be recent</small></div>{data.workers.length?data.workers.map((worker)=><article
-          className="ops-row" key={worker.id}><div><strong>{worker.name}</strong><p>{worker.platform} · Worker {worker.worker_version}
+          className="ops-row" key={worker.id}><div><strong>{worker.name}</strong>{' '}<span className={`ops-state ${worker.status.toLowerCase()}`}>{worker.status==='ONLINE'?'Online':worker.status==='OFFLINE'?'Offline':worker.status==='PAUSED'?'Paused':worker.status.replaceAll('_',' ').toLowerCase()}</span><p>{worker.platform} · Worker {worker.worker_version}
             {' · '}OpenClaw {worker.openclaw_version??'unknown'} ({
               worker.openclaw_compatibility==='APPROVED_PINNED'?'approved pinned runtime':
                 'compatibility unconfirmed'})</p>
-            <small>Latest Worker {worker.latestWorkerRelease??'unknown'} · Minimum {worker.minimumWorkerRelease??'unknown'}
+            <details className="ops-disclosure"><summary>View Worker diagnostics</summary>            <small>Latest Worker {worker.latestWorkerRelease??'unknown'} · Minimum {worker.minimumWorkerRelease??'unknown'}
               {' · '}{worker.versionStatus.replaceAll('_',' ').toLowerCase()}</small>
             <small>Supported isolated OpenClaw: {supportedOpenClawVersion} · {
               worker.openclaw_compatibility==='APPROVED_PINNED'? 'approved for execution':
                 'no approved runtime reported; new work blocked'}</small>
-            <small>Last heartbeat {stamp(worker.lastHeartbeatAt)}
-            {' · '} {worker.running_jobs??'—'} running / {worker.capacity??'—'} capacity
-            {' · '}{worker.pending_jobs} pending</small>
             <small>Last success {stamp(worker.lastSuccessAt)} · Last failure {stamp(worker.lastFailureAt)}</small>
             <small>7 day average runtime {worker.average_runtime_seconds===null?'Unknown':
               `${Math.round(worker.average_runtime_seconds)} seconds`} · failure rate {
@@ -230,13 +230,17 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
             <small>Docker {worker.operational_checks?.find((check)=>check.code==='DOCKER_DAEMON')?.state??'Unknown'}
               {' · '}approved sandbox {worker.operational_checks?.find((check)=>
                 check.code==='APPROVED_SANDBOX_IMAGE')?.state??'Unknown'}</small>
+            </details>
+            <small>Last heartbeat {stamp(worker.lastHeartbeatAt)}
+              {' · '}{worker.running_jobs??'—'} running / {worker.capacity??'—'} capacity
+              {' · '}{worker.pending_jobs} pending</small>
             {worker.cloudSyncPending&&<small role="status">Pause change awaiting Worker acknowledgement; new jobs blocked.</small>}
             {worker.maintenanceUntil&&<small>Maintenance scheduled to end {stamp(worker.maintenanceUntil)}; readiness must pass before jobs resume.</small>}
             {worker.warnings.map((warning)=><p className="ops-warning" role="alert" key={warning.code}>
               {warning.severity}: {warning.title}. {warning.description} {warning.action}
               {warning.detectedAt?` · Detected ${stamp(warning.detectedAt)}`:''}</p>)}</div>
-          <div className="ops-row-actions"><span className={`ops-state ${worker.status.toLowerCase()}`}>{worker.status}</span>
-            <button type="button" disabled={busy!==null} onClick={()=>void action(worker.id,
+          <div className="ops-row-actions">
+            <button type="button" className={!worker.web_paused?'ops-safety-action':undefined} disabled={busy!==null} onClick={()=>void action(worker.id,
               `worker/${worker.id}/pause`,{paused:!worker.web_paused,reason:null})}>
               {busy===worker.id?'Updating…':worker.web_paused?'Resume new jobs':'Pause all new jobs'}</button>
             <label>Maintenance until<input type="datetime-local" value={maintenance[worker.id]??''}
@@ -253,9 +257,9 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
             {capability.price&&<p className="ops-price">{money(capability.price.buyerAmountMinor)} / job ·
               You earn {money(capability.price.sellerEarningMinor)} ·
               Marketplace fee {money(capability.price.platformFeeMinor)}</p>}
-            <p>{capability.status} ·
-            {capability.availability?.status??'Not published'} ·
-            {capability.availability?.reason??'No operational policy'}</p>
+            <p>{capability.status==='PUBLISHED'?'Published':capability.status.replaceAll('_',' ').toLowerCase()} ·
+            {capability.availability?availabilityLabel(capability.availability.status):'Not published'} ·
+            {capability.availability?availabilityReasonLabel(capability.availability.reason):'No operational policy'}</p>
             {capability.availability?.nextAvailableAt&&<small>Next available {stamp(capability.availability.nextAvailableAt)}</small>}
             {capability.maintenanceUntil&&<small>Maintenance scheduled to end {stamp(capability.maintenanceUntil)}; readiness must pass first.</small>}
             <small>Isolation {capability.readinessFresh?
@@ -267,7 +271,15 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
             {capability.operations&&<small>{capability.operations.scheduledCount} scheduled ·
               {capability.operations.queuedCount} queued ·
               {capability.runningCount} running / {capability.operations.policy.concurrencyLimit} max</small>}
-            {capability.availabilityMetrics&&<div className="ops-metrics">
+            {capability.permission_manifest&&<details className="ops-disclosure">
+              <summary>View buyer-visible access for this version</summary>
+              <p>The published version declares these access categories. Changing the underlying
+                resource or permission requires a new reviewed version.</p>
+              <div className="permission-grid">{capability.permission_manifest.entries.map((entry)=><div
+                key={entry.category}><span>{permissionCategoryLabel(entry.category)}</span>
+                <strong>{permissionStateLabel(entry.state)}</strong></div>)}</div>
+            </details>}
+            <details className="ops-disclosure"><summary>View availability history</summary>            {capability.availabilityMetrics&&<div className="ops-metrics">
               <strong>Availability observations</strong>
               <small>Last {capability.availabilityMetrics.periodDays} days, observed minutes:</small>
               <div className="ops-metrics-grid">
@@ -289,9 +301,10 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
               <small>Time is sampled once per minute; missing periods are unknown. These observations
                 do not affect marketplace ranking.</small>
             </div>}
+            </details>
             <small>Last success {stamp(capability.lastSuccessAt)} · Last failure {
               stamp(capability.lastFailureAt)}</small>
-          </div><div className="ops-row-actions"><button type="button" disabled={busy!==null||!capability.operations}
+          </div><div className="ops-row-actions"><button type="button" className={!capability.operations?.sellerPaused?'ops-safety-action':undefined} disabled={busy!==null||!capability.operations}
             onClick={()=>void action(capability.id,`capability/${capability.id}/pause`,
               {paused:!capability.operations?.sellerPaused,reason:null})}>
             {capability.operations?.sellerPaused?'Resume capability':'Pause capability'}</button>
@@ -303,10 +316,17 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
               Schedule maintenance</button></div>
           <ScheduleEditor capability={capability} onSaved={()=>void load()}/></article>):
           <p className="ops-empty">No capabilities yet. Nothing is listed for buyers.</p>}</section></div>
+      <div className="ops-summary"><div><span>Settled buyer sales</span><strong>{money(data.settledSales.buyerSalesMinor)}</strong></div>
+        <div><span>Marketplace fees</span><strong>{money(data.settledSales.marketplaceFeesMinor)}</strong></div>
+        <div><span>Pending earnings</span><strong>{money(data.earnings.pendingMinor)}</strong></div>
+        <div><span>Available</span><strong>{money(data.earnings.availableMinor)}</strong></div>
+        <div><span>Transferred</span><strong>{money(data.earnings.transferredMinor)}</strong></div>
+        <div><span>Paid out</span><strong>{money(data.earnings.paidOutMinor)}</strong></div></div>
+      <p className="ops-finance-note">Settled sales exclude refunded jobs. Earnings can change after a refund or payment dispute.</p>
       <section className="ops-panel ops-jobs"><div className="ops-panel-head"><h3>Jobs</h3>
         <small>Active work first, then recent history</small></div>
         {data.jobs.length?data.jobs.map((job)=><article className="ops-job" key={job.id}>
-          <div><strong>{job.capability_name}</strong><p>#{job.id.slice(0,8)} · {job.status} ·
+          <div><strong>{job.capability_name}</strong><p>#{job.id.slice(0,8)} · {jobStatusLabel(job.status)} ·
             payment {job.economics.paymentState}</p>
             <small>Buyer {money(job.economics.buyerPriceMinor)} · Kivro fee {
               money(job.economics.marketplaceFeeMinor)} · seller proceeds {
@@ -318,7 +338,10 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
                 'Unknown':money(job.economics.estimatedNetProceedsMinor)}</small>
             {job.economics.possibleLoss&&<small className="ops-warning">Provider cost may exceed seller proceeds.</small>}
             <small>Created {stamp(job.created_at)}
-              {job.started_at?` · Started ${stamp(job.started_at)}`:''}</small></div>
+              {job.started_at?` · Started ${stamp(job.started_at)}`:''}</small>
+            <details><summary>Job audit</summary><ol>{job.audit.map((event,index)=><li key={`${event.at}-${index}`}>
+              <time dateTime={event.at}>{stamp(event.at)}</time> · {event.kind} · {
+                event.code.replaceAll('_',' ').toLowerCase()}</li>)}</ol></details></div>
           <div className="ops-row-actions">{job.status==='RUNNING'&&job.pause_support==='FULL_RESUME'&&
             <button type="button" disabled={busy!==null} onClick={()=>void action(job.id,
               `job/${job.id}/control`,{commandId:crypto.randomUUID(),jobId:job.id,
@@ -340,12 +363,21 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
                 'Pause unavailable; cancel instead.'}</small>}
             {['STARTING','RUNNING','UPLOADING_RESULT','PAUSE_REQUESTED','PAUSED',
               'RESUME_REQUESTED','SECURITY_PAUSED'].includes(job.status)&&
-              <button type="button" disabled={busy!==null} onClick={()=>{
+              <button type="button" className="ops-danger-action" disabled={busy!==null} onClick={()=>{
                 if(!window.confirm('Cancel this running job? Execution will stop. Undelivered work will be released to the buyer after Worker confirmation.'))return;
                 void action(job.id,`job/${job.id}/control`,{commandId:crypto.randomUUID(),
                   jobId:job.id,executionId:job.execution_id,attemptId:job.attempt_id,
                   controlPlaneId:job.control_plane_id,action:'CANCEL',reason:null,
                   requestedAt:new Date().toISOString()});}}>Cancel job</button>}
+            <label>Safety concern<select value={reportCategories[job.id]??'MALICIOUS_INPUT'}
+              onChange={(event)=>setReportCategories((current)=>({...current,
+                [job.id]:event.target.value}))}>
+              <option value="MALICIOUS_INPUT">Malicious input</option><option value="HARASSMENT">Harassment</option>
+              <option value="FRAUD">Fraud</option><option value="PRIVACY">Privacy</option>
+              <option value="OTHER">Other</option></select></label>
+            <button type="button" disabled={busy!==null} onClick={()=>void action(job.id,
+              'report-abuse',{id:crypto.randomUUID(),jobId:job.id,
+                category:reportCategories[job.id]??'MALICIOUS_INPUT'})}>Report unsafe job</button>
           </div></article>):<p className="ops-empty">No buyer jobs yet.</p>}</section>
       <section className="ops-panel ops-history"><div className="ops-panel-head"><h3>Recent health and controls</h3>
         <small>Sanitized operational history</small></div>{data.history.length?data.history.map((event,index)=><p

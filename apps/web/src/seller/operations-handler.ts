@@ -6,12 +6,16 @@ import { SellerOperationsError } from '../../../../packages/persistence/src/sell
 import { AvailabilityError } from '../../../../packages/persistence/src/availability.js';
 import { JobExecutionError } from '../../../../packages/persistence/src/job-execution.js';
 import { JobControlCommandSchema } from '../../../../packages/contracts/src/job-control.js';
+import { PlatformOperationsError,PlatformOperationsRepository } from
+  '../../../../packages/persistence/src/platform-operations.js';
 
 const id=z.uuid();
 const pause=z.strictObject({paused:z.boolean(),reason:z.string().trim().max(200).nullable(),
   maintenanceUntil:z.iso.datetime({offset:true}).nullable().optional()});
 const schedule=z.strictObject({policy:z.unknown(),expectedRevision:z.number().int().positive()});
 const jobControl=JobControlCommandSchema.omit({source:true,actorId:true});
+const abuseReport=z.strictObject({id,jobId:id,category:z.enum([
+  'HARASSMENT','MALICIOUS_INPUT','UNSAFE_OUTPUT','FRAUD','PRIVACY','OTHER'])});
 function json(value:unknown,status=200):Response{return Response.json(value,{status,
   headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});}
 async function boundedJson(request:Request):Promise<unknown>{
@@ -39,7 +43,7 @@ export async function handleSellerOperationsRequest(request:Request,path:readonl
   const sellerId=session.user.id;
   try{
     const verified=await auth.database.query<{ok:boolean}>(`SELECT
-      (status='ACTIVE' AND email_verified_at IS NOT NULL) AS ok FROM accounts WHERE id=$1`,
+      (status='ACTIVE' AND auth_email_verified) AS ok FROM accounts WHERE id=$1`,
       [sellerId]);
     if(!verified.rows[0]?.ok)return json({code:'ACCOUNT_NOT_VERIFIED'},403);
     const service=getSellerOperations();
@@ -67,6 +71,12 @@ export async function handleSellerOperationsRequest(request:Request,path:readonl
         ...body,source:'WEB',actorId:sellerId},sellerId);
       return json(result);
     }
+    if(path.join('/')==='report-abuse'){
+      const report=abuseReport.parse(raw);
+      await new PlatformOperationsRepository(auth.database).report(sellerId,report.id,
+        report.jobId,'SELLER',report.category);
+      return json({ok:true},201);
+    }
     return json({code:'NOT_FOUND'},404);
   }catch(error){
     if(error instanceof z.ZodError||error instanceof TypeError||error instanceof SyntaxError)
@@ -75,6 +85,8 @@ export async function handleSellerOperationsRequest(request:Request,path:readonl
       error instanceof JobExecutionError){return json({code:error.code},
         error.code==='NOT_FOUND'?404:error.code==='NOT_ELIGIBLE'||
           error.code==='SECURITY_BLOCK'?403:409);}
+    if(error instanceof PlatformOperationsError)return json({code:error.code},
+      error.code==='FORBIDDEN'?403:error.code==='NOT_FOUND'?404:409);
     throw error;
   }
 }

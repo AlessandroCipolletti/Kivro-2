@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "COMPONENT_ONLY",
+  "warning": "Passing this suite does not prove paid two-user E2E, Stripe test-mode purchase, production Worker composition or both-provider conformance.",
+  "results": [
+    {
+      "name": "typecheck",
+      "command": [
+        "pnpm",
+        "typecheck"
+      ],
+      "startedAt": "2026-10-07T05:14:05.512Z",
+      "completedAt": "2026-10-07T05:14:07.080Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "lint-and-architecture",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "startedAt": "2026-10-07T05:14:07.080Z",
+      "completedAt": "2026-10-07T05:14:08.818Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "unit-and-boundary",
+      "command": [
+        "pnpm",
+        "test"
+      ],
+      "startedAt": "2026-10-07T05:14:08.818Z",
+      "completedAt": "2026-10-07T05:14:12.056Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "web-build",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@kivro/web",
+        "build"
+      ],
+      "startedAt": "2026-10-07T05:14:12.056Z",
+      "completedAt": "2026-10-07T05:14:18.853Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m01",
+      "command": [
+        "pnpm",
+        "test:postgres:m01"
+      ],
+      "startedAt": "2026-10-07T05:14:18.853Z",
+      "completedAt": "2026-10-07T05:14:19.870Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m02",
+      "command": [
+        "pnpm",
+        "test:postgres:m02"
+      ],
+      "startedAt": "2026-10-07T05:14:19.870Z",
+      "completedAt": "2026-10-07T05:14:22.140Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m03",
+      "command": [
+        "pnpm",
+        "test:postgres:m03"
+      ],
+      "startedAt": "2026-10-07T05:14:22.140Z",
+      "completedAt": "2026-10-07T05:14:24.500Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m05",
+      "command": [
+        "pnpm",
+        "test:postgres:m05"
+      ],
+      "startedAt": "2026-10-07T05:14:24.500Z",
+      "completedAt": "2026-10-07T05:14:27.671Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m06",
+      "command": [
+        "pnpm",
+        "test:postgres:m06"
+      ],
+      "startedAt": "2026-10-07T05:14:27.671Z",
+      "completedAt": "2026-10-07T05:14:33.051Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m07",
+      "command": [
+        "pnpm",
+        "test:postgres:m07"
+      ],
+      "startedAt": "2026-10-07T05:14:33.051Z",
+      "completedAt": "2026-10-07T05:14:38.739Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m08",
+      "command": [
+        "pnpm",
+        "test:postgres:m08"
+      ],
+      "startedAt": "2026-10-07T05:14:38.739Z",
+      "completedAt": "2026-10-07T05:14:44.531Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m09",
+      "command": [
+        "pnpm",
+        "test:postgres:m09"
+      ],
+      "startedAt": "2026-10-07T05:14:44.531Z",
+      "completedAt": "2026-10-07T05:14:52.436Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m10",
+      "command": [
+        "pnpm",
+        "test:postgres:m10"
+      ],
+      "startedAt": "2026-10-07T05:14:52.436Z",
+      "completedAt": "2026-10-07T05:14:58.493Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m11",
+      "command": [
+        "pnpm",
+        "test:postgres:m11"
+      ],
+      "startedAt": "2026-10-07T05:14:58.493Z",
+      "completedAt": "2026-10-07T05:15:05.391Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m12",
+      "command": [
+        "pnpm",
+        "test:postgres:m12"
+      ],
+      "startedAt": "2026-10-07T05:15:05.391Z",
+      "completedAt": "2026-10-07T05:15:20.954Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m13",
+      "command": [
+        "pnpm",
+        "test:postgres:m13"
+      ],
+      "startedAt": "2026-10-07T05:15:20.955Z",
+      "completedAt": "2026-10-07T05:15:41.564Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "postgres-m15",
+      "command": [
+        "pnpm",
+        "test:postgres:m15"
+      ],
+      "startedAt": "2026-10-07T05:15:41.564Z",
+      "completedAt": "2026-10-07T05:15:46.969Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "docker-sandbox",
+      "command": [
+        "pnpm",
+        "test:sandbox:docker"
+      ],
+      "startedAt": "2026-10-07T05:15:46.970Z",
+      "completedAt": "2026-10-07T05:15:54.489Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "docker-output",
+      "command": [
+        "pnpm",
+        "test:sandbox:output"
+      ],
+      "startedAt": "2026-10-07T05:15:54.489Z",
+      "completedAt": "2026-10-07T05:15:58.351Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "docker-control",
+      "command": [
+        "pnpm",
+        "test:sandbox:job-control"
+      ],
+      "startedAt": "2026-10-07T05:15:58.351Z",
+      "completedAt": "2026-10-07T05:16:10.265Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "output-storage",
+      "command": [
+        "pnpm",
+        "test:output:storage"
+      ],
+      "startedAt": "2026-10-07T05:16:10.265Z",
+      "completedAt": "2026-10-07T05:16:13.593Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "openclaw-execution",
+      "command": [
+        "pnpm",
+        "test:openclaw:execution"
+      ],
+      "startedAt": "2026-10-07T05:16:13.593Z",
+      "completedAt": "2026-10-07T05:16:34.901Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "core-worker-slice",
+      "command": [
+        "pnpm",
+        "test:core-worker:m16"
+      ],
+      "startedAt": "2026-10-07T05:16:34.901Z",
+      "completedAt": "2026-10-07T05:17:13.953Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "object-storage",
+      "command": [
+        "pnpm",
+        "test:storage:seaweedfs"
+      ],
+      "startedAt": "2026-10-07T05:17:13.953Z",
+      "completedAt": "2026-10-07T05:17:19.770Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "object-storage-minio",
+      "command": [
+        "pnpm",
+        "test:storage:minio"
+      ],
+      "startedAt": "2026-10-07T05:17:19.770Z",
+      "completedAt": "2026-10-07T05:17:22.450Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "browser-m10",
+      "command": [
+        "pnpm",
+        "test:browser:m10"
+      ],
+      "startedAt": "2026-10-07T05:17:22.450Z",
+      "completedAt": "2026-10-07T05:18:01.183Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "browser-m12",
+      "command": [
+        "pnpm",
+        "test:browser:m12"
+      ],
+      "startedAt": "2026-10-07T05:18:01.183Z",
+      "completedAt": "2026-10-07T05:18:15.634Z",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "name": "browser-m13",
+      "command": [
+        "pnpm",
+        "test:browser:m13"
+      ],
+      "startedAt": "2026-10-07T05:18:15.634Z",
+      "completedAt": "2026-10-07T05:18:29.602Z",
+      "exitCode": 0,
+      "signal": null
+    }
+  ]
+}

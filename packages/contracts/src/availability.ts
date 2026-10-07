@@ -88,7 +88,8 @@ export const PublicAvailabilitySchema = z.strictObject({
   nextScheduleWindowAt: z.iso.datetime().nullable(),
   reason: z.enum(['NONE', 'NOT_VISIBLE', 'NOT_PUBLISHED', 'SELLER_PAUSED', 'PLATFORM_BLOCKED',
     'SCHEDULE_CLOSED', 'WORKER_OFFLINE', 'READINESS_STALE', 'DEPENDENCY_BLOCKED',
-    'CAPACITY_FULL', 'QUEUE_FULL', 'NO_FUTURE_WINDOW', 'RECONCILIATION_PENDING']),
+    'CAPACITY_FULL', 'QUEUE_FULL', 'NO_FUTURE_WINDOW', 'RECONCILIATION_PENDING',
+    'PROCESSOR_DECLARATION_MISSING']),
 });
 export type PublicAvailability = z.infer<typeof PublicAvailabilitySchema>;
 

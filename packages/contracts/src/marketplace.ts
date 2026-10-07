@@ -50,6 +50,7 @@ export const CapabilityDetailSchema = CapabilityCardSchema.extend({
     ioContract: CapabilityIOContractSchema,
     permissionManifest: PublicPermissionManifestSchema,
     researchAccess: z.boolean(),
+    externalProcessors: z.array(z.string()).nullable(),
     executionModel: z.literal('ISOLATED_SELLER_OPENCLAW'),
   }),
   sellerMemberSince: z.iso.datetime(),

@@ -47,8 +47,29 @@ export function securitySurfaceExpansion(previous: SecuritySurface, next: Securi
   if (canonicalJson(nextPolicy.internet ?? null) !== canonicalJson(priorPolicy.internet ?? null)) {
     add('POLICY_FIELD', 'internet');
   }
+  const previousConnectors = new Map(priorPolicy.internet?.mode === 'DECLARED_API_ACCESS'
+    ? priorPolicy.internet.connectors.map((connector) => [connector.id, canonicalJson(connector)]) : []);
+  if (nextPolicy.internet?.mode === 'DECLARED_API_ACCESS') {
+    for (const connector of nextPolicy.internet.connectors) {
+      if (previousConnectors.get(connector.id) !== canonicalJson(connector)) {
+        add('NETWORK_DESTINATION', `connector:${connector.id}:${connector.host}${connector.path}`);
+      }
+    }
+  }
   if (canonicalJson(nextPolicy.localResources ?? null) !== canonicalJson(priorPolicy.localResources ?? null)) {
     add('RESOURCE_PERMISSION', 'localResources');
+  }
+  const previousOperations = new Map<string, string>((priorPolicy.localResources ?? []).flatMap((resource) =>
+    resource.operations.map((operation) =>
+      [`${resource.resourceId}:${operation.id}`,
+        canonicalJson({ statementTimeoutMs: resource.statementTimeoutMs, operation })] as const)));
+  for (const resource of nextPolicy.localResources ?? []) {
+    for (const operation of resource.operations) {
+      const reference = `${resource.resourceId}:${operation.id}`;
+      if (previousOperations.get(reference) !== canonicalJson({
+        statementTimeoutMs: resource.statementTimeoutMs, operation,
+      })) add('RESOURCE_PERMISSION', `operation:${reference}`);
+    }
   }
   if (canonicalJson(nextPolicy.providerBudget ?? null) !== canonicalJson(priorPolicy.providerBudget ?? null)) {
     add('INFERENCE', 'providerBudget');

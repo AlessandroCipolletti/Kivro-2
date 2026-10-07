@@ -4,6 +4,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import type { CapabilityDetail } from '../../../../../packages/contracts/src/marketplace.js';
 import type { ScheduleQuote } from '../../../../../packages/contracts/src/availability.js';
 import { money,availabilityLabel } from '../../discover/marketplace-ui';
+import { Icon } from '../../ui/kivro-icon';
 
 type Values=Record<string,unknown>;
 type Assets=Record<string,string[]>;
@@ -55,25 +56,28 @@ export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,ch
   const [payload,setPayload]=useState<{values:Values;assets:Assets}|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [fieldError,setFieldError]=useState<{key:string;message:string}|null>(null);
   const [favorite,setFavorite]=useState(detail.favorite);
   const [acceptedTerms,setAcceptedTerms]=useState(termsAccepted);
   const canRequest=detail.availability.acceptingImmediate||
     detail.availability.acceptingQueue||detail.availability.canSchedule;
   const purchaseAttempt=useRef<{quoteId:string;jobId:string;reservationId:string;
     manifestId:string}|null>(null);
-  const update=(key:string,value:unknown)=>{setValues((old)=>({...old,[key]:value}));setQuote(null);};
+  const update=(key:string,value:unknown)=>{setValues((old)=>({...old,[key]:value}));setQuote(null);
+    setFieldError((old)=>old?.key===key?null:old);};
   const inputFields=[...detail.version.ioContract.input.fields].sort((a,b)=>a.order-b.order);
   const current=inputFields.filter((field)=>!field.visibleWhen||
     values[field.visibleWhen.fieldKey]===field.visibleWhen.equals);
   const prepare=async()=>{
-    setBusy(true);setError('');setQuote(null);
+    setBusy(true);setError('');setFieldError(null);setQuote(null);
     try{
       if(!acceptedTerms)throw new Error('Accept the marketplace use terms before preflight');
       if(!termsAccepted)await post('terms',{acceptanceId:crypto.randomUUID(),version:1,accepted:true});
       for(const field of current){if(field.type==='JSON'&&rawJson[field.key]?.trim()){
         try{JSON.parse(rawJson[field.key]!);}catch{throw new Error(`${field.label}: enter valid JSON`);}
       }}
-      const assets:Assets={...ownedAssets};
+      const assets:Assets=Object.fromEntries(Object.entries(ownedAssets)
+        .filter(([,ids])=>ids.length>0));
       for(const field of current){
         if(field.type!=='FILE'&&field.type!=='FILES')continue;
         const selected=files[field.key]??[];
@@ -115,7 +119,9 @@ export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,ch
         ...(deadline?{latestAcceptableStartAt:new Date(deadline).toISOString()}:{}),
         payload:prepared});
       setQuote(result);setPayload(prepared);
-    }catch(cause){setError(cause instanceof Error?cause.message:'Preflight failed');}
+    }catch(cause){const message=cause instanceof Error?cause.message:'Preflight failed';
+      const field=current.find((item)=>message.startsWith(`${item.label}:`));
+      if(field)setFieldError({key:field.key,message});else setError(message);}
     finally{setBusy(false);}
   };
   const purchase=async()=>{
@@ -146,38 +152,40 @@ export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,ch
     try{await post('favorite',{capabilityId:detail.id,favorite:!favorite});setFavorite(!favorite);}
     catch(cause){setError(cause instanceof Error?cause.message:'Could not save favorite');}
   };
-  return <section className="run-panel" aria-labelledby="run-title"><div className="run-panel-heading"><div><p className="form-eyebrow">START A NEW JOB</p><h2 id="run-title">Prepare your inputs</h2></div><button type="button" className="favorite-button" onClick={toggleFavorite} aria-pressed={favorite}>{favorite?'♥ Saved':'♡ Save'}</button></div>
+  return <section className="run-panel" aria-labelledby="run-title"><div className="run-panel-heading"><div><p className="form-eyebrow">START A NEW JOB</p><h2 id="run-title">Prepare your inputs</h2></div><button type="button" className="favorite-button" onClick={toggleFavorite} aria-pressed={favorite}><Icon name="heart"/>{favorite?'Saved':'Save'}</button></div>
     {sourceLabel&&<p className="notice success">{sourceLabel}. This is a new purchase using the current version and current price.</p>}
     {changeWarning&&<p className="notice error" role="alert">{changeWarning}</p>}
     <p className="run-helper">Your inputs are processed on the seller’s machine in an isolated job. Only the declared inputs reach the Worker. Review the permission summary above before uploading sensitive material.</p>
     <div className="run-fields">{current.map((field,index)=><Fragment key={field.key}>{field.group&&
       (index===0||current[index-1]?.group!==field.group)&&
       <h3 className="run-group-title">{field.group}</h3>}<label className="run-field"><span>{field.label}{field.required?' *':''}</span>{field.description&&<small>{field.description}</small>}
-      {field.type==='BOOLEAN'?<input type="checkbox" checked={values[field.key]===true} onChange={(e)=>update(field.key,e.target.checked)}/>:
-      field.type==='SELECT'?<select value={String(values[field.key]??'')} onChange={(e)=>update(field.key,e.target.value)} required={field.required}><option value="">Select an option</option>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
-      field.type==='MULTI_SELECT'?<select multiple value={Array.isArray(values[field.key])?values[field.key] as string[]:[]} onChange={(e)=>update(field.key,Array.from(e.target.selectedOptions).map((o)=>o.value))}>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
-      field.type==='FILE'||field.type==='FILES'?<><input type="file" multiple={field.type==='FILES'} accept={field.constraints.allowedExtensions.join(',')} onChange={(e)=>{setFiles((old)=>({...old,[field.key]:Array.from(e.target.files??[])}));setOwnedAssets((old)=>({...old,[field.key]:[]}));setQuote(null);}}/>{(ownedAssets[field.key]?.length??0)>0&&<small>{ownedAssets[field.key]!.length} private buyer file(s) selected by Marketplace Agent. Choosing a new file replaces this selection.</small>}</>:
-      field.type==='LONG_TEXT'||field.type==='MARKDOWN'||field.type==='JSON'?<textarea rows={field.type==='JSON'?6:4} value={field.type==='JSON'?rawJson[field.key]??'':String(values[field.key]??'')} onChange={(e)=>{if(field.type==='JSON'){
+      {field.type==='BOOLEAN'?<input type="checkbox" checked={values[field.key]===true} aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined} onChange={(e)=>update(field.key,e.target.checked)}/>:
+      field.type==='SELECT'?<select value={String(values[field.key]??'')} aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined} onChange={(e)=>update(field.key,e.target.value)} required={field.required}><option value="">Select an option</option>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
+      field.type==='MULTI_SELECT'?<select multiple value={Array.isArray(values[field.key])?values[field.key] as string[]:[]} aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined} onChange={(e)=>update(field.key,Array.from(e.target.selectedOptions).map((o)=>o.value))}>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
+      field.type==='FILE'||field.type==='FILES'?<><input type="file" multiple={field.type==='FILES'} accept={field.constraints.allowedExtensions.join(',')} aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined} onChange={(e)=>{setFiles((old)=>({...old,[field.key]:Array.from(e.target.files??[])}));setOwnedAssets((old)=>({...old,[field.key]:[]}));setFieldError((old)=>old?.key===field.key?null:old);setQuote(null);}}/>{(ownedAssets[field.key]?.length??0)>0&&<small>{ownedAssets[field.key]!.length} private buyer file(s) selected by Marketplace Agent. Choosing a new file replaces this selection.</small>}</>:
+      field.type==='LONG_TEXT'||field.type==='MARKDOWN'||field.type==='JSON'?<textarea rows={field.type==='JSON'?6:4} aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined} value={field.type==='JSON'?rawJson[field.key]??'':String(values[field.key]??'')} onChange={(e)=>{if(field.type==='JSON'){
         setRawJson((old)=>({...old,[field.key]:e.target.value}));setQuote(null);
         try{update(field.key,JSON.parse(e.target.value) as unknown);setError('');}
         catch{update(field.key,undefined);}
       }else update(field.key,e.target.value);}}/>:
       <input type={field.type==='INTEGER'||field.type==='NUMBER'?'number':field.type==='URL'?'url':'text'}
         step={field.type==='INTEGER'?'1':field.type==='NUMBER'?'any':undefined}
+        aria-invalid={fieldError?.key===field.key} aria-describedby={fieldError?.key===field.key?`run-error-${field.key}`:undefined}
         value={String(values[field.key]??'')} onChange={(e)=>update(field.key,
           field.type==='INTEGER'||field.type==='NUMBER'?
             e.target.value===''?undefined:Number(e.target.value):e.target.value)} required={field.required}/>}
+      {fieldError?.key===field.key&&<small id={`run-error-${field.key}`} className="field-error" role="alert">{fieldError.message}</small>}
     </label></Fragment>)}</div>
     <div className="run-preference"><h3>When should this run?</h3><label><input type="radio" name="mode" checked={mode==='IMMEDIATE_ONLY'} onChange={()=>{setMode('IMMEDIATE_ONLY');setQuote(null);}}/> As soon as possible while available</label><label><input type="radio" name="mode" checked={mode==='EARLIEST_AVAILABLE'} onChange={()=>{setMode('EARLIEST_AVAILABLE');setQuote(null);}}/> Earliest eligible window, including future schedule</label><label>Latest acceptable start (optional)<input type="datetime-local" value={deadline} onChange={(e)=>{setDeadline(e.target.value);setQuote(null);}}/></label></div>
     {!termsAccepted&&<label className="run-terms"><input type="checkbox" checked={acceptedTerms} onChange={(e)=>setAcceptedTerms(e.target.checked)}/> I have read and accept the <a href="/marketplace-terms" target="_blank" rel="noopener noreferrer">Marketplace use terms (version 1)</a>.</label>}
-    <button type="button" className="primary-button run-button" disabled={busy||!canRequest} onClick={prepare}>{busy?'Checking…':canRequest?'Check price & availability →':'New jobs temporarily unavailable'}</button>
+    <button type="button" className="primary-button run-button" disabled={busy||!canRequest} onClick={prepare}>{busy?'Checking…':canRequest?'Check price & availability':'New jobs temporarily unavailable'}</button>
     {error&&<p className="notice error" role="alert">{friendlyError(error)}</p>}
     {quote&&<div className="run-quote" role="status"><p className="form-eyebrow">CURRENT EXECUTION QUOTE</p><div className="run-quote-price"><strong>{money(quote.quote.price.buyerAmountMinor)}</strong><span>fixed price · version {detail.version.number}</span></div>
       <p>{availabilityLabel(detail.availability.status,detail.availability.acceptingQueue)}. Earliest eligible start: {new Date(quote.quote.earliestEligibleAt).toLocaleString()}. Latest start under this quote: {new Date(quote.quote.latestStartAt).toLocaleString()}.</p>
       <p>Start time is not guaranteed. No completion ETA is available until sufficient execution history exists. Quote expires {new Date(quote.quote.quoteExpiresAt).toLocaleTimeString()}.</p>
       {mode==='EARLIEST_AVAILABLE'&&<p>Your credits will be reserved now. Execution starts only when an eligible seller window and Worker are available, before your latest acceptable start.</p>}
       <p>Credits available: {money(quote.balance.availableMinor)} · reserved: {money(quote.balance.reservedMinor)}</p>
-      {quote.canAfford?<button type="button" className="primary-button run-button" disabled={busy||Date.parse(quote.quote.quoteExpiresAt)<=Date.now()} onClick={purchase}>Confirm purchase & reserve credits →</button>:
+      {quote.canAfford?<button type="button" className="primary-button run-button" disabled={busy||Date.parse(quote.quote.quoteExpiresAt)<=Date.now()} onClick={purchase}>Confirm purchase & reserve credits</button>:
         <p className="notice error">Insufficient Kivro Credits. Add credits in your account before purchasing.</p>}
       <p className="run-fineprint">Credits are reserved before the job can execute. Eligible cancellation before execution releases them. Failed jobs follow the published refund policy.</p></div>}
   </section>;

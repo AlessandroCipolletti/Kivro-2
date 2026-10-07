@@ -13,7 +13,7 @@ test('all 106 M06 requirements remain traceable and open until their real closin
   assert.equal(ids.length, 106);
   for (const id of ids) {
     const line = coverage.split('\n').find((item) => item.includes(`\`${id}\``));
-    assert.ok(line?.includes('`DEFERRED_VERIFICATION`'), id);
+    assert.ok(line && /`(?:DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION)`/.test(line), id);
     assert.ok(backlog.includes(`| \`${id}\` (§`), `missing per-ID closing gate: ${id}`);
   }
 });

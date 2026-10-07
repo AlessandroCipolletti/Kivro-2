@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE buyer_api_keys (
   id uuid PRIMARY KEY,
   account_id uuid NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
@@ -137,3 +139,5 @@ END;
 $$;
 CREATE TRIGGER job_transition_webhook_outbox AFTER INSERT ON job_transitions
   FOR EACH ROW EXECUTE FUNCTION enqueue_buyer_webhook_event();
+
+COMMIT;

@@ -11,6 +11,9 @@ import { MarketplaceActionError } from '../../../../packages/persistence/src/mar
 import { MarketplaceAssetError } from '../../../../packages/persistence/src/marketplace-assets.js';
 import { ContractValidationError } from '../../../../packages/contracts/src/contract-values.js';
 import { InputObjectValidationError } from '../../../../packages/application/src/input-object-validation.js';
+import { PlatformOperationsError,PlatformOperationsRepository } from
+  '../../../../packages/persistence/src/platform-operations.js';
+import { safeResultFileName } from '../../../../packages/contracts/src/file-types.js';
 
 const id=z.uuid();
 const preflight=z.strictObject({capabilityId:id,mode:z.enum(['IMMEDIATE_ONLY','EARLIEST_AVAILABLE']),
@@ -25,6 +28,8 @@ const reviewEdit=z.strictObject({reviewId:id,expectedRevision:z.number().int().p
 const cancel=z.strictObject({jobId:id,requestId:id});
 const problem=z.strictObject({id,jobId:id,category:z.enum([
   'MISSING_OUTPUT','CORRUPT_FILE','QUALITY','OTHER']),description:z.string().min(10).max(2000)});
+const abuseReport=z.strictObject({id,jobId:id,category:z.enum([
+  'HARASSMENT','MALICIOUS_INPUT','UNSAFE_OUTPUT','FRAUD','PRIVACY','OTHER'])});
 const uploadBegin=z.strictObject({capabilityId:id,fieldKey:z.string().min(1).max(64),
   fileName:z.string().min(1).max(128),sizeBytes:z.number().int().nonnegative(),
   sha256:z.string(),contentType:z.string().min(3).max(120)});
@@ -141,7 +146,7 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
           /^(image\/(png|jpeg|webp|gif)|video\/(mp4|webm)|audio\/(mpeg|wav|ogg)|application\/pdf)$/.test(asset.mimeType);
         return new Response(body,{headers:{'Content-Type':asset.mimeType,
           'Content-Length':String(asset.sizeBytes),'Content-Disposition':
-            `${preview?'inline':'attachment'}; filename="kivro-result-${path[1]}"`,
+            `${preview?'inline':'attachment'}; filename="${safeResultFileName(path[1]!,asset.mimeType)}"`,
           'Content-Security-Policy':"default-src 'none'; sandbox",
           'X-Content-Type-Options':'nosniff','Cache-Control':'private, no-store'}});
       }
@@ -177,6 +182,12 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
       await app.getBuyer().reportProblem({buyerId,...problem.parse(raw)});
       return json({ok:true},201);
     }
+    if(key==='abuse-report'){
+      const report=abuseReport.parse(raw);
+      await new PlatformOperationsRepository(app.pool).report(buyerId,report.id,report.jobId,
+        'BUYER',report.category);
+      return json({ok:true},201);
+    }
     if(key==='upload-begin')return json(await app.getAssets().beginDirect(
       {buyerId,...uploadBegin.parse(raw)}),201);
     if(key==='upload-finalize')return json(await app.getAssets().finalizeDirect(
@@ -192,15 +203,19 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
     return json({code:'NOT_FOUND'},404);
   }catch(error){
     if(error instanceof InputObjectValidationError)return json({code:error.code},409);
+    if(error instanceof PlatformOperationsError)return json({code:error.code},
+      error.code==='FORBIDDEN'?403:error.code==='NOT_FOUND'?404:409);
     if(error instanceof z.ZodError||error instanceof TypeError||error instanceof SyntaxError||
       error instanceof ContractValidationError)
       return json({code:'INVALID_INPUT'},400);
+    if(error instanceof AvailabilityError&&error.code==='BUYER_LIMIT')
+      return json({code:'BUYER_LIMIT'},429);
     if(error instanceof BuyerMarketplaceError||error instanceof MarketplaceActionError||
       error instanceof MarketplaceAssetError||error instanceof AvailabilityError||
       error instanceof FinanceError||error instanceof JobExecutionError){
       const code=error.code;
       return json({code},code==='NOT_FOUND'?404:
-        ['NOT_ELIGIBLE','PAYMENT_NOT_SECURED'].includes(code)?403:409);
+        ['NOT_ELIGIBLE','PAYMENT_NOT_SECURED','ABUSE_DENIED'].includes(code)?403:409);
     }
     throw error;
   }

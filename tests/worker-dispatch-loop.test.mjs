@@ -26,6 +26,7 @@ test('poll dispatcher loads only local reviewed packages and never starts one of
     supportedProtocolVersions: [WORKER_PROTOCOL_VERSION],
     async poll(hello) {
       assert.equal(hello.workerDeviceId, deviceId);
+      assert.equal(hello.workerRelease, '2026.10.7');
       return [{type:'WORKER_WELCOME',messageId:randomUUID(),controlPlaneId:'plane-a',
         selectedProtocolVersion:WORKER_PROTOCOL_VERSION,controlPlaneState:'ACTIVE',
         serverTime:new Date().toISOString(),pauseDirective:{revision:1,paused:false,
@@ -33,7 +34,8 @@ test('poll dispatcher loads only local reviewed packages and never starts one of
         { ...offer, messageId: randomUUID() }];
     }, async send() {}, async close() {} };
   const dispatcher = new WorkerDispatchLoop(transport, deviceId,
-    { load(versionId) { calls.push(['load', versionId]); return { reviewed: true }; } },
+    { load(versionId) { calls.push(['load', versionId]); return { reviewed: true }; },
+      loadReviewedSkills(versionId) { calls.push(['load-skills', versionId]); return []; } },
     { snapshot() { return { localRevision: 0 }; },applyCloudDirective() {},recordCloudContact() {},
       acknowledgeCloudRevision(){},
       isUnpausedForNewJobOffer(){return true;} },
@@ -42,14 +44,80 @@ test('poll dispatcher loads only local reviewed packages and never starts one of
     { async execute(seen, pkg) { calls.push(['execute', seen.executionId, pkg]); await blocked; } },
     (seen, error) => errors.push([seen, error]),
     {reporter:{async heartbeat(){return {localRevision:0,capabilityReadiness:[{
-      capabilityVersionId,state:'READY'}]};}},capacity:1,workerRelease:'0.0.0-dev',
+      capabilityVersionId,state:'READY'}]};}},capacity:1,workerRelease:'2026.10.7',
       openClawVersion:null,policyVersion:1});
   await dispatcher.pollOnce();
   assert.equal(calls.filter(([kind]) => kind === 'execute').length, 1);
   assert.equal(calls.filter(([kind]) => kind === 'load').length, 1);
+  assert.equal(calls.filter(([kind]) => kind === 'load-skills').length, 1);
   resolveExecution();
   await dispatcher.awaitActiveForTest();
   assert.deepEqual(errors, []);
+});
+
+test('dispatch refuses a package whose reviewed skill snapshot is missing', async () => {
+  const deviceId = randomUUID(), capabilityVersionId = randomUUID();
+  const offer = { type: 'JOB_OFFER', protocolVersion: WORKER_PROTOCOL_VERSION,
+    messageId: randomUUID(), controlPlaneId: 'plane-a', jobId: randomUUID(),
+    executionId: randomUUID(), attemptId: randomUUID(), workerDeviceId: deviceId,
+    capabilityId: randomUUID(), capabilityVersionId, inputManifestId: randomUUID(),
+    paymentReservationId: randomUUID(), workerManifestHash: `sha256:${'a'.repeat(64)}`,
+    localPackageHash: `sha256:${'b'.repeat(64)}`, permissionPolicyHash: `sha256:${'c'.repeat(64)}`,
+    policyValidationHash: `sha256:${'d'.repeat(64)}`, inputSchemaHash: `sha256:${'e'.repeat(64)}`,
+    inputManifestHash: `sha256:${'f'.repeat(64)}`, inputTotalBytes: 10, inputFileCount: 0,
+    pauseSupport: 'FULL_RESUME', expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    leaseToken: 'x'.repeat(32), paymentSecured: true };
+  const errors = [];
+  let executed = false;
+  const transport = { controlPlaneId: 'plane-a', kind: 'HTTPS_POLLING',
+    supportedProtocolVersions: [WORKER_PROTOCOL_VERSION], async send() {}, async close() {},
+    async poll() { return [{ type: 'WORKER_WELCOME', messageId: randomUUID(),
+      controlPlaneId: 'plane-a', selectedProtocolVersion: WORKER_PROTOCOL_VERSION,
+      controlPlaneState: 'ACTIVE', serverTime: new Date().toISOString(),
+      pauseDirective: { revision: 1, paused: false, securityPaused: false,
+        capabilityPauses: [] } }, offer]; } };
+  const loop = new WorkerDispatchLoop(transport, deviceId,
+    { load() { return { reviewed: true }; }, loadReviewedSkills() { throw Error('SKILL_MISSING'); } },
+    { snapshot() { return { localRevision: 0 }; }, applyCloudDirective() {},
+      recordCloudContact() {}, acknowledgeCloudRevision() {},
+      isUnpausedForNewJobOffer() { return true; } },
+    { snapshots() { return []; }, async stopOrphanedAtStartup() {},
+      async expireLeases() {}, async expireOverdue() {} },
+    { async execute() { executed = true; } }, (_seen, error) => errors.push(error),
+    { reporter: { async heartbeat() { return { localRevision: 0, capabilityReadiness: [
+      { capabilityVersionId, state: 'READY' }] }; } }, capacity: 1,
+    workerRelease: '2026.10.7', openClawVersion: null, policyVersion: 1 });
+  await loop.pollOnce();
+  assert.equal(executed, false);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0].message, /SKILL_MISSING/);
+});
+
+test('dispatch never exceeds the published capability concurrency limit',async()=>{
+  const deviceId=randomUUID(),versionId=randomUUID(),capabilityId=randomUUID();
+  const offer={type:'JOB_OFFER',controlPlaneId:'plane-a',workerDeviceId:deviceId,
+    executionId:randomUUID(),capabilityVersionId:versionId,capabilityId};
+  const transport={controlPlaneId:'plane-a',kind:'HTTPS_POLLING',
+    supportedProtocolVersions:[WORKER_PROTOCOL_VERSION],async send(){},async close(){},
+    async poll(){return [{type:'WORKER_WELCOME',controlPlaneId:'plane-a',
+      controlPlaneState:'ACTIVE',pauseDirective:{revision:0,paused:false,
+        securityPaused:false,capabilityPauses:[]}},offer];}};
+  const failures=[];let executed=false;
+  const loop=new WorkerDispatchLoop(transport,deviceId,
+    {load(){return {capabilityVersionId:versionId,concurrencyLimit:1};},
+      loadReviewedSkills(){return [];}},
+    {snapshot(){return {localRevision:0};},applyCloudDirective(){},
+      recordCloudContact(){},acknowledgeCloudRevision(){},
+      isUnpausedForNewJobOffer(){return true;}},
+    {snapshots(){return [{capabilityVersionId:versionId,status:'RUNNING'}];},
+      async stopOrphanedAtStartup(){},async expireLeases(){},async expireOverdue(){}},
+    {async execute(){executed=true;}},(_offer,error)=>failures.push(error),
+    {reporter:{async heartbeat(){return {localRevision:0,capabilityReadiness:[{
+      capabilityVersionId:versionId,state:'READY'}]};}},capacity:1,
+      workerRelease:'2026.10.7',openClawVersion:'2026.8.2',policyVersion:1});
+  await loop.pollOnce();
+  assert.equal(executed,false);
+  assert.equal(failures[0]?.code,'CAPACITY_FULL');
 });
 
 test('dispatch refuses a paid offer without same-cycle capability readiness',async()=>{

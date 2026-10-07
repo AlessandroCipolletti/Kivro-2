@@ -53,7 +53,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await expect(page.locator('.market-card-tags')).toContainText('Input:');
     await expect(page.locator('.market-card-tags')).toContainText('Output:');
     await page.getByRole('searchbox',{name:'Search capabilities'}).fill('research');
-    await page.getByRole('button',{name:'Search ↗'}).click();
+    await page.getByRole('button',{name:'Search'}).click();
     await expect(page.getByRole('heading',{name:'Results for “research”'})).toBeVisible();
     await page.screenshot({path:'test-results/m10-discover-desktop.png',fullPage:true,
       animations:'disabled'});
@@ -64,7 +64,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
     await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByRole('heading',{name:'Privacy & access'})).toBeVisible();
-    await expect(page.getByRole('link',{name:'Ask Marketplace Agent ↗'})).toHaveAttribute(
+    await expect(page.getByRole('link',{name:'Ask Marketplace Agent'})).toHaveAttribute(
       'href',`/ai-request?capabilityId=${capability.id}`);
     await page.goto('/privacy');
     await expect(page.getByRole('heading',{name:'Know where your request goes.'})).toBeVisible();
@@ -141,6 +141,8 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
       weeklyWindows:[{dayOfWeek:tomorrow.getUTCDay()||7,
         startLocalTime:'00:00',endLocalTime:'23:59'}]}]);
     await statusOnCard('Scheduled offline');
+    await page.screenshot({path:'test-results/m14-scheduled-mobile.png',fullPage:true,
+      animations:'disabled'});
     await expect(page.locator('.detail-availability')).toContainText('Next available:');
     const localTime=page.locator('.detail-availability time');
     await expect(localTime).toHaveAttribute('datetime',/Z$/);
@@ -148,27 +150,40 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
       new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'})
         .format(new Date(element.getAttribute('datetime')!)));
     await expect(localTime).toHaveText(`Next available: ${expectedLocal}`);
-    await expect(page.getByRole('link',{name:'Schedule a job →'})).toBeVisible();
+    await expect(page.getByRole('link',{name:'Schedule a job'})).toBeVisible();
     await expect(page.getByRole('radio',{name:/Earliest eligible window/})).toBeChecked();
     await page.getByRole('textbox',{name:'Question'}).fill('Run at the next window');
     await page.getByRole('checkbox',{name:/Marketplace use terms/}).check();
+    const fileField=page.getByLabel('Supporting file');
+    await fileField.setInputFiles({name:'too-large.txt',mimeType:'text/plain',
+      buffer:Buffer.alloc(2048)});
+    await page.getByRole('button',{name:'Check price & availability'}).click();
+    await expect(page.locator('.run-field .field-error')).toContainText('Supporting file');
+    await expect(fileField).toHaveAttribute('aria-invalid','true');
+    await fileField.setInputFiles([]);
     await page.getByRole('radio',{name:/As soon as possible/}).check();
-    await page.getByRole('button',{name:'Check price & availability →'}).click();
+    await page.getByRole('button',{name:'Check price & availability'}).click();
     await expect(page.locator('.run-panel .notice.error')).toContainText('current schedule is closed');
     await page.getByRole('radio',{name:/Earliest eligible window/}).check();
-    await page.getByRole('button',{name:'Check price & availability →'}).click();
+    await page.getByRole('button',{name:'Check price & availability'}).click();
     await expect(page.getByText('CURRENT EXECUTION QUOTE')).toBeVisible();
     await expect(page.getByText(/Start time is not guaranteed/)).toBeVisible();
     await expect(page.getByText(/credits will be reserved now/)).toBeVisible();
-    await page.getByRole('button',{name:'Confirm purchase & reserve credits →'}).click();
+    await page.screenshot({path:'test-results/m14-quote-mobile.png',fullPage:true,
+      animations:'disabled'});
+    await page.getByRole('button',{name:'Confirm purchase & reserve credits'}).click();
     await expect(page.locator('.job-hero-status strong')).toHaveText('Waiting for schedule');
     await page.getByRole('button',{name:'Cancel this job'}).click();
     await expect(page.locator('.job-hero-status strong')).toHaveText('Cancelled');
+    await page.screenshot({path:'test-results/m14-cancelled-mobile.png',fullPage:true,
+      animations:'disabled'});
     await pool.query(`UPDATE capability_availability_policies SET schedule_override=NULL
       WHERE capability_id=$1`,[capability.id]);
     await pool.query(`UPDATE worker_heartbeats SET reported_at=now()-interval '31 seconds'
       WHERE worker_device_id=$1`,[capability.worker_device_id]);
     await statusOnCard('Worker offline');
+    await page.screenshot({path:'test-results/m14-offline-mobile.png',fullPage:true,
+      animations:'disabled'});
     await report(1,true);
     await statusOnCard('Busy · queue open');
     await report(0,false);
@@ -214,13 +229,13 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await expect(page.getByRole('heading',{name:'SOURCE'})).toBeVisible();
     await page.screenshot({path:'test-results/m10-run-form-mobile.png',fullPage:true,
       animations:'disabled'});
-    await page.getByRole('button',{name:'♡ Save'}).click();
-    await expect(page.getByRole('button',{name:'♥ Saved'})).toBeVisible();
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Saved',exact:true})).toBeVisible();
     await page.goto('/buyer?view=favorites');
     await expect(page.getByRole('heading',{name:'Favorites',exact:true})).toBeVisible();
     await expect(page.getByRole('link',{name:/Research brief/})).toBeVisible();
     await page.goto(`/capabilities/${capability.slug}`);
-    await page.getByRole('link',{name:'Use as template →'}).first().click({timeout:5000});
+    await page.getByRole('link',{name:'Use as template'}).first().click({timeout:5000});
     await expect(page.getByText('Prefilled from a seller-approved example')).toBeVisible();
     await expect(page.getByRole('textbox',{name:'Question'})).toHaveValue('Example');
     await page.getByRole('textbox',{name:'Question'}).fill('Summarize this company');
@@ -231,7 +246,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     const [uploaded]=await Promise.all([
       page.waitForResponse((response)=>response.url().startsWith(process.env.OBJECT_STORAGE_ENDPOINT!)&&
         response.request().method()==='PUT'),
-      page.getByRole('button',{name:'Check price & availability →'}).click(),
+      page.getByRole('button',{name:'Check price & availability'}).click(),
     ]);
     expect(uploaded.status()).toBe(200);
     await expect(page.getByText('CURRENT EXECUTION QUOTE')).toBeVisible();
@@ -246,7 +261,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
       expect(committed.status()).toBe(201);
       await route.abort('failed');
     });
-    await page.getByRole('button',{name:'Confirm purchase & reserve credits →'}).click();
+    await page.getByRole('button',{name:'Confirm purchase & reserve credits'}).click();
     await expect(page).toHaveURL(/\/buyer\/jobs\/[a-f0-9-]+/);
     const jobId=page.url().split('/').at(-1)!;
     await expect(page.getByText('Payment: RESERVED')).toBeVisible();
@@ -263,7 +278,12 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     ]);
     expect(cancelResponse.status()).toBe(200);
     await expect(page.locator('.job-hero-status strong')).toHaveText('Cancelled');
-    await page.getByRole('link',{name:'Run again →'}).click();
+    await page.getByRole('button',{name:'Send safety report'}).click();
+    await expect(page.getByRole('status')).toHaveText('Your safety report was recorded for review.');
+    const safetyReport=await pool.query<{category:string;reporter_account_id:string}>(
+      'SELECT category,reporter_account_id FROM abuse_reports WHERE job_id=$1',[jobId]);
+    expect(safetyReport.rows).toEqual([{category:'UNSAFE_OUTPUT',reporter_account_id:buyer}]);
+    await page.getByRole('link',{name:'Run again'}).click();
     await expect(page.getByText('Prefilled from your previous job')).toBeVisible();
     const previousVersion=(await pool.query<{id:string}>(`SELECT id FROM capability_versions
       WHERE capability_id=$1 AND version_number=1`,[capability.id])).rows[0]!.id;
@@ -274,7 +294,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await pool.query('UPDATE capabilities SET current_version_id=$2 WHERE id=$1',
       [capability.id,capability.current_version_id]);
     await expect(page.getByRole('textbox',{name:'Question'})).toHaveValue('Summarize this company');
-    await expect(page.getByText(/CURRENT PUBLISHED VERSION · \d+/)).toBeVisible();
+    await expect(page.locator('.detail-mobile-purchase')).toContainText(/CURRENT PRICE · VERSION \d+/);
     await page.goto('/buyer');
     await expect(page.getByRole('heading',{name:'Failed, expired & cancelled'})).toBeVisible();
     await expect(page.getByText('Research brief').first()).toBeVisible();

@@ -380,12 +380,13 @@ export class PostgresSellerOperations {
       WHERE d.seller_profile_id=$1 ORDER BY d.created_at,d.id`,[profile.id]);
     const capabilities=await this.pool.query<{id:string;slug:string;name:string;status:string;
       current_version_id:string|null;worker_device_id:string|null;
-      price:unknown|null;
+      price:unknown|null;permission_manifest:unknown|null;
       readiness_state:string|null;readiness_at:Date|null;sandbox_verified:boolean|null;
       required_secrets_ready:boolean|null;runtime_healthy:boolean|null;
       maintenance_until:Date|null}>(`SELECT c.id,c.slug,c.name,c.status,
       c.current_version_id,v.version_snapshot->>'workerDeviceId' AS worker_device_id,
       v.version_snapshot->'price' AS price,
+      v.version_snapshot->'publicPermissionManifest' AS permission_manifest,
       p.maintenance_until,r.state AS readiness_state,r.observed_at AS readiness_at,r.sandbox_verified,
       r.required_secrets_ready,r.runtime_healthy
       FROM capabilities c LEFT JOIN capability_versions v ON v.id=c.current_version_id
@@ -425,10 +426,21 @@ export class PostgresSellerOperations {
     const settledSales=await this.finance.sellerSettledSales(profile.id);
     const economics=new PostgresSellerEconomics(this.pool);
     const availabilityMetrics=new PostgresAvailabilityMetrics(this.pool,this.availability);
+    const audit=await this.pool.query<{job_id:string;at:Date;kind:string;code:string;
+      correlation_id:string|null}>(`SELECT job_id,at,'JOB' AS kind,to_status AS code,correlation_id
+      FROM job_transitions WHERE job_id=ANY($1::uuid[])
+      UNION ALL SELECT job_id,created_at,'FINANCE',kind,NULL::uuid
+      FROM financial_journals WHERE job_id=ANY($1::uuid[])
+      ORDER BY at LIMIT 2000`,[jobs.rows.map((row)=>row.id)]);
+    const auditByJob=new Map<string,{at:string;kind:string;code:string;
+      correlationId:string|null}[]>();
+    for(const item of audit.rows){const list=auditByJob.get(item.job_id)??[];
+      list.push({at:item.at.toISOString(),kind:item.kind,code:item.code,
+        correlationId:item.correlation_id});auditByJob.set(item.job_id,list);}
     const jobViews=await Promise.all(jobs.rows.map(async(row)=>({...row,
       created_at:row.created_at.toISOString(),started_at:row.started_at?.toISOString()??null,
       completed_at:row.completed_at?.toISOString()??null,
-      economics:await economics.job(row.id,sellerId)})));
+      economics:await economics.job(row.id,sellerId),audit:auditByJob.get(row.id)??[]})));
     const capabilityViews=await Promise.all(capabilities.rows.map(async(item)=>{
       let operations:Awaited<ReturnType<PostgresAvailabilityRepository['sellerOverview']>>|null=null;
       if(item.current_version_id){
