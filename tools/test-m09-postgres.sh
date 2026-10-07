@@ -23,4 +23,6 @@ mapped_port=$(docker port "$container_name" 5432/tcp | sed -n 's/.*://p' | head 
 M09_DATABASE_URL="postgres://postgres@127.0.0.1:$mapped_port/postgres" \
   node --test "$repo_root/tests/m09-postgres-integration.mjs"
 DATABASE_URL="postgres://postgres@127.0.0.1:$mapped_port/postgres" \
-  KIVRO_STRIPE_MODE=test node "$repo_root/tools/kivro-scheduler.mjs" --once
+  KIVRO_STRIPE_MODE=test KIVRO_LEASE_KEY_VERSION=v1 \
+  KIVRO_LEASE_KEY_BASE64='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' \
+  node "$repo_root/tools/kivro-scheduler.mjs" --once

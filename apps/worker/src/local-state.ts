@@ -21,6 +21,9 @@ export interface PauseAuditEvent {
 
 export interface PauseState {
   readonly globalPaused: boolean;
+  readonly localPaused: boolean;
+  readonly cloudPaused: boolean;
+  readonly cloudRevision: number;
   readonly securityPaused: boolean;
   readonly pausedAt: string | null;
   readonly pauseReason: string | null;
@@ -29,6 +32,9 @@ export interface PauseState {
   readonly acknowledgedRevision: number;
   readonly cloudSyncPending: boolean;
   readonly capabilityPauses: readonly string[];
+  readonly localCapabilityPauses: readonly string[];
+  readonly lastCloudContactAt: string | null;
+  readonly reportedCapacity: number;
 }
 
 export interface ReadinessResult {
@@ -53,6 +59,7 @@ CREATE TABLE IF NOT EXISTS worker_pause_state (
   singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
   global_paused INTEGER NOT NULL DEFAULT 0 CHECK (global_paused IN (0,1)),
   security_paused INTEGER NOT NULL DEFAULT 0 CHECK (security_paused IN (0,1)),
+  security_pause_origin TEXT CHECK (security_pause_origin IN ('LOCAL','CLOUD')),
   paused_at TEXT,
   pause_reason TEXT,
   pause_source TEXT CHECK (pause_source IN ('LOCAL_CLI','WEB','PLATFORM_SECURITY','ADMIN')),
@@ -66,6 +73,15 @@ CREATE TABLE IF NOT EXISTS capability_pause (
   source TEXT NOT NULL CHECK (source IN ('LOCAL_CLI','WEB','PLATFORM_SECURITY','ADMIN')),
   reason TEXT
 );
+CREATE TABLE IF NOT EXISTS cloud_capability_pause (
+  capability_id TEXT PRIMARY KEY
+);
+CREATE TABLE IF NOT EXISTS worker_connection_state (
+  singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+  last_contact_at TEXT,
+  advertised_capacity INTEGER NOT NULL DEFAULT 0 CHECK(advertised_capacity BETWEEN 0 AND 64)
+);
+INSERT OR IGNORE INTO worker_connection_state(singleton) VALUES(1);
 CREATE TABLE IF NOT EXISTS pause_audit (
   id TEXT PRIMARY KEY,
   occurred_at TEXT NOT NULL,
@@ -84,7 +100,10 @@ CREATE TRIGGER IF NOT EXISTS pause_audit_no_delete BEFORE DELETE ON pause_audit 
 
 type StateRow = {
   global_paused: number;
+  cloud_paused: number;
+  cloud_revision: number;
   security_paused: number;
+  security_pause_origin: 'LOCAL'|'CLOUD'|null;
   paused_at: string | null;
   pause_reason: string | null;
   pause_source: PauseSource | null;
@@ -196,6 +215,20 @@ export class WorkerLocalState {
     this.db = openPrivateWorkerSqlite(stateDir, 'worker.sqlite');
     try {
       this.db.exec(schema);
+      // Expand existing private Worker state without dropping a persisted local stop.
+      const columns = this.db.prepare('PRAGMA table_info(worker_pause_state)').all() as { name: string }[];
+      if (!columns.some((column) => column.name === 'cloud_paused')) {
+        this.db.exec('ALTER TABLE worker_pause_state ADD COLUMN cloud_paused INTEGER NOT NULL DEFAULT 0 CHECK (cloud_paused IN (0,1))');
+      }
+      if (!columns.some((column) => column.name === 'cloud_revision')) {
+        this.db.exec('ALTER TABLE worker_pause_state ADD COLUMN cloud_revision INTEGER NOT NULL DEFAULT 0 CHECK (cloud_revision >= 0)');
+      }
+      if (!columns.some((column) => column.name === 'security_pause_origin')) {
+        this.db.exec("ALTER TABLE worker_pause_state ADD COLUMN security_pause_origin TEXT CHECK (security_pause_origin IN ('LOCAL','CLOUD'))");
+      }
+      const connectionColumns=this.db.prepare('PRAGMA table_info(worker_connection_state)').all() as {name:string}[];
+      if(!connectionColumns.some((column)=>column.name==='advertised_capacity'))
+        this.db.exec('ALTER TABLE worker_connection_state ADD COLUMN advertised_capacity INTEGER NOT NULL DEFAULT 0 CHECK(advertised_capacity BETWEEN 0 AND 64)');
     } catch (error) {
       this.db.close();
       throw error;
@@ -208,9 +241,14 @@ export class WorkerLocalState {
 
   snapshot(): PauseState {
     const row = this.db.prepare('SELECT * FROM worker_pause_state WHERE singleton = 1').get() as StateRow;
-    const capabilityPauses = (this.db.prepare('SELECT capability_id FROM capability_pause ORDER BY capability_id').all() as { capability_id: string }[]).map((item) => item.capability_id);
+    const localCapabilityPauses = (this.db.prepare('SELECT capability_id FROM capability_pause ORDER BY capability_id').all() as { capability_id: string }[]).map((item) => item.capability_id);
+    const cloudCapabilityPauses = (this.db.prepare('SELECT capability_id FROM cloud_capability_pause ORDER BY capability_id').all() as { capability_id: string }[]).map((item) => item.capability_id);
+    const connection = this.db.prepare('SELECT last_contact_at,advertised_capacity FROM worker_connection_state WHERE singleton=1').get() as {last_contact_at:string|null;advertised_capacity:number};
     return {
-      globalPaused: row.global_paused === 1,
+      globalPaused: row.global_paused === 1 || row.cloud_paused === 1,
+      localPaused: row.global_paused === 1,
+      cloudPaused: row.cloud_paused === 1,
+      cloudRevision:row.cloud_revision,
       securityPaused: row.security_paused === 1,
       pausedAt: row.paused_at,
       pauseReason: row.pause_reason,
@@ -218,7 +256,10 @@ export class WorkerLocalState {
       localRevision: row.local_revision,
       acknowledgedRevision: row.acknowledged_revision,
       cloudSyncPending: row.acknowledged_revision < row.local_revision,
-      capabilityPauses,
+      capabilityPauses: [...new Set([...localCapabilityPauses, ...cloudCapabilityPauses])].sort(),
+      localCapabilityPauses,
+      lastCloudContactAt:connection.last_contact_at,
+      reportedCapacity:connection.advertised_capacity,
     };
   }
 
@@ -242,12 +283,14 @@ export class WorkerLocalState {
     const safeReason = assertReason(reason);
     const expected = this.readRow();
     if (expected.security_paused === 1) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
+    if (expected.cloud_paused === 1) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
     const readiness = await this.readiness.check();
     assertFreshReadiness(readiness);
     const now = new Date().toISOString();
     this.transaction(() => {
       const row = this.readRow();
       if (row.security_paused === 1) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
+      if (row.cloud_paused === 1) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
       if (row.local_revision !== expected.local_revision) throw new WorkerStateError('NOT_READY', 'Pause state changed during readiness check');
       if (row.global_paused === 0) return;
       this.db.prepare('UPDATE worker_pause_state SET global_paused=0, paused_at=NULL, pause_reason=NULL, pause_source=NULL, local_revision=local_revision+1 WHERE singleton=1').run();
@@ -277,7 +320,8 @@ export class WorkerLocalState {
     assertActor(actorId);
     const safeReason = assertReason(reason);
     const current = this.readRow();
-    if (current.security_paused === 1 || current.global_paused === 1) {
+    if (current.security_paused === 1 || current.global_paused === 1 || current.cloud_paused === 1 ||
+      this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId)) {
       throw new WorkerStateError('SECURITY_PAUSE', 'Global or security pause blocks capability resume');
     }
     const readiness = await this.readiness.check();
@@ -285,7 +329,9 @@ export class WorkerLocalState {
     const now = new Date().toISOString();
     this.transaction(() => {
       const row = this.readRow();
-      if (row.security_paused === 1 || row.global_paused === 1) throw new WorkerStateError('SECURITY_PAUSE', 'Global or security pause blocks capability resume');
+      if (row.security_paused === 1 || row.global_paused === 1 || row.cloud_paused === 1 ||
+        this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId))
+        throw new WorkerStateError('SECURITY_PAUSE', 'Global, web or security pause blocks capability resume');
       if (row.local_revision !== current.local_revision) throw new WorkerStateError('NOT_READY', 'Pause state changed during readiness check');
       const result = this.db.prepare('DELETE FROM capability_pause WHERE capability_id=?').run(capabilityId);
       if (result.changes === 0) return;
@@ -303,10 +349,54 @@ export class WorkerLocalState {
     const now = new Date().toISOString();
     this.transaction(() => {
       const row = this.readRow();
-      if (row.security_paused === 1) return;
-      this.db.prepare("UPDATE worker_pause_state SET security_paused=1, paused_at=?, pause_reason=?, pause_source='PLATFORM_SECURITY', local_revision=local_revision+1 WHERE singleton=1")
+      if (row.security_paused === 1 && row.security_pause_origin === 'LOCAL') return;
+      this.db.prepare("UPDATE worker_pause_state SET security_paused=1, security_pause_origin='LOCAL',paused_at=?, pause_reason=?, pause_source='PLATFORM_SECURITY', local_revision=local_revision+1 WHERE singleton=1")
         .run(now, safeReason);
       this.audit('PLATFORM_SECURITY', actorId, 'ALL', null, 'PAUSE', safeReason, now, row.local_revision + 1);
+    });
+    return this.snapshot();
+  }
+
+  /** A signed cloud welcome is applied before any offer in that poll. It cannot clear a local stop. */
+  applyCloudDirective(input: { readonly revision: number; readonly paused: boolean;
+    readonly capabilityPauses: readonly string[]; readonly securityPaused: boolean;
+    readonly clearSecurityPause?: boolean | undefined }): PauseState {
+    if (!Number.isSafeInteger(input.revision) || input.revision < 0 ||
+      input.capabilityPauses.length > 64 || (input.clearSecurityPause && input.securityPaused))
+      throw new WorkerStateError('INVALID_ARGUMENT', 'Invalid cloud pause directive');
+    for (const id of input.capabilityPauses) assertCapabilityId(id);
+    this.transaction(() => {
+      const row = this.readRow();
+      if (input.revision < row.cloud_revision) return;
+      if (input.revision === row.cloud_revision) {
+        const existing = this.db.prepare('SELECT capability_id FROM cloud_capability_pause ORDER BY capability_id').all() as { capability_id: string }[];
+        if (row.cloud_paused !== Number(input.paused) ||
+          existing.map((item) => item.capability_id).join(',') !== [...input.capabilityPauses].sort().join(',')) {
+          throw new WorkerStateError('INVALID_ARGUMENT', 'Conflicting cloud pause directive');
+        }
+        if (input.securityPaused && row.security_paused === 0) {
+          this.db.prepare("UPDATE worker_pause_state SET security_paused=1,security_pause_origin='CLOUD',paused_at=?,pause_reason='Security policy blocked execution',pause_source='PLATFORM_SECURITY',local_revision=local_revision+1 WHERE singleton=1")
+            .run(new Date().toISOString());
+        }
+        return;
+      }
+      this.db.prepare('UPDATE worker_pause_state SET cloud_paused=?,cloud_revision=? WHERE singleton=1')
+        .run(Number(input.paused), input.revision);
+      this.db.prepare('DELETE FROM cloud_capability_pause').run();
+      for (const id of input.capabilityPauses) {
+        this.db.prepare('INSERT INTO cloud_capability_pause(capability_id) VALUES(?)').run(id);
+      }
+      if (input.securityPaused && row.security_paused === 0) {
+        this.db.prepare("UPDATE worker_pause_state SET security_paused=1,security_pause_origin='CLOUD',paused_at=?,pause_reason='Security policy blocked execution',pause_source='PLATFORM_SECURITY',local_revision=local_revision+1 WHERE singleton=1")
+          .run(new Date().toISOString());
+      } else if (input.clearSecurityPause && !input.securityPaused &&
+        row.security_paused === 1 && row.security_pause_origin === 'CLOUD') {
+        const now=new Date().toISOString();
+        this.db.prepare("UPDATE worker_pause_state SET security_paused=0,security_pause_origin=NULL,local_revision=local_revision+1 WHERE singleton=1")
+          .run();
+        this.audit('PLATFORM_SECURITY','platform-policy','ALL',null,'RESUME',
+          'Security block cleared after platform verification',now,row.local_revision+1);
+      }
     });
     return this.snapshot();
   }
@@ -320,12 +410,20 @@ export class WorkerLocalState {
     return this.snapshot();
   }
 
+  recordCloudContact(advertisedCapacity=0):void{
+    if(!Number.isSafeInteger(advertisedCapacity)||advertisedCapacity<0||advertisedCapacity>64)
+      throw new WorkerStateError('INVALID_ARGUMENT','Invalid announced execution capacity');
+    this.db.prepare('UPDATE worker_connection_state SET last_contact_at=?,advertised_capacity=? WHERE singleton=1')
+      .run(new Date().toISOString(),advertisedCapacity);
+  }
+
   /** This is only the pause decision, not authorization to execute a job. */
   isUnpausedForNewJobOffer(capabilityId: string): boolean {
     assertCapabilityId(capabilityId);
     const row = this.readRow();
-    if (row.global_paused === 1 || row.security_paused === 1) return false;
-    return this.db.prepare('SELECT 1 FROM capability_pause WHERE capability_id=?').get(capabilityId) === undefined;
+    if (row.global_paused === 1 || row.cloud_paused === 1 || row.security_paused === 1) return false;
+    return this.db.prepare('SELECT 1 FROM capability_pause WHERE capability_id=?').get(capabilityId) === undefined &&
+      this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId) === undefined;
   }
 
   auditEvents(): readonly PauseAuditEvent[] {

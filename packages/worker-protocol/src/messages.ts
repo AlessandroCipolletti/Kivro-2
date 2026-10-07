@@ -22,6 +22,14 @@ export const WorkerWelcomeSchema = z.strictObject({
   selectedProtocolVersion: z.literal(WORKER_PROTOCOL_VERSION),
   controlPlaneState: z.enum(['ACTIVE', 'DRAINING', 'RETIRED']),
   serverTime: z.iso.datetime(),
+  pauseDirective: z.strictObject({
+    revision: z.number().int().nonnegative(),
+    paused: z.boolean(),
+    securityPaused: z.boolean(),
+    clearSecurityPause: z.boolean().optional(),
+    capabilityPauses: z.array(z.uuid()).max(64),
+  }).refine((value)=>!value.clearSecurityPause||!value.securityPaused,
+    'A security clear cannot accompany a security block').optional(),
 });
 
 export const WorkerHeartbeatSchema = z.strictObject({
@@ -33,17 +41,37 @@ export const WorkerHeartbeatSchema = z.strictObject({
   workerRelease: z.string().min(1).max(80),
   sentAt: z.iso.datetime().optional(),
   openClawVersion: z.string().min(1).max(80).nullable(),
+  openClawCompatibility:z.enum(['APPROVED_PINNED','UNAVAILABLE']).optional(),
   status: z.enum(['ONLINE', 'PAUSED', 'NOT_READY']),
   runningJobs: z.number().int().nonnegative().max(64),
   capacity: z.number().int().nonnegative().max(64),
   policyVersion: z.number().int().positive(),
   localRevision: z.number().int().nonnegative(),
+  acknowledgedCloudRevision: z.number().int().nonnegative().optional(),
+  localPause: z.strictObject({
+    globalPaused: z.boolean(),
+    securityPaused: z.boolean(),
+    capabilityPauses: z.array(z.uuid()).max(64),
+  }).optional(),
+  operationalChecks: z.array(z.strictObject({
+    code:z.enum(['DEVICE_IDENTITY','DOCKER_DAEMON','APPROVED_SANDBOX_IMAGE',
+      'SELLER_INFERENCE_CREDENTIALS','REVIEWED_PACKAGES','CLOUD_CONNECTION',
+      'SECURITY_PAUSE','SELLER_PAUSE','SANDBOX_SELF_TEST','EXECUTION_CAPACITY']),
+    state:z.enum(['HEALTHY','BLOCKING','UNKNOWN']),
+  })).max(12).optional(),
   capabilityReadiness: z.array(z.strictObject({
     capabilityVersionId: z.uuid(),
     policyValidationHash: DigestSchema.nullable(),
     state: z.enum(['READY','NOT_READY','DEPENDENCY_BLOCKED']),
-  }).refine((value) => value.state !== 'READY' || value.policyValidationHash !== null)).max(64).optional(),
-});
+    checks: z.strictObject({sandboxVerified:z.boolean(),requiredSecretsReady:z.boolean(),
+      runtimeHealthy:z.boolean()}).optional(),
+  }).refine((value) => value.state !== 'READY' ||
+    (value.policyValidationHash !== null && value.checks?.sandboxVerified === true &&
+      value.checks.requiredSecretsReady === true && value.checks.runtimeHealthy === true))).max(64).optional(),
+}).refine((value)=>value.openClawCompatibility!=='APPROVED_PINNED'||
+  (value.openClawVersion!==null&&value.operationalChecks?.some((check)=>
+    check.code==='APPROVED_SANDBOX_IMAGE'&&check.state==='HEALTHY')===true),
+  'Approved runtime requires matching observed image health');
 
 export const JobOfferSchema = z.strictObject({
   type: z.literal('JOB_OFFER'),
@@ -88,6 +116,18 @@ export const WorkerJobControlCommandSchema = JobControlCommandSchema.extend({
 export const WorkerJobControlAckSchema = JobControlAckSchema.extend({
   type: z.literal('JOB_CONTROL_ACK'), protocolVersion: z.literal(WORKER_PROTOCOL_VERSION),
   messageId: z.uuid(), workerDeviceId: z.uuid(),
+});
+
+/** Durable seller-local command result; cloud may reconcile it after an outage. */
+export const WorkerLocalJobControlReportSchema = z.strictObject({
+  type:z.literal('LOCAL_JOB_CONTROL_REPORT'),protocolVersion:z.literal(WORKER_PROTOCOL_VERSION),
+  messageId:z.uuid(),commandId:z.uuid(),jobId:z.uuid(),executionId:z.uuid(),
+  attemptId:z.uuid(),controlPlaneId:z.string().min(1).max(160),workerDeviceId:z.uuid(),
+  action:z.enum(['PAUSE','RESUME','CANCEL']),
+  source:z.enum(['CLI','LOCAL_UI','PLATFORM_SECURITY']),
+  actorId:z.string().min(1).max(160),reason:z.string().max(200).nullable(),
+  status:z.enum(['PAUSED','RUNNING','SECURITY_PAUSED','CANCELLED','TIMED_OUT']),
+  localRevision:z.number().int().positive(),confirmedAt:z.iso.datetime(),
 });
 
 export function negotiateWorkerProtocol(supported: readonly string[]): typeof WORKER_PROTOCOL_VERSION {

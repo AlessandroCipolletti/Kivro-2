@@ -190,6 +190,9 @@ if (!process.env.M08_DATABASE_URL) {
         enabled:true,sortOrder:4,expectedRevision:1}),{code:'CONFLICT'});
       await Promise.all(Array.from({length:5}, () => finance.settleDeliveredJob(jobId)));
       assert.equal((await finance.sellerEarnings(seller)).pendingMinor, 800);
+      assert.deepEqual(await finance.sellerSettledSales(seller),
+        {buyerSalesMinor:999,marketplaceFeesMinor:199,currency:'USD'},
+        'seller sales projection uses the settled immutable price snapshot');
       assert.equal((await finance.buyerBalance(buyer)).reservedMinor, 0);
       const settled = await pool.query(`SELECT kind,count(*)::int AS n FROM financial_journals
         WHERE job_id=$1 GROUP BY kind`, [jobId]);
@@ -197,6 +200,9 @@ if (!process.env.M08_DATABASE_URL) {
       await assert.rejects(finance.releaseFailedJob(jobId), { code: 'NOT_ELIGIBLE' });
       await Promise.all([finance.refundSettledJob(jobId), finance.refundSettledJob(jobId)]);
       assert.equal((await finance.sellerEarnings(seller)).pendingMinor, 0);
+      assert.deepEqual(await finance.sellerSettledSales(seller),
+        {buyerSalesMinor:0,marketplaceFeesMinor:0,currency:'USD'},
+        'refunded jobs are excluded from settled sales');
       assert.deepEqual(await finance.buyerBalance(buyer),
         { availableMinor: 1000, reservedMinor: 0, currency: 'USD' });
       const loserId = jobs[1-winnerIndex];

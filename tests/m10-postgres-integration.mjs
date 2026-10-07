@@ -99,7 +99,8 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         workerDeviceId:worker,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
         localRevision:0,capabilityReadiness:[{capabilityVersionId:versionId,
-          policyValidationHash:hash,state:'READY'}]},worker,plane);
+          policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:true,runtimeHealthy:true}}]},worker,plane);
       await social.setSellerMetadata(capability,sellerAccount,{category:'RESEARCH',
         shortDescription:'A focused research brief',tags:['research','brief'],
         strengths:['Fast scope'],limitations:['No private web access']});
@@ -408,7 +409,8 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         sentAt:new Date(Math.max(Date.now(),latestHeartbeat.getTime()+1000)).toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
         localRevision:0,capabilityReadiness:[{capabilityVersionId:newVersionId,
-          policyValidationHash:hash,state:'READY'}]},worker,plane);
+          policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:true,runtimeHealthy:true}}]},worker,plane);
       const rerunQuote=await buyerRepo.preflight({buyerId:buyer,capabilityId:capability,
         mode:'IMMEDIATE_ONLY',quoteId:randomUUID(),expectedVersionId:newVersionId,payload});
       assert.equal(rerunQuote.quote.price.buyerAmountMinor,1499);

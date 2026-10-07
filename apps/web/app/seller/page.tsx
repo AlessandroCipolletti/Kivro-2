@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { getAuthService } from '../../src/auth/server.js';
 import { getSellerProfile } from '../../../../packages/persistence/src/seller-profiles.js';
 import SellerProfileForm from './seller-profile-form';
+import OperationsDashboard from './operations-dashboard';
+import { openClawCompatibilityMatrix } from '../../../../packages/openclaw-adapter/src/compatibility.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,10 +15,13 @@ export default async function SellerPage() {
   if (!session) redirect('/sign-in?callbackURL=/seller');
   const profile = await getSellerProfile(service.database, session.user.id);
   const acknowledged = profile?.executionModelAcknowledged === true;
+  const showOnboarding = !profile || !acknowledged || profile.status === 'DRAFT';
   return <main className="site-shell">
     <header className="site-header"><Link href="/" className="brand" aria-label="Kivro home"><span className="brand-mark">K</span><span>Kivro</span></Link>
       <nav aria-label="Main navigation"><Link href="/account" className="nav-link">Account</Link><span className="seller-nav-label">Seller workspace</span></nav></header>
-    <section className="seller-layout">
+    {profile && <OperationsDashboard supportedOpenClawVersion={
+      openClawCompatibilityMatrix[0].openClawVersion} />}
+    {showOnboarding && <section className="seller-layout">
       <div className="seller-heading"><p className="eyebrow"><span className="status-dot" /> Seller workspace</p>
         <h1>Build a useful service.<br /><em>Keep control of the work.</em></h1>
         <p>Kivro runs approved jobs in an isolated workspace on your connected computer. You choose the capabilities and resources you offer. Your machine and any model or provider usage are your operating costs.</p>
@@ -33,7 +38,7 @@ export default async function SellerPage() {
         </div>
         <p className="seller-footnote">Discovery never publishes a skill or grants access. Each permission needs your explicit approval.</p>
       </div>
-    </section>
+    </section>}
     <footer className="site-footer"><span>© 2026 Kivro</span><span>Independent work, clear boundaries.</span></footer>
   </main>;
 }

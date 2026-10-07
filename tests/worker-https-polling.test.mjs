@@ -53,6 +53,7 @@ test('outbound polling signs strict safe metadata and rejects cross-plane or ove
       type: 'WORKER_WELCOME', messageId: randomUUID(), controlPlaneId: 'plane-a',
       selectedProtocolVersion: WORKER_PROTOCOL_VERSION, controlPlaneState: 'ACTIVE',
       serverTime: new Date().toISOString(),
+      pauseDirective:{revision:0,paused:false,securityPaused:false,capabilityPauses:[]},
     }] }), { status: 200 });
   };
   const transport = new HttpsPollingWorkerTransport('plane-a', 'https://plane.kivro.example/',
@@ -74,4 +75,11 @@ test('outbound polling signs strict safe metadata and rejects cross-plane or ove
   const oversized = new HttpsPollingWorkerTransport('plane-a', 'https://plane.kivro.example/',
     signer, { fetcher: async () => new globalThis.Response('x'.repeat(262_145), { status: 200 }) });
   await assert.rejects(oversized.poll(hello), { code: 'RESPONSE_LIMIT' });
+  const omittedPause=new HttpsPollingWorkerTransport('plane-a',
+    'https://plane.kivro.example/',signer,{fetcher:async()=>new globalThis.Response(
+      JSON.stringify({protocolVersion:WORKER_PROTOCOL_VERSION,messages:[{
+        type:'WORKER_WELCOME',messageId:randomUUID(),controlPlaneId:'plane-a',
+        selectedProtocolVersion:WORKER_PROTOCOL_VERSION,controlPlaneState:'ACTIVE',
+        serverTime:new Date().toISOString()}]}),{status:200})});
+  await assert.rejects(omittedPause.poll(hello),{code:'PROTOCOL_MISMATCH'});
 });

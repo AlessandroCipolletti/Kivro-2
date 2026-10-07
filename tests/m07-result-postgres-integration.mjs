@@ -167,6 +167,15 @@ if (!process.env.M07_DATABASE_URL) {
         { code: 'WRONG_CONTROL_PLANE' });
       assert.equal((await repo.acknowledgeJobControl(pausedAck, worker, 'plane-a')).status, 'PAUSED');
       assert.equal((await repo.acknowledgeJobControl(pausedAck, worker, 'plane-a')).status, 'PAUSED');
+      await new PostgresWorkerHeartbeatRepository(pool).observe({
+        type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+        messageId:randomUUID(),controlPlaneId:'plane-a',workerDeviceId:worker,
+        workerRelease:'0.0.0-dev',openClawVersion:null,status:'ONLINE',
+        sentAt:new Date().toISOString(),runningJobs:1,capacity:1,
+        policyVersion:1,localRevision:0,capabilityReadiness:[{
+          capabilityVersionId:versionId,policyValidationHash:hash,state:'READY',
+          checks:{sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}}]},
+      worker,'plane-a');
       const resume = { ...pause, commandId: randomUUID(), action: 'RESUME', reason: null,
         requestedAt: new Date().toISOString() };
       assert.equal((await repo.requestJobControl(resume, sellerAccount)).status, 'RESUME_REQUESTED');

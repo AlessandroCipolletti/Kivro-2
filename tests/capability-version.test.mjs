@@ -55,6 +55,12 @@ test('publication candidate requires a catalog-selected split and matching tier'
     selectedPrice:{...input.selectedPrice,tier:'USD_299'} }));
 });
 
+test('candidate cannot promise step restart before a checkpoint runtime exists',()=>{
+  assert.throws(()=>buildVersionCandidate({...input,
+    localPackage:{...localPackage,pauseSupport:'RESTART_STEP'}}),
+  /RESTART_STEP requires a verified checkpoint runtime/);
+});
+
 test('version candidate is immutable and cannot be used for a job', () => {
   const source = JSON.parse(JSON.stringify(input));
   const version = buildVersionCandidate(source);

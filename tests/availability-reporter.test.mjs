@@ -18,7 +18,8 @@ test('Worker reports READY only from fresh local sandbox/secret/runtime checks',
     runtimeHealthy:true,capacityAvailable:true};}};
   const reporter=new WorkerAvailabilityReporter(deviceId,packages,state,port);
   assert.deepEqual((await reporter.heartbeat(input)).capabilityReadiness,
-    [{capabilityVersionId:versionId,policyValidationHash:digest,state:'READY'}]);
+    [{capabilityVersionId:versionId,policyValidationHash:digest,state:'READY',
+      checks:{sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}}]);
   const busy=new WorkerAvailabilityReporter(deviceId,packages,state,{async check(){return {
     ...await port.check(),capacityAvailable:false};}});
   assert.equal((await busy.heartbeat({...input,runningJobs:1})).capabilityReadiness[0].state,

@@ -38,6 +38,7 @@
     "build": "tsc -p tsconfig.build.json",
     "openclaw:inspect": "pnpm build && node tools/inspect-openclaw.mjs",
     "worker": "pnpm build && node tools/kivro-worker.mjs",
+    "worker:sync-controls": "pnpm build && node tools/kivro-worker-sync.mjs",
     "scheduler": "pnpm build && node tools/kivro-scheduler.mjs",
     "agent:scheduler": "node --env-file=.env.local tools/kivro-agent-scheduler.mjs",
     "local:agent:setup": "node tools/setup-local-agent.mjs",
@@ -50,7 +51,9 @@
     "local:auth:migrate": "node --env-file=.env.local tools/run-local-migrations.mjs",
     "test:postgres:m10": "pnpm build && sh tools/test-m10-postgres.sh",
     "test:browser:m10": "pnpm build && sh tools/test-m10-browser.sh",
-    "test:postgres:m11": "pnpm build && sh tools/test-m11-postgres.sh"
+    "test:postgres:m11": "pnpm build && sh tools/test-m11-postgres.sh",
+    "test:postgres:m12": "pnpm build && sh tools/test-m12-postgres.sh",
+    "test:browser:m12": "pnpm build && sh tools/test-m12-browser.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1146.0",

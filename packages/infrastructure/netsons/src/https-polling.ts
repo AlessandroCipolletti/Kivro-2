@@ -4,6 +4,7 @@ import { canonicalJson } from '../../../contracts/src/canonical-json.js';
 import { workerMessageHash, workerSignatureBytes } from '../../../worker-protocol/src/auth.js';
 import { JobAcceptedSchema, JobOfferSchema, WorkerHeartbeatSchema, WorkerHelloSchema,
   WorkerJobControlAckSchema, WorkerJobControlCommandSchema, WorkerWelcomeSchema,
+  WorkerLocalJobControlReportSchema,
   WORKER_PROTOCOL_VERSION } from '../../../worker-protocol/src/messages.js';
 import type { WorkerProtocolTransport } from '../../../worker-protocol/src/transport.js';
 
@@ -21,7 +22,8 @@ const pollResponse = z.strictObject({
   messages: z.array(z.union([WorkerWelcomeSchema, JobOfferSchema,
     WorkerJobControlCommandSchema])).max(32),
 });
-const outboundMessage = z.union([WorkerHeartbeatSchema, JobAcceptedSchema, WorkerJobControlAckSchema]);
+const outboundMessage = z.union([WorkerHeartbeatSchema, JobAcceptedSchema,
+  WorkerJobControlAckSchema,WorkerLocalJobControlReportSchema]);
 
 export interface WorkerMessageSigner {
   readonly deviceId: string;
@@ -149,6 +151,9 @@ export class HttpsPollingWorkerTransport implements WorkerProtocolTransport {
     if (parsed.data.messages.some((message) => message.controlPlaneId !== this.controlPlaneId)) {
       throw new WorkerPollingError('WRONG_CONTROL_PLANE');
     }
+    if(parsed.data.messages[0]?.type!=='WORKER_WELCOME'||
+      !parsed.data.messages[0].pauseDirective)
+      throw new WorkerPollingError('PROTOCOL_MISMATCH');
     return parsed.data.messages;
   }
 

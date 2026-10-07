@@ -17,11 +17,11 @@ test('CLI pause commits before success and health sees it from a new process', (
     const paused = execFileSync(process.execPath, [command, 'pause', '--all'], { env, encoding: 'utf8' });
     assert.match(paused, /Paused new jobs locally/);
     const health = JSON.parse(execFileSync(process.execPath, [command, 'health', '--json'], { env, encoding: 'utf8' }));
-    assert.equal(health.globalPaused, true);
+    assert.equal(health.localPaused, true);
     assert.equal(health.acceptingNewJobs, false);
-    assert.equal(health.overall, 'NOT_READY');
+    assert.equal(health.overall, 'PAUSED');
     assert.equal(health.cloudSyncPending, true);
-    assert.equal(health.runningJobs, null, 'unobserved jobs must not be presented as zero');
+    assert.equal(health.runningJobs, 0, 'local execution table has no running job');
     const denied = spawnSync(process.execPath, [command, 'resume', '--all'], { env, encoding: 'utf8' });
     assert.equal(denied.status, 1);
     assert.match(denied.stdout, /NOT_READY/);
@@ -39,7 +39,8 @@ test('doctor shows critical failures and does not print local paths or secrets',
     assert.equal(result.status, 1);
     const report = JSON.parse(result.stdout);
     assert.equal(report.overall, 'NOT_READY');
-    assert.ok(report.checks.some((check) => check.name === 'Sandbox isolation' && check.status === 'FAIL'));
+    assert.ok(report.checks.some((check) => check.name === 'APPROVED_SANDBOX_IMAGE' && check.status === 'FAIL'));
+    assert.ok(report.checks.some((check) => check.name === 'EXECUTION_CAPACITY' && check.status === 'FAIL'));
     assert.doesNotMatch(result.stdout, /do-not-print-me|kivro-worker-cli-/);
   } finally {
     rmSync(directory, { recursive: true, force: true });
@@ -62,4 +63,10 @@ test('device status reports local metadata without claiming credential or cloud 
     assert.equal(found.pairing, 'UNKNOWN');
     assert.doesNotMatch(JSON.stringify(found), /PRIVATE KEY|passphrase/);
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('destructive global job stop requires an explicit confirmation flag',()=>{
+  const denied=spawnSync(process.execPath,[command,'stop','--all'],{encoding:'utf8'});
+  assert.equal(denied.status,2);
+  assert.match(denied.stdout,/--confirm/);
 });

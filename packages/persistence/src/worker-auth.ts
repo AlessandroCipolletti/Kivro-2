@@ -2,7 +2,8 @@ import type { Pool } from 'pg';
 import { verifyWorkerEnvelopeSignature } from '../../worker-protocol/src/auth.js';
 
 export class WorkerAuthenticationError extends Error {
-  constructor(readonly code: 'UNKNOWN_DEVICE' | 'REVOKED_DEVICE' | 'REPLAY_CONFLICT') {
+  constructor(readonly code: 'UNKNOWN_DEVICE' | 'REVOKED_DEVICE' | 'REPLAY_CONFLICT' |
+    'INVALID_SIGNATURE') {
     super(code); this.name = 'WorkerAuthenticationError';
   }
 }
@@ -23,7 +24,9 @@ export class PostgresWorkerMessageAuthenticator {
       const row = device.rows[0];
       if (!row) throw new WorkerAuthenticationError('UNKNOWN_DEVICE');
       if (row.status === 'REVOKED' || row.revoked_at) throw new WorkerAuthenticationError('REVOKED_DEVICE');
-      const checked = verifyWorkerEnvelopeSignature(row.public_key, rawEnvelope, body);
+      let checked;
+      try{checked=verifyWorkerEnvelopeSignature(row.public_key,rawEnvelope,body);}
+      catch{throw new WorkerAuthenticationError('INVALID_SIGNATURE');}
       if (!body || typeof body !== 'object' ||
         !('controlPlaneId' in body) || body.controlPlaneId !== checked.controlPlaneId ||
         !('workerDeviceId' in body) || body.workerDeviceId !== checked.workerDeviceId) {

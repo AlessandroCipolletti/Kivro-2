@@ -28,10 +28,12 @@ function construct(){
   // Browsing can work without Worker lease or storage credentials. Actions that
   // need those security boundaries fail closed when configuration is missing.
   let buyer:MarketplaceBuyerRepository|undefined;
+  let jobs:PostgresJobExecutionRepository|undefined;
   let storage:S3PrivateObjectStorage|undefined;
   let assets:MarketplaceAssetRepository|undefined;
-  const getBuyer=()=>buyer??=new MarketplaceBuyerRepository(pool,availability,finance,
-    new PostgresJobExecutionRepository(pool,finance,leaseTokenIssuerFromEnvironment(process.env),availability));
+  const getJobs=()=>jobs??=new PostgresJobExecutionRepository(pool,finance,
+    leaseTokenIssuerFromEnvironment(process.env),availability);
+  const getBuyer=()=>buyer??=new MarketplaceBuyerRepository(pool,availability,finance,getJobs());
   const getStorage=()=>storage??=new S3PrivateObjectStorage({
     bucket:required('OBJECT_STORAGE_BUCKET'),region:required('OBJECT_STORAGE_REGION'),
     ...(process.env.OBJECT_STORAGE_ENDPOINT?{endpoint:process.env.OBJECT_STORAGE_ENDPOINT}:{}),
@@ -41,6 +43,6 @@ function construct(){
     allowInsecureLoopback:process.env.NODE_ENV!=='production',
   });
   const getAssets=()=>assets??=new MarketplaceAssetRepository(pool,getStorage());
-  return {pool,finance,availability,catalog,social,getBuyer,getStorage,getAssets};
+  return {pool,finance,availability,catalog,social,getBuyer,getJobs,getStorage,getAssets};
 }
 export function getMarketplaceService(){return shared??=construct();}

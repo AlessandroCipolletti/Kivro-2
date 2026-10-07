@@ -10,6 +10,7 @@ import type { WorkerExecutionSupervisor } from './execution-supervisor.js';
 import { WorkerJobControl } from './job-control.js';
 import { WorkerLocalState } from './local-state.js';
 import type { WorkerAvailabilityReporter } from './availability-reporter.js';
+import { flushLocalJobControls } from './local-control-outbox.js';
 
 export interface WorkerInboundPollingPort {
   readonly controlPlaneId: string;
@@ -23,7 +24,8 @@ export interface WorkerInboundPollingPort {
 
 export class WorkerDispatchError extends Error {
   constructor(readonly code: 'WRONG_WORKER' | 'WRONG_CONTROL_PLANE' |
-    'CONTROL_NOT_OWNED' | 'DRAINING' | 'CAPACITY_FULL') { super(code); this.name = 'WorkerDispatchError'; }
+    'CONTROL_NOT_OWNED' | 'DRAINING' | 'CAPACITY_FULL' | 'PAUSE_UNSYNCHRONIZED' |
+    'NOT_READY') { super(code); this.name = 'WorkerDispatchError'; }
 }
 
 /** Provider-neutral orchestration; callers compose a transport and a real job supervisor. */
@@ -32,6 +34,8 @@ export class WorkerDispatchLoop {
   private readonly active = new Map<string, Promise<void>>();
   private state: 'ACTIVE' | 'DRAINING' | 'RETIRED' = 'ACTIVE';
   private started = false;
+  private pauseSynchronized = false;
+  private readyVersions=new Set<string>();
 
   constructor(private readonly transport: WorkerInboundPollingPort,
     private readonly deviceId: string, private readonly packages: WorkerCapabilityPackageStore,
@@ -51,18 +55,30 @@ export class WorkerDispatchLoop {
     await this.jobControl.stopOrphanedAtStartup();
     await this.jobControl.expireLeases();
     await this.jobControl.expireOverdue();
+    await flushLocalJobControls(this.jobControl,this.transport,this.deviceId);
     this.started = true;
   }
 
   async pollOnce(): Promise<void> {
     if (!this.started) await this.startup();
+    this.pauseSynchronized=false;
+    this.readyVersions.clear();
+    await this.jobControl.expireLeases();
+    await this.jobControl.expireOverdue();
+    await flushLocalJobControls(this.jobControl,this.transport,this.deviceId);
     if (this.availabilityReporting) {
-      await this.transport.send(await this.availabilityReporting.reporter.heartbeat({
+      const beat=await this.availabilityReporting.reporter.heartbeat({
         controlPlaneId:this.transport.controlPlaneId,
         workerRelease:this.availabilityReporting.workerRelease,
         openClawVersion:this.availabilityReporting.openClawVersion,
         runningJobs:this.active.size,capacity:this.availabilityReporting.capacity,
-        policyVersion:this.availabilityReporting.policyVersion }));
+        policyVersion:this.availabilityReporting.policyVersion });
+      await this.transport.send(beat);
+      this.readyVersions=new Set((beat.capabilityReadiness??[])
+        .filter((item)=>item.state==='READY').map((item)=>item.capabilityVersionId));
+      // HTTP success means the signed report was durably accepted by cloud. If it
+      // times out, keep the revision pending; the retry is replay-safe.
+      this.localState.acknowledgeCloudRevision(beat.localRevision);
     }
     const messages = await this.transport.poll({ type: 'WORKER_HELLO', messageId: randomUUID(),
       workerDeviceId: this.deviceId, controlPlaneId: this.transport.controlPlaneId,
@@ -76,17 +92,31 @@ export class WorkerDispatchLoop {
       }
       if (message.type === 'WORKER_WELCOME') {
         this.state = message.controlPlaneState;
+        if (message.pauseDirective) {
+          this.localState.applyCloudDirective(message.pauseDirective);
+          this.pauseSynchronized = true;
+          this.localState.recordCloudContact(this.availabilityReporting?.capacity??0);
+          if(message.pauseDirective.securityPaused)
+            await this.jobControl.enforceSecurityPause();
+        } else {
+          this.pauseSynchronized = false;
+        }
         if (this.state === 'DRAINING') this.router.markDraining(this.transport.controlPlaneId);
         continue;
       }
       if (message.type === 'JOB_OFFER') {
         if (message.workerDeviceId !== this.deviceId) throw new WorkerDispatchError('WRONG_WORKER');
         if (this.state !== 'ACTIVE') throw new WorkerDispatchError('DRAINING');
+        if (!this.pauseSynchronized) throw new WorkerDispatchError('PAUSE_UNSYNCHRONIZED');
+        if(!this.availabilityReporting||this.availabilityReporting.capacity<1||
+          !this.readyVersions.has(message.capabilityVersionId)||
+          !this.localState.isUnpausedForNewJobOffer(message.capabilityId))
+          throw new WorkerDispatchError('NOT_READY');
+        if (this.active.has(message.executionId) || this.jobControl.snapshots().some((item) =>
+          item.executionId === message.executionId)) continue;
         if (this.availabilityReporting && this.active.size >= this.availabilityReporting.capacity) {
           this.onExecutionError(message,new WorkerDispatchError('CAPACITY_FULL')); continue;
         }
-        if (this.active.has(message.executionId) || this.jobControl.snapshots().some((item) =>
-          item.executionId === message.executionId)) continue;
         this.router.ownExecution(message.executionId, this.transport.controlPlaneId);
         let pkg;
         try { pkg = this.packages.load(message.capabilityVersionId); }
@@ -131,6 +161,9 @@ export class WorkerDispatchLoop {
         controlPlaneId: command.controlPlaneId, status, localRevision: revision,
         confirmedAt: ['PAUSED', 'RUNNING', 'SECURITY_PAUSED', 'CANCELLED'].includes(status) ?
           new Date().toISOString() : null });
+      if(['PAUSED','RUNNING','SECURITY_PAUSED','CANCELLED'].includes(status))
+        this.jobControl.acknowledge(command.jobId,command.executionId,
+          command.controlPlaneId,revision);
     }
   }
 

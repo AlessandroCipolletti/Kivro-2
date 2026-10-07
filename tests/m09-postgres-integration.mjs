@@ -34,15 +34,19 @@ if (!process.env.M09_DATABASE_URL) {
     const worker = randomUUID(), capability = randomUUID(), versionId = randomUUID();
     const hash = `sha256:${'a'.repeat(64)}`, plane = 'm09-test-plane';
     let lastBeatSent=0;
-    const beat = async (ready=false,runningJobs=0) => heartbeat.observe({ type: 'WORKER_HEARTBEAT',
+    const beat = async (ready=false,runningJobs=0) => {
+      const controls=await pool.query('SELECT revision FROM worker_cloud_control_revisions WHERE worker_device_id=$1',[worker]);
+      return heartbeat.observe({ type: 'WORKER_HEARTBEAT',
       protocolVersion: WORKER_PROTOCOL_VERSION, messageId: randomUUID(), controlPlaneId: plane,
       workerDeviceId: worker, workerRelease: 'test',
       sentAt:new Date(lastBeatSent=Math.max(Date.now(),lastBeatSent+1)).toISOString(),
       openClawVersion: null,
       status: 'ONLINE', runningJobs, capacity: 1, policyVersion: 1, localRevision: 0,
+      acknowledgedCloudRevision:Number(controls.rows[0]?.revision??0),
       capabilityReadiness:ready?[{capabilityVersionId:versionId,
-        policyValidationHash:hash,state:'READY'}]:[] },
-    worker, plane);
+        policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+          requiredSecretsReady:true,runtimeHealthy:true}}]:[] },
+    worker, plane);};
     try {
       await pool.query(`INSERT INTO accounts(id,primary_email,status,email_verified_at)
         VALUES($1,$3,'ACTIVE',now()),($2,$4,'ACTIVE',now())`,
@@ -147,7 +151,8 @@ if (!process.env.M09_DATABASE_URL) {
       await assert.rejects(heartbeat.observe({...staleBody,messageId:randomUUID(),
         sentAt:new Date(latestBeat.rows[0].at.getTime()+1).toISOString(),status:'ONLINE',
         capabilityReadiness:[{capabilityVersionId:versionId,
-          policyValidationHash:`sha256:${'f'.repeat(64)}`,state:'READY'}]},worker,plane),
+          policyValidationHash:`sha256:${'f'.repeat(64)}`,state:'READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:true,runtimeHealthy:true}}]},worker,plane),
       /READINESS_VERSION_MISMATCH/);
       assert.equal((await availability.publicStatus(capability)).status,'ONLINE');
       // Purchase can precede input upload. A paid job without a finalized
@@ -287,6 +292,7 @@ if (!process.env.M09_DATABASE_URL) {
       assert.equal((await finance.buyerBalance(buyer)).availableMinor,10000);
       await availability.setCapabilityPolicy({capabilityId:capability,
         sellerAccountId:sellerAccount,policy:policy(always),paused:false,source:'WEB',expectedRevision:4});
+      await beat(true);
 
       const expiring=await quote('EARLIEST_AVAILABLE');
       const j4=await job();
@@ -552,8 +558,10 @@ if (!process.env.M09_DATABASE_URL) {
         workerRelease:'test',sentAt:new Date(Date.now()+10).toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,
         policyVersion:1,localRevision:0,capabilityReadiness:[
-          {capabilityVersionId:versionId,policyValidationHash:hash,state:'READY'},
-          {capabilityVersionId:secondVersionId,policyValidationHash:hash,state:'READY'}]},
+          {capabilityVersionId:versionId,policyValidationHash:hash,state:'READY',checks:{
+            sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}},
+          {capabilityVersionId:secondVersionId,policyValidationHash:hash,state:'READY',checks:{
+            sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}}]},
       worker,plane);
       const firstSharedQuote=await quote('EARLIEST_AVAILABLE');
       const firstSharedJob=await job();

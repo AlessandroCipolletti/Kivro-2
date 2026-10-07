@@ -31,6 +31,10 @@ export interface VersionCandidateInput {
 
 export function buildVersionCandidate(input: VersionCandidateInput): Readonly<CapabilityVersionCandidate> {
   const localPackage = LocalCapabilityPackageSchema.parse(input.localPackage);
+  // The contract knows this future mode, but the MVP runtime cannot safely
+  // restart an atomic step from a durable checkpoint. Never publish that claim.
+  if(localPackage.pauseSupport==='RESTART_STEP')
+    throw new TypeError('RESTART_STEP requires a verified checkpoint runtime');
   if (localPackage.capabilityVersionId !== input.id || localPackage.capabilityId !== input.capabilityId ||
     localPackage.workerDeviceId !== input.workerDeviceId) {
     throw new TypeError('Local package identity mismatch');

@@ -1382,6 +1382,21 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
       currency: 'USD' };
   }
 
+  async sellerSettledSales(sellerId: string): Promise<{ buyerSalesMinor: number;
+    marketplaceFeesMinor: number; currency: 'USD' }> {
+    uuid.parse(sellerId);
+    const result = await this.pool.query<{ buyer_sales: string; marketplace_fees: string }>(
+      `SELECT coalesce(sum(s.buyer_price_minor),0)::text AS buyer_sales,
+        coalesce(sum(s.platform_fee_minor),0)::text AS marketplace_fees
+       FROM job_financial_snapshots s
+       JOIN financial_journals j ON j.job_id=s.job_id AND j.kind='SETTLE'
+       JOIN job_payment_states p ON p.job_id=s.job_id AND p.state='SETTLED'
+       WHERE s.seller_profile_id=$1`, [sellerId]);
+    return { buyerSalesMinor: safeMinor(result.rows[0]?.buyer_sales ?? '0'),
+      marketplaceFeesMinor: safeMinor(result.rows[0]?.marketplace_fees ?? '0'),
+      currency: 'USD' };
+  }
+
   async reconcileLedger(): Promise<{ unbalancedJournals: number; negativeProtectedAccounts: number;
     reservationMismatches: number }> {
     const [journals, balances, reservations, purchases, providerEffects] = await Promise.all([

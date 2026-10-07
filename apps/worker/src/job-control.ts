@@ -90,6 +90,7 @@ export interface LocalJobSnapshot {
   readonly status: LocalJobStatus;
   readonly pauseExpiresAt: string | null;
   readonly localRevision: number;
+  readonly acknowledgedRevision: number;
   readonly cloudSyncPending: boolean;
 }
 
@@ -126,7 +127,7 @@ export class WorkerJobControl {
       controlPlaneId: row.control_plane_id, pauseSupport: row.pause_support,
       leaseExpiresAt: row.lease_expires_at,
       status: row.status, pauseExpiresAt: row.pause_expires_at,
-      localRevision: row.local_revision,
+      localRevision: row.local_revision,acknowledgedRevision:row.acknowledged_revision,
       cloudSyncPending: row.acknowledged_revision < row.local_revision,
     };
   }
@@ -293,8 +294,8 @@ export class WorkerJobControl {
       this.db.prepare(`UPDATE local_job_execution SET status=?,paused_at=?,pause_expires_at=?,
         local_revision=local_revision+1 WHERE job_id=?`).run(status,
         status === 'PAUSED' || status === 'SECURITY_PAUSED' ? now : null, expires, input.jobId);
-      this.db.prepare('UPDATE local_job_command SET confirmed_at=?,resulting_state=? WHERE id=?')
-        .run(now, status, input.id);
+      this.db.prepare(`UPDATE local_job_command SET confirmed_at=?,resulting_state=?,
+        local_revision=? WHERE id=?`).run(now,status,row.local_revision+1,input.id);
       if (row.status === 'STOPPED' || row.status === 'CANCELLED') throw new WorkerJobControlError('INVALID_STATE');
     });
     return this.snapshot(input.jobId);
@@ -368,6 +369,27 @@ export class WorkerJobControl {
     }
     catch { throw new WorkerJobControlError('CONTROL_FAILED'); }
     return this.confirm(input, 'CANCELLED');
+  }
+
+  /** A platform security block freezes resumable work and terminates work that
+   * cannot safely pause. Failed freezing falls back to termination. */
+  async enforceSecurityPause():Promise<readonly LocalJobSnapshot[]>{
+    const changed:LocalJobSnapshot[]=[];
+    for(const snapshot of this.snapshots()){
+      if(['STOPPED','CANCELLED','TIMED_OUT','PAUSED','SECURITY_PAUSED',
+        'CANCEL_REQUESTED'].includes(snapshot.status))
+        continue;
+      if(snapshot.status==='RUNNING'&&snapshot.pauseSupport==='FULL_RESUME'){
+        try{
+          changed.push(await this.pause(newLocalJobCommand(snapshot.jobId,
+            'kivro:security','PLATFORM_SECURITY','PLATFORM_SECURITY_PAUSE')));
+          continue;
+        }catch{/* A failed freeze must not permit continued execution. */}
+      }
+      changed.push(await this.cancel(newLocalJobCommand(snapshot.jobId,
+        'kivro:security','PLATFORM_SECURITY','PLATFORM_SECURITY_STOP')));
+    }
+    return changed;
   }
 
   /** Call at Worker startup and on a bounded timer; never leave paid work paused forever. */

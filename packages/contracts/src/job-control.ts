@@ -12,6 +12,7 @@ export const JobControlCommandSchema = z.strictObject({
   actorId: z.string().min(1).max(160),
   reason: z.string().max(200).nullable(),
   requestedAt: z.iso.datetime(),
+  overrideGlobalPause: z.boolean().optional(),
 });
 
 export const JobControlAckSchema = z.strictObject({

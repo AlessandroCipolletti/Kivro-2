@@ -141,8 +141,10 @@ if (!process.env.M07_DATABASE_URL) {
     const auth = new PostgresWorkerMessageAuthenticator(pool);
     const outcomes = await Promise.all(Array.from({ length: 4 }, () => auth.verify(envelope, body)));
     assert.equal(outcomes.filter((outcome) => !outcome.duplicate).length, 1);
-    await assert.rejects(auth.verify(envelope, { ...body, runningJobs: 1 }), /WORKER_BODY_MISMATCH/);
-    await assert.rejects(auth.verify(envelope, { ...body, controlPlaneId: 'other' }), /WORKER_BODY_MISMATCH/);
+    await assert.rejects(auth.verify(envelope, { ...body, runningJobs: 1 }),
+      {code:'INVALID_SIGNATURE'});
+    await assert.rejects(auth.verify(envelope, { ...body, controlPlaneId: 'other' }),
+      {code:'INVALID_SIGNATURE'});
     await pool.query("UPDATE worker_devices SET status='REVOKED',revoked_at=now() WHERE id=$1", [deviceId]);
     await assert.rejects(auth.verify(envelope, body), { code: 'REVOKED_DEVICE' });
   });

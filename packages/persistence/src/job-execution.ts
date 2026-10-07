@@ -11,7 +11,8 @@ import { validateInputPayload, validateOutputPayload } from '../../contracts/src
 import { verifyStoredObject } from '../../application/src/object-integrity.js';
 import type { ObjectStoragePort } from '../../infrastructure/contracts/src/ports.js';
 import { JobControlCommandSchema, type PauseSupport } from '../../contracts/src/job-control.js';
-import { JobOfferSchema, WORKER_PROTOCOL_VERSION, type JobOffer } from '../../worker-protocol/src/messages.js';
+import { JobOfferSchema, WorkerLocalJobControlReportSchema, WORKER_PROTOCOL_VERSION,
+  type JobOffer } from '../../worker-protocol/src/messages.js';
 import type { LeaseTokenIssuer } from '../../application/src/lease-token.js';
 import { SUPPORTED_FILE_TYPES } from '../../contracts/src/file-types.js';
 import { AvailabilityError } from './availability.js';
@@ -31,6 +32,7 @@ const terminalStates = new Set<JobStatus>([
 /** Bound to the Core financial ledger by the cloud composition root. Worker messages cannot implement it. */
 export interface PaymentReservationVerifier {
   isSecured(client: PoolClient, jobId: string, reservationId: string): Promise<boolean>;
+  releaseFailedJobInTransaction(client: PoolClient, jobId: string): Promise<void>;
 }
 
 /** M09 controls eligibility; M07 retains the offer, lease and Worker transition authority. */
@@ -369,11 +371,14 @@ export class PostgresJobExecutionRepository {
       payment_reservation_id=COALESCE(payment_reservation_id,$3),
       result_manifest_id=COALESCE(result_manifest_id,$4),
       started_at=CASE WHEN $2='RUNNING' THEN COALESCE(started_at,now()) ELSE started_at END,
-      completed_at=CASE WHEN $2='COMPLETED' THEN now() ELSE completed_at END WHERE id=$1`,
-    [job.id, event.to, event.paymentReservationId, event.resultManifestId]);
+      completed_at=CASE WHEN $5 THEN now() ELSE completed_at END WHERE id=$1`,
+    [job.id, event.to, event.paymentReservationId, event.resultManifestId,
+      terminalStates.has(event.to)]);
     if (terminalStates.has(event.to) || (event.from === 'DISPATCHED' && event.to === 'QUEUED')) {
       await client.query('UPDATE job_executions SET completed_at=now() WHERE job_id=$1 AND completed_at IS NULL', [job.id]);
     }
+    if(terminalStates.has(event.to)&&event.to!=='COMPLETED'&&resolvedReservation)
+      await this.payment.releaseFailedJobInTransaction(client,job.id);
     return { jobId: job.id, status: next.status, paymentReservationId: resolvedReservation, transitions: next.transitions };
   }
 
@@ -811,7 +816,7 @@ export class PostgresJobExecutionRepository {
   async requestJobControl(raw: unknown, sellerAccountId: string): Promise<DurableJobView> {
     const command = JobControlCommandSchema.parse(raw);
     uuid.parse(sellerAccountId);
-    if (command.action === 'CANCEL' || command.source !== 'WEB' || command.actorId !== sellerAccountId) {
+    if (command.source !== 'WEB' || command.actorId !== sellerAccountId) {
       throw new JobExecutionError('NOT_ELIGIBLE');
     }
     return this.transaction(async (client) => {
@@ -827,14 +832,15 @@ export class PostgresJobExecutionRepository {
       if (!active || active.attempt_id !== command.attemptId ||
         active.control_plane_id !== command.controlPlaneId) throw new JobExecutionError('NOT_ELIGIBLE');
       const prior = await client.query<{ action: string; actor_id: string; source: string; job_id: string;
-        execution_id: string; reason: string | null; requested_at: Date }>(
-        'SELECT action,actor_id,source,job_id,execution_id,reason,requested_at FROM job_control_commands WHERE id=$1',
+        execution_id: string; reason: string | null; requested_at: Date;override_global_pause:boolean }>(
+        'SELECT action,actor_id,source,job_id,execution_id,reason,requested_at,override_global_pause FROM job_control_commands WHERE id=$1',
         [command.commandId]);
       if (prior.rows[0]) {
         if (prior.rows[0].action !== command.action || prior.rows[0].actor_id !== sellerAccountId ||
           prior.rows[0].source !== 'WEB' || prior.rows[0].job_id !== job.id ||
           prior.rows[0].execution_id !== active.id || prior.rows[0].reason !== command.reason ||
-          prior.rows[0].requested_at.getTime() !== Date.parse(command.requestedAt)) {
+          prior.rows[0].requested_at.getTime() !== Date.parse(command.requestedAt) ||
+          prior.rows[0].override_global_pause !== (command.overrideGlobalPause??false)) {
           throw new JobExecutionError('CONFLICT');
         }
         return { jobId: job.id, status: job.status, paymentReservationId: job.payment_reservation_id,
@@ -842,23 +848,72 @@ export class PostgresJobExecutionRepository {
       }
       const snapshot = JobContractSnapshotSchema.parse(job.contract_snapshot);
       const support: PauseSupport = snapshot.pauseSupportSnapshot;
-      if (support !== 'FULL_RESUME') throw new JobExecutionError('NOT_ELIGIBLE');
-      const target = command.action === 'PAUSE' ? 'PAUSE_REQUESTED' : 'RESUME_REQUESTED';
+      if (command.action !== 'CANCEL' && support !== 'FULL_RESUME')
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const target = command.action === 'PAUSE' ? 'PAUSE_REQUESTED' :
+        command.action === 'RESUME'?'RESUME_REQUESTED':'CANCEL_REQUESTED';
       // A newly created container has no running process tree for Docker to freeze.
       // The seller pause contract begins at RUNNING; STARTING may be cancelled.
       if (command.action === 'PAUSE' && job.status !== 'RUNNING' ||
-        command.action === 'RESUME' && job.status !== 'PAUSED') throw new JobExecutionError('NOT_ELIGIBLE');
+        command.action === 'RESUME' && job.status !== 'PAUSED' ||
+        command.action === 'CANCEL' && !['STARTING','RUNNING','UPLOADING_RESULT',
+          'PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED','SECURITY_PAUSED'].includes(job.status))
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      if(command.action==='RESUME'){
+        const security=await client.query(`SELECT 1 FROM worker_devices d
+          LEFT JOIN worker_security_blocks b ON b.worker_device_id=d.id
+          LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=d.id
+          JOIN capability_readiness r ON r.capability_version_id=$2
+          JOIN worker_heartbeats h ON h.worker_device_id=d.id
+          WHERE d.id=$1 AND d.status<>'REVOKED' AND d.revoked_at IS NULL
+          AND coalesce(b.blocked,false)=false AND coalesce(l.security_paused,false)=false
+          AND h.observed_at>=now()-interval '30 seconds'
+          AND r.observed_at>=now()-interval '30 seconds'
+          AND r.worker_device_id=d.id AND r.sandbox_verified
+          AND r.required_secrets_ready AND r.runtime_healthy LIMIT 1`,
+        [job.worker_device_id,job.capability_version_id]);
+        if(!security.rowCount)throw new JobExecutionError('NOT_ELIGIBLE');
+        const pause=await client.query<{seller_paused:boolean;global_paused:boolean|null}>(`SELECT
+          s.seller_paused,l.global_paused FROM worker_availability_schedules s
+          LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=s.worker_device_id
+          WHERE s.worker_device_id=$1`,[job.worker_device_id]);
+        const globallyPaused=Boolean(pause.rows[0]?.seller_paused||pause.rows[0]?.global_paused);
+        if(globallyPaused&&!command.overrideGlobalPause)throw new JobExecutionError('NOT_ELIGIBLE');
+      }
       await client.query(`INSERT INTO job_control_commands(id,job_id,execution_id,action,source,
-        actor_id,reason,previous_state,requested_at,pause_support)
-        VALUES($1,$2,$3,$4,'WEB',$5,$6,$7,$8,$9)`,
+        actor_id,reason,previous_state,requested_at,pause_support,override_global_pause)
+        VALUES($1,$2,$3,$4,'WEB',$5,$6,$7,$8,$9,$10)`,
       [command.commandId, job.id, active.id, command.action, sellerAccountId, command.reason,
-        job.status, command.requestedAt, support]);
+        job.status, command.requestedAt, support,command.overrideGlobalPause??false]);
       return this.transitionLocked(client, JobTransitionSchema.parse({ id: command.commandId,
         jobId: job.id, from: job.status, to: target, at: new Date().toISOString(),
-        actor: 'SELLER', reason: command.action === 'PAUSE' ? 'SELLER_PAUSE_REQUEST' : 'SELLER_RESUME_REQUEST',
+        actor: 'SELLER', reason: command.action === 'PAUSE' ? 'SELLER_PAUSE_REQUEST' :
+          command.action === 'RESUME'?'SELLER_RESUME_REQUEST':'SELLER_CANCEL_REQUEST',
         attemptId: active.attempt_id, correlationId: active.id,
         paymentReservationId: null, resultManifestId: null }));
     });
+  }
+
+  /** Pending seller control is pulled by the owning Worker, never by a buyer session. */
+  async pendingJobControls(workerDeviceId:string,planeId:string,limit=16):Promise<readonly unknown[]>{
+    uuid.parse(workerDeviceId);controlPlane.parse(planeId);
+    if(!Number.isSafeInteger(limit)||limit<1||limit>64)throw new JobExecutionError('NOT_ELIGIBLE');
+    const commands=await this.pool.query<{id:string;job_id:string;execution_id:string;
+      attempt_id:string;action:'PAUSE'|'RESUME'|'CANCEL';source:'WEB'|'LOCAL_UI'|'CLI'|'PLATFORM_SECURITY';
+      actor_id:string;reason:string|null;requested_at:Date;override_global_pause:boolean}>(
+      `SELECT c.id,c.job_id,c.execution_id,e.attempt_id,c.action,c.source,c.actor_id,
+        c.reason,c.requested_at,c.override_global_pause FROM job_control_commands c
+        JOIN job_executions e ON e.id=c.execution_id
+        JOIN jobs j ON j.id=c.job_id
+        WHERE e.worker_device_id=$1 AND e.control_plane_id=$2 AND e.completed_at IS NULL
+        AND e.lease_expires_at>now() AND c.confirmed_at IS NULL
+        AND j.status IN ('PAUSE_REQUESTED','RESUME_REQUESTED','CANCEL_REQUESTED')
+        ORDER BY c.requested_at,c.id LIMIT $3`,[workerDeviceId,planeId,limit]);
+    return commands.rows.map((row)=>({type:'JOB_CONTROL',protocolVersion:WORKER_PROTOCOL_VERSION,
+      messageId:randomUUID(),commandId:row.id,jobId:row.job_id,
+      executionId:row.execution_id,attemptId:row.attempt_id,controlPlaneId:planeId,
+      action:row.action,source:row.source,actorId:row.actor_id,reason:row.reason,
+      requestedAt:row.requested_at.toISOString(),overrideGlobalPause:row.override_global_pause}));
   }
 
   /** Caller must pass identity from signed Worker authentication, not the untrusted ack body. */
@@ -867,7 +922,8 @@ export class PostgresJobExecutionRepository {
     const ack = z.strictObject({
       commandId: uuid, jobId: uuid, executionId: uuid, attemptId: uuid,
       workerDeviceId: uuid, controlPlaneId: controlPlane,
-      status: z.enum(['PAUSED', 'RUNNING', 'SECURITY_PAUSED', 'CONTROL_FAILED', 'RESUME_NOT_READY',
+      status: z.enum(['PAUSED', 'RUNNING', 'SECURITY_PAUSED', 'CANCELLED',
+        'CONTROL_FAILED', 'RESUME_NOT_READY',
         'DEPENDENCY_UNAVAILABLE', 'INFERENCE_UNAVAILABLE', 'SECURITY_BLOCK']),
       localRevision: z.number().int().nonnegative(),
       confirmedAt: z.iso.datetime().nullable(),
@@ -880,7 +936,7 @@ export class PostgresJobExecutionRepository {
       const job = await this.lockJob(client, ack.jobId);
       if (job.worker_device_id !== ack.workerDeviceId) throw new JobExecutionError('WRONG_WORKER');
       const execution = await client.query<ExecutionRow>(
-        'SELECT * FROM job_executions WHERE id=$1 AND job_id=$2 AND completed_at IS NULL FOR UPDATE',
+        'SELECT * FROM job_executions WHERE id=$1 AND job_id=$2 FOR UPDATE',
         [ack.executionId, job.id]);
       const active = execution.rows[0];
       if (!active || active.attempt_id !== ack.attemptId) throw new JobExecutionError('NOT_ELIGIBLE');
@@ -891,7 +947,8 @@ export class PostgresJobExecutionRepository {
         [ack.commandId, job.id, active.id]);
       const command = commands.rows[0];
       if (!command) throw new JobExecutionError('NOT_FOUND');
-      const expected = command.action === 'PAUSE' ? 'PAUSE_REQUESTED' : 'RESUME_REQUESTED';
+      const expected = command.action === 'PAUSE' ? 'PAUSE_REQUESTED' :
+        command.action==='RESUME'?'RESUME_REQUESTED':'CANCEL_REQUESTED';
       const failure = ['CONTROL_FAILED', 'RESUME_NOT_READY', 'DEPENDENCY_UNAVAILABLE',
         'INFERENCE_UNAVAILABLE', 'SECURITY_BLOCK'].includes(ack.status);
       if (failure) {
@@ -908,7 +965,9 @@ export class PostgresJobExecutionRepository {
       }
       const result = ack.status;
       if (command.action === 'PAUSE' && !['PAUSED', 'SECURITY_PAUSED', 'RUNNING'].includes(result) ||
-        command.action === 'RESUME' && !['RUNNING', 'PAUSED'].includes(result)) throw new JobExecutionError('NOT_ELIGIBLE');
+        command.action === 'RESUME' && !['RUNNING', 'PAUSED'].includes(result) ||
+        command.action === 'CANCEL' && result!=='CANCELLED')
+        throw new JobExecutionError('NOT_ELIGIBLE');
       if (command.confirmed_at) {
         if (command.resulting_state !== result) throw new JobExecutionError('CONFLICT');
         return { jobId: job.id, status: job.status, paymentReservationId: job.payment_reservation_id,
@@ -919,10 +978,108 @@ export class PostgresJobExecutionRepository {
       }
       await client.query('UPDATE job_control_commands SET confirmed_at=now(),resulting_state=$2 WHERE id=$1',
         [ack.commandId, result]);
-      return this.transitionLocked(client, JobTransitionSchema.parse({ id: randomUUID(),
+      const view=await this.transitionLocked(client, JobTransitionSchema.parse({ id: randomUUID(),
         jobId: job.id, from: expected, to: result, at: new Date().toISOString(),
         actor: 'WORKER', reason: ack.status, attemptId: active.attempt_id,
         correlationId: active.id, paymentReservationId: null, resultManifestId: null }));
+      return view;
+    });
+  }
+
+  /** Replay-safe reconciliation of a confirmed seller-local CLI/UI action after cloud loss.
+   * The signed Worker report never authorizes payment or a new execution. */
+  async reconcileLocalJobControl(raw:unknown,authenticatedWorkerDeviceId:string,
+    authenticatedControlPlaneId:string):Promise<void>{
+    const report=WorkerLocalJobControlReportSchema.parse(raw);
+    if(report.workerDeviceId!==uuid.parse(authenticatedWorkerDeviceId))
+      throw new JobExecutionError('WRONG_WORKER');
+    if(report.controlPlaneId!==controlPlane.parse(authenticatedControlPlaneId))
+      throw new JobExecutionError('WRONG_CONTROL_PLANE');
+    const hash=hashCanonicalJson({commandId:report.commandId,jobId:report.jobId,
+      executionId:report.executionId,attemptId:report.attemptId,
+      controlPlaneId:report.controlPlaneId,workerDeviceId:report.workerDeviceId,
+      action:report.action,source:report.source,actorId:report.actorId,
+      reason:report.reason,status:report.status,localRevision:report.localRevision,
+      confirmedAt:report.confirmedAt});
+    await this.transaction(async(client)=>{
+      const previous=await client.query<{body_hash:string}>(`SELECT body_hash FROM
+        worker_local_job_control_reports WHERE command_id=$1 FOR UPDATE`,[report.commandId]);
+      if(previous.rows[0]){
+        if(previous.rows[0].body_hash!==hash)throw new JobExecutionError('CONFLICT');
+        return;
+      }
+      const job=await this.lockJob(client,report.jobId);
+      if(job.worker_device_id!==report.workerDeviceId)throw new JobExecutionError('WRONG_WORKER');
+      const selected=await client.query<ExecutionRow>(`SELECT * FROM job_executions
+        WHERE id=$1 AND job_id=$2 FOR UPDATE`,[report.executionId,report.jobId]);
+      const execution=selected.rows[0];
+      if(!execution||execution.attempt_id!==report.attemptId||
+        execution.control_plane_id!==report.controlPlaneId)
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const validResult=report.action==='PAUSE'&&
+        (report.status==='PAUSED'||report.status==='SECURITY_PAUSED')||
+        report.action==='RESUME'&&report.status==='RUNNING'||
+        report.action==='CANCEL'&&
+        (report.status==='CANCELLED'||report.status==='TIMED_OUT');
+      if(!validResult)throw new JobExecutionError('NOT_ELIGIBLE');
+      let eligible=!execution.completed_at&&execution.lease_expires_at.getTime()>Date.now()&&
+        (report.action==='PAUSE'&&job.status==='RUNNING'||
+          report.action==='RESUME'&&job.status==='PAUSED'||
+          report.action==='CANCEL'&&['STARTING','RUNNING','PAUSED','PAUSE_REQUESTED',
+            'RESUME_REQUESTED','SECURITY_PAUSED'].includes(job.status));
+      if(report.action==='RESUME'&&eligible){
+        const blocked=await client.query(`SELECT 1 FROM worker_devices d
+          LEFT JOIN worker_security_blocks b ON b.worker_device_id=d.id
+          LEFT JOIN worker_availability_schedules s ON s.worker_device_id=d.id
+          WHERE d.id=$1 AND (d.status='REVOKED' OR coalesce(b.blocked,false)
+            OR coalesce(s.seller_paused,false))`,[report.workerDeviceId]);
+        if(blocked.rowCount)eligible=false;
+      }
+      if(eligible){
+        const requested=report.action==='PAUSE'?'PAUSE_REQUESTED':
+          report.action==='RESUME'?'RESUME_REQUESTED':'CANCEL_REQUESTED';
+        await this.transitionLocked(client,JobTransitionSchema.parse({id:report.commandId,
+          jobId:job.id,from:job.status,to:requested,at:new Date().toISOString(),
+          actor:report.source==='PLATFORM_SECURITY'?'SYSTEM':'SELLER',
+          reason:`LOCAL_${report.action}_REQUEST`,attemptId:execution.attempt_id,
+          correlationId:execution.id,paymentReservationId:null,resultManifestId:null}));
+        await this.transitionLocked(client,JobTransitionSchema.parse({id:randomUUID(),
+          jobId:job.id,from:requested,to:report.status,at:new Date().toISOString(),
+          actor:'WORKER',reason:`LOCAL_${report.action}_CONFIRMED`,
+          attemptId:execution.attempt_id,correlationId:execution.id,
+          paymentReservationId:null,resultManifestId:null}));
+      }
+      await client.query(`INSERT INTO worker_local_job_control_reports(command_id,job_id,
+        execution_id,worker_device_id,control_plane_id,body_hash,disposition)
+        VALUES($1,$2,$3,$4,$5,$6,$7)`,[report.commandId,job.id,execution.id,
+        report.workerDeviceId,report.controlPlaneId,hash,eligible?'APPLIED':'STALE']);
+    });
+  }
+
+  /** Cloud restart-safe timeout for a paid pause. A live lease prevents premature release. */
+  async expireOverduePausedJobs(maxPauseSeconds:number,limit=100):Promise<number>{
+    if(!Number.isSafeInteger(maxPauseSeconds)||maxPauseSeconds<60||
+      maxPauseSeconds>604800||!Number.isSafeInteger(limit)||limit<1||limit>500)
+      throw new JobExecutionError('NOT_ELIGIBLE');
+    return this.transaction(async(client)=>{
+      const due=await client.query<{id:string;status:JobStatus;attempt_id:string;
+        execution_id:string}>(`SELECT j.id,j.status,e.attempt_id,e.id AS execution_id
+        FROM jobs j JOIN job_executions e ON e.job_id=j.id AND e.completed_at IS NULL
+        WHERE j.status IN ('PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED','SECURITY_PAUSED')
+        AND e.lease_expires_at<=now()
+        AND (SELECT t.at FROM job_transitions t WHERE t.job_id=j.id
+          AND t.to_status IN ('PAUSE_REQUESTED','PAUSED','SECURITY_PAUSED')
+          ORDER BY t.sequence DESC LIMIT 1)
+          <=now()-($1::integer * interval '1 second')
+        ORDER BY j.created_at,j.id LIMIT $2 FOR UPDATE OF j SKIP LOCKED`,
+      [maxPauseSeconds,limit]);
+      for(const row of due.rows){
+        await this.transitionLocked(client,JobTransitionSchema.parse({id:randomUUID(),
+          jobId:row.id,from:row.status,to:'TIMED_OUT',at:new Date().toISOString(),
+          actor:'CLOUD',reason:'PAUSE_DURATION_EXCEEDED',attemptId:row.attempt_id,
+          correlationId:row.execution_id,paymentReservationId:null,resultManifestId:null}));
+      }
+      return due.rows.length;
     });
   }
 }

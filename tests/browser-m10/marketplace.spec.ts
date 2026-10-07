@@ -106,7 +106,8 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
       sentAt:new Date(Math.max(Date.now(),(latest?.getTime()??0)+1000)).toISOString(),
       openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
       localRevision:0,capabilityReadiness:[{capabilityVersionId:capability.current_version_id,
-        policyValidationHash:capability.policy_validation_hash,state:'READY'}]},
+        policyValidationHash:capability.policy_validation_hash,state:'READY',
+        checks:{sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}}]},
     capability.worker_device_id,'m10-test-plane');
     const statusOnCard=async(label:string)=>{
       await page.goto('/discover');
@@ -124,7 +125,9 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
         openClawVersion:null,status:'ONLINE',runningJobs,capacity:1,policyVersion:1,
         localRevision:0,capabilityReadiness:[{capabilityVersionId:capability.current_version_id,
           policyValidationHash:capability.policy_validation_hash,
-          state:ready?'READY':'NOT_READY'}]},capability.worker_device_id,'m10-test-plane');
+          state:ready?'READY':'NOT_READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:ready,runtimeHealthy:ready}}]},
+      capability.worker_device_id,'m10-test-plane');
     };
     await statusOnCard('Available now');
     await pool.query(`UPDATE capability_availability_policies SET seller_paused=true
@@ -139,6 +142,12 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
         startLocalTime:'00:00',endLocalTime:'23:59'}]}]);
     await statusOnCard('Scheduled offline');
     await expect(page.locator('.detail-availability')).toContainText('Next available:');
+    const localTime=page.locator('.detail-availability time');
+    await expect(localTime).toHaveAttribute('datetime',/Z$/);
+    const expectedLocal=await localTime.evaluate((element)=>
+      new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'})
+        .format(new Date(element.getAttribute('datetime')!)));
+    await expect(localTime).toHaveText(`Next available: ${expectedLocal}`);
     await expect(page.getByRole('link',{name:'Schedule a job →'})).toBeVisible();
     await expect(page.getByRole('radio',{name:/Earliest eligible window/})).toBeChecked();
     await page.getByRole('textbox',{name:'Question'}).fill('Run at the next window');

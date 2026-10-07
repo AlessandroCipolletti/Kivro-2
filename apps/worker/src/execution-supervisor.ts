@@ -192,6 +192,12 @@ export class WorkerExecutionSupervisor {
             },
             onWatchdogTick: async () => {
               const before = this.deps.jobControl.snapshot(offer.jobId);
+              if(this.deps.localState.snapshot().securityPaused){
+                await sidecar.quiesce();
+                const changed=await this.deps.jobControl.enforceSecurityPause();
+                if(changed.some((item)=>item.jobId===offer.jobId&&item.status==='CANCELLED'))
+                  throw new WorkerExecutionError('NOT_READY');
+              }
               if (['PAUSE_REQUESTED', 'CANCEL_REQUESTED'].includes(before.status) ||
                 Date.parse(before.leaseExpiresAt) <= Date.now() ||
                 (before.pauseExpiresAt && Date.parse(before.pauseExpiresAt) <= Date.now())) {

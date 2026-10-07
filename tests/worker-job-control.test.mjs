@@ -128,6 +128,34 @@ test('security pause cannot be seller-resumed; cancellation remains available', 
   } finally { f.cleanup(); }
 });
 
+test('critical security block freezes resumable work and terminates unsupported work',async()=>{
+  for(const [mode,expected] of [['FULL_RESUME','SECURITY_PAUSED'],
+    ['NOT_SUPPORTED','CANCELLED']]){
+    const f=fixture(mode);
+    try{
+      const changed=await f.control.enforceSecurityPause();
+      assert.equal(changed[0].status,expected);
+      assert.equal(f.control.snapshot(f.jobId).status,expected);
+      assert.equal(expected==='SECURITY_PAUSED'?f.state.pauseCalls:f.state.stopCalls,1);
+      assert.deepEqual(await f.control.enforceSecurityPause(),[]);
+    }finally{f.cleanup();}
+  }
+});
+
+test('failed security freeze falls back to verified container termination',async()=>{
+  const f=fixture();
+  try{
+    f.control.close();
+    const docker={async pause(){throw new Error('freeze failed');},
+      async stop(){f.state.stopCalls++;f.state.status='exited';},
+      async status(){return f.state.status;}};
+    const control=new WorkerJobControl(f.dir,docker,ready,{maxPauseDurationMs:60_000});
+    assert.equal((await control.enforceSecurityPause())[0].status,'CANCELLED');
+    assert.equal(f.state.stopCalls,1);
+    control.close();
+  }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
 test('configured maximum pause duration stops local execution without settling delivery', async () => {
   const f = fixture();
   try {

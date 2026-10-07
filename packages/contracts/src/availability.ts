@@ -84,6 +84,7 @@ export const PublicAvailabilitySchema = z.strictObject({
   acceptingQueue: z.boolean(),
   canSchedule: z.boolean(),
   nextAvailableAt: z.iso.datetime().nullable(),
+  maintenanceUntil: z.iso.datetime().nullable().optional(),
   nextScheduleWindowAt: z.iso.datetime().nullable(),
   reason: z.enum(['NONE', 'NOT_VISIBLE', 'NOT_PUBLISHED', 'SELLER_PAUSED', 'PLATFORM_BLOCKED',
     'SCHEDULE_CLOSED', 'WORKER_OFFLINE', 'READINESS_STALE', 'DEPENDENCY_BLOCKED',

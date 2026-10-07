@@ -105,7 +105,8 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         workerDeviceId:worker,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
         localRevision:0,capabilityReadiness:[{capabilityVersionId:versionId,
-          policyValidationHash:hash,state:'READY'}]},worker,plane);
+          policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:true,runtimeHealthy:true}}]},worker,plane);
       await social.setSellerMetadata(capability,sellerAccount,{category:'RESEARCH',
         shortDescription:'A focused research brief',tags:['research','brief'],
         strengths:['Fast scope'],limitations:['No private web access']});
@@ -310,6 +311,19 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       assert.equal((await repo.planView(buyer,chained.id)).spentMinor,999);
       await availability.setCapabilityPolicy({capabilityId:capability,
         sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',expectedRevision:2});
+      const revision=await pool.query(`SELECT revision FROM worker_cloud_control_revisions
+        WHERE worker_device_id=$1`,[worker]);
+      const lastBeat=await pool.query(`SELECT latest_heartbeat_reported_at AS at
+        FROM worker_devices WHERE id=$1`,[worker]);
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+        protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
+        workerDeviceId:worker,workerRelease:'test',
+        sentAt:new Date(Math.max(Date.now(),lastBeat.rows[0].at.getTime()+1)).toISOString(),
+        openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
+        localRevision:0,acknowledgedCloudRevision:Number(revision.rows[0].revision),
+        capabilityReadiness:[{capabilityVersionId:versionId,policyValidationHash:hash,
+          state:'READY',checks:{sandboxVerified:true,requiredSecretsReady:true,
+            runtimeHealthy:true}}]},worker,plane);
       await restarted.revisePaused(buyer,chained.id,[{
         stepId:second.id,capabilityId:capability}]);
       await repo.approvePlan(buyer,chained.id,randomUUID());
@@ -340,6 +354,19 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         [paused.steps[0].jobId])).rows[0].n,0);
       await availability.setCapabilityPolicy({capabilityId:capability,
         sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',expectedRevision:4});
+      const revisionAgain=await pool.query(`SELECT revision FROM worker_cloud_control_revisions
+        WHERE worker_device_id=$1`,[worker]);
+      const lastBeatAgain=await pool.query(`SELECT latest_heartbeat_reported_at AS at
+        FROM worker_devices WHERE id=$1`,[worker]);
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+        protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
+        workerDeviceId:worker,workerRelease:'test',
+        sentAt:new Date(Math.max(Date.now(),lastBeatAgain.rows[0].at.getTime()+1)).toISOString(),
+        openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
+        localRevision:0,acknowledgedCloudRevision:Number(revisionAgain.rows[0].revision),
+        capabilityReadiness:[{capabilityVersionId:versionId,policyValidationHash:hash,
+          state:'READY',checks:{sandboxVerified:true,requiredSecretsReady:true,
+            runtimeHealthy:true}}]},worker,plane);
       const options=await restarted.pausedAlternatives(buyer,paused.id);
       assert.equal(options[0].options[0].capabilityId,capability);
       const revised=await restarted.revisePaused(buyer,paused.id,[{
@@ -392,7 +419,8 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         workerDeviceId:worker2,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
         localRevision:0,capabilityReadiness:[{capabilityVersionId:version2,
-          policyValidationHash:hash,state:'READY'}]},worker2,plane);
+          policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+            requiredSecretsReady:true,runtimeHealthy:true}}]},worker2,plane);
       await social.setSellerMetadata(capability2,sellerAccount,{category:'RESEARCH',
         shortDescription:'Research a second subject',tags:['research'],strengths:['Focused'],
         limitations:['No private web access']});

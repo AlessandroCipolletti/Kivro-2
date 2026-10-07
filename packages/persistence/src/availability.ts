@@ -14,6 +14,7 @@ import { JobTransitionSchema } from '../../contracts/src/job-lifecycle.js';
 import { applyJobTransition } from '../../domain/src/job-lifecycle.js';
 import type { JobStatus } from '../../contracts/src/job-lifecycle.js';
 import type { PostgresFinanceRepository } from './finance.js';
+import { workerVersionStatus } from '../../domain/src/worker-version.js';
 
 const uuid = z.uuid();
 const activeStatuses = ['PAYMENT_RESERVED','WAITING_FOR_AVAILABILITY','QUEUED',
@@ -28,8 +29,10 @@ type CapabilityRow = { id: string; status: string; visibility: string; current_v
   seller_profile_id: string; version_snapshot: unknown; version_id: string; worker_device_id: string };
 type PolicyRow = { capability_id: string; schedule_override: unknown | null; concurrency_limit: number;
   queue_limit: number; future_reservation_limit: number; estimated_runtime_seconds: number | null;
-  max_wait_seconds: number; seller_paused: boolean; platform_blocked: boolean; revision: number };
-type WorkerScheduleRow = { schedule: unknown; revision: number; seller_paused: boolean };
+  max_wait_seconds: number; seller_paused: boolean; platform_blocked: boolean; revision: number;
+  maintenance_until:Date|null };
+type WorkerScheduleRow = { schedule: unknown; revision: number; seller_paused: boolean;
+  sync_pending:boolean;web_paused:boolean;maintenance_until:Date|null };
 type JobRow = { id: string; status: JobStatus; buyer_account_id: string; capability_version_id: string;
   worker_device_id: string; contract_snapshot: unknown; payment_reservation_id: string | null };
 type PlanRow = { job_id: string; quote_id: string; capability_id: string; execution_mode: string;
@@ -93,15 +96,27 @@ export class PostgresAvailabilityRepository {
   }
 
   private async policy(client: PoolClient, capabilityId: string, lock: boolean): Promise<PolicyRow> {
-    const result = await client.query<PolicyRow>(`SELECT * FROM capability_availability_policies
-      WHERE capability_id=$1 ${lock ? 'FOR UPDATE' : ''}`, [capabilityId]);
+    const result = await client.query<PolicyRow>(`SELECT p.*,
+      (p.seller_paused OR EXISTS (SELECT 1 FROM worker_local_capability_pauses l
+        WHERE l.capability_id=p.capability_id)) AS seller_paused
+      FROM capability_availability_policies p
+      WHERE p.capability_id=$1 ${lock ? 'FOR UPDATE OF p' : ''}`, [capabilityId]);
     if (!result.rows[0]) throw new AvailabilityError('NOT_READY');
     return result.rows[0];
   }
 
   private async workerSchedule(client: PoolClient, workerId: string): Promise<WorkerScheduleRow> {
       const result = await client.query<WorkerScheduleRow>(
-      'SELECT * FROM worker_availability_schedules WHERE worker_device_id=$1 FOR SHARE', [workerId]);
+      `SELECT s.schedule,s.revision,s.seller_paused AS web_paused,s.maintenance_until,
+        (coalesce(r.revision,0)>coalesce(r.acknowledged_revision,0)) AS sync_pending,
+        (s.seller_paused OR coalesce(l.global_paused,false) OR
+          coalesce(l.security_paused,false) OR coalesce(b.blocked,false) OR
+          coalesce(r.revision,0)>coalesce(r.acknowledged_revision,0)) AS seller_paused
+      FROM worker_availability_schedules s
+      LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=s.worker_device_id
+      LEFT JOIN worker_security_blocks b ON b.worker_device_id=s.worker_device_id
+      LEFT JOIN worker_cloud_control_revisions r ON r.worker_device_id=s.worker_device_id
+      WHERE s.worker_device_id=$1 FOR SHARE OF s`, [workerId]);
     if (!result.rows[0]) throw new AvailabilityError('NOT_READY');
     return result.rows[0];
   }
@@ -161,6 +176,10 @@ export class PostgresAvailabilityRepository {
         VALUES($1,'WORKER',$2,'SELLER',$3,$4,$5,$6,$7)`,
       [randomUUID(),input.workerDeviceId,input.sellerAccountId,input.source,old ?? null,
         { schedule, sellerPaused: input.paused },revision]);
+      if((old?.seller_paused??false)!==input.paused)
+        await client.query(`INSERT INTO worker_cloud_control_revisions(worker_device_id,revision)
+          VALUES($1,1) ON CONFLICT(worker_device_id) DO UPDATE SET revision=
+          worker_cloud_control_revisions.revision+1`,[input.workerDeviceId]);
       await client.query(`UPDATE job_schedule_plans p SET last_reconciled_at=NULL
         FROM jobs j WHERE j.id=p.job_id AND j.worker_device_id=$1
           AND j.status=ANY($2::text[])`,[input.workerDeviceId,preStartStatuses]);
@@ -202,6 +221,10 @@ export class PostgresAvailabilityRepository {
         VALUES($1,'CAPABILITY',$2,'SELLER',$3,$4,$5,$6,$7)`,
       [randomUUID(),capability.id,input.sellerAccountId,input.source,old.rows[0] ?? null,
         { policy: value, sellerPaused: input.paused },revision]);
+      if((old.rows[0]?.seller_paused??false)!==input.paused)
+        await client.query(`INSERT INTO worker_cloud_control_revisions(worker_device_id,revision)
+          VALUES($1,1) ON CONFLICT(worker_device_id) DO UPDATE SET revision=
+          worker_cloud_control_revisions.revision+1`,[capability.worker_device_id]);
       return revision;
     });
   }
@@ -225,13 +248,20 @@ export class PostgresAvailabilityRepository {
         VALUES($1,'CAPABILITY',$2,'PLATFORM',$3,'PLATFORM',$4,$5,$6)`,
       [randomUUID(),capabilityId,uuid.parse(platformActorId),old,
         { ...old, platform_blocked: blocked },revision]);
+      await client.query(`INSERT INTO worker_cloud_control_revisions(worker_device_id,revision)
+        VALUES($1,1) ON CONFLICT(worker_device_id) DO UPDATE SET revision=
+        worker_cloud_control_revisions.revision+1`,[cap.worker_device_id]);
     });
   }
 
   private async health(client: PoolClient, capability: CapabilityRow): Promise<
     'ONLINE' | 'BUSY' | 'OFFLINE' | 'PAUSED' | 'READINESS_BLOCKED'> {
-    const result = await client.query<{ worker_status: string; heartbeat_status: string | null;
-      readiness_state: string | null; running_jobs: number | null; capacity: number | null }>(`SELECT d.status AS worker_status,
+    const result = await client.query<{ worker_status: string; worker_version:string;
+      heartbeat_status: string | null;
+      readiness_state: string | null; sandbox_verified: boolean | null;
+      required_secrets_ready: boolean | null; runtime_healthy: boolean | null;
+      running_jobs: number | null; capacity: number | null }>(`SELECT d.status AS worker_status,
+      d.worker_version,
       (SELECT reported_status FROM worker_heartbeats WHERE worker_device_id=d.id
         AND reported_at > now()-interval '30 seconds' ORDER BY reported_at DESC LIMIT 1) AS heartbeat_status,
       (SELECT running_jobs FROM worker_heartbeats WHERE worker_device_id=d.id
@@ -240,12 +270,26 @@ export class PostgresAvailabilityRepository {
         AND reported_at > now()-interval '30 seconds' ORDER BY reported_at DESC LIMIT 1) AS capacity,
       (SELECT state FROM capability_readiness WHERE capability_id=$2 AND capability_version_id=$3
         AND worker_device_id=d.id AND observed_at > now()-interval '30 seconds') AS readiness_state
+      ,(SELECT sandbox_verified FROM capability_readiness WHERE capability_id=$2 AND capability_version_id=$3
+        AND worker_device_id=d.id AND observed_at > now()-interval '30 seconds') AS sandbox_verified
+      ,(SELECT required_secrets_ready FROM capability_readiness WHERE capability_id=$2 AND capability_version_id=$3
+        AND worker_device_id=d.id AND observed_at > now()-interval '30 seconds') AS required_secrets_ready
+      ,(SELECT runtime_healthy FROM capability_readiness WHERE capability_id=$2 AND capability_version_id=$3
+        AND worker_device_id=d.id AND observed_at > now()-interval '30 seconds') AS runtime_healthy
       FROM worker_devices d WHERE d.id=$1`,[capability.worker_device_id,capability.id,capability.version_id]);
     const row = result.rows[0];
     if (!row || row.worker_status === 'REVOKED' || !row.heartbeat_status) return 'OFFLINE';
+    if (process.env.NODE_ENV==='production'){
+      const version=workerVersionStatus(row.worker_version,
+        process.env.KIVRO_MIN_WORKER_RELEASE??null,
+        process.env.KIVRO_LATEST_WORKER_RELEASE??null);
+      if(version==='SECURITY_UPDATE_REQUIRED'||version==='UNKNOWN')return 'READINESS_BLOCKED';
+    }
     if (row.worker_status === 'PAUSED' || row.heartbeat_status === 'PAUSED') return 'PAUSED';
     if (row.worker_status !== 'ONLINE' || row.heartbeat_status !== 'ONLINE') return 'OFFLINE';
-    if (row.readiness_state!=='READY'||!row.capacity) return 'READINESS_BLOCKED';
+    if (row.readiness_state!=='READY'||row.sandbox_verified!==true||
+      row.required_secrets_ready!==true||row.runtime_healthy!==true||!row.capacity)
+      return 'READINESS_BLOCKED';
     return (row.running_jobs??0)>=row.capacity?'BUSY':'ONLINE';
   }
 
@@ -397,8 +441,9 @@ export class PostgresAvailabilityRepository {
       let reason: PublicAvailability['reason'] = 'NONE';
       if (cap.status !== 'PUBLISHED') { status='UNAVAILABLE';reason='NOT_PUBLISHED'; }
       else if (p.platform_blocked) { status='READINESS_BLOCKED';reason='PLATFORM_BLOCKED'; }
-      else if (p.seller_paused || w.seller_paused || health === 'PAUSED') {
+      else if (p.seller_paused || w.web_paused || health === 'PAUSED') {
         status='PAUSED';reason='SELLER_PAUSED';
+      } else if(w.sync_pending){status='READINESS_BLOCKED';reason='RECONCILIATION_PENDING';
       } else if (!open) { status='SCHEDULED_OFFLINE';reason='SCHEDULE_CLOSED'; }
       else if (health === 'OFFLINE') { status='OFFLINE';reason='WORKER_OFFLINE'; }
       else if (health === 'READINESS_BLOCKED') { status='READINESS_BLOCKED';reason='READINESS_STALE'; }
@@ -416,6 +461,10 @@ export class PostgresAvailabilityRepository {
         catch(error) { if (!(error instanceof AvailabilityError && error.code==='NO_FUTURE_WINDOW')) throw error; }
       }
       return PublicAvailabilitySchema.parse({ status,reason,scheduleOpen:open,
+        maintenanceUntil:status==='PAUSED'&&reason==='SELLER_PAUSED'&&
+          (p.maintenance_until||w.maintenance_until)?
+          new Date(Math.max(p.maintenance_until?.getTime()??0,
+            w.maintenance_until?.getTime()??0)).toISOString():null,
         workerReachable:!['OFFLINE'].includes(health),
         readinessReady:['ONLINE','BUSY'].includes(health),
         acceptingImmediate:status==='ONLINE'&&queued<p.concurrency_limit,
