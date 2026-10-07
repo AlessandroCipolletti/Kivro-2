@@ -399,9 +399,15 @@ if (!process.env.M08_DATABASE_URL) {
         restarted.cancelBeforeDispatch(raceJob,buyer,cancelRequest),
         repo.offer(raceJob,worker,plane,120),
       ]);
-      assert.equal(claimCancel.filter((item)=>item.status==='fulfilled').length,1);
+      const fulfilled=claimCancel.filter((item)=>item.status==='fulfilled').length;
+      // An offer may commit first and then be cancelled before STARTING. Both
+      // calls succeeding is valid only when cancellation wins the final state
+      // and releases the one reservation; the old exactly-one assertion was
+      // nondeterministic and rejected that legitimate serial order.
+      assert.ok(fulfilled>=1&&fulfilled<=2);
       const raceState=(await repo.load(raceJob)).status;
       assert.ok(['CANCELLED','DISPATCHED'].includes(raceState));
+      if(fulfilled===2)assert.equal(raceState,'CANCELLED');
       const racePayment=await pool.query('SELECT state FROM payment_reservations WHERE job_id=$1',
         [raceJob]);
       assert.equal(racePayment.rows[0].state,raceState==='CANCELLED'?'RELEASED':'RESERVED');

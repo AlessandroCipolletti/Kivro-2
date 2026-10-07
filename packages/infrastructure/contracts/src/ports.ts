@@ -10,6 +10,7 @@ export interface ObjectStoragePort {
     expiresSeconds: number }): Promise<{ url: string; headers: Readonly<Record<string, string>> }>;
   presignPrivateDownload(key: string, expiresSeconds: number): Promise<string>;
   deletePrivateObject(key: string): Promise<void>;
+  copyPrivateObject(sourceKey: string, destinationKey: string): Promise<void>;
 }
 
 export interface DurableTaskPort {

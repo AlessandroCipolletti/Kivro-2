@@ -17,6 +17,14 @@ function messageFor(status: number, fallback: string): string {
   return fallback;
 }
 
+function returnPath():string{
+  const value=new URLSearchParams(window.location.search).get('callbackURL');
+  if(!value||!value.startsWith('/')||value.startsWith('//')||value.includes('\\')||
+    [...value].some((character)=>character.charCodeAt(0)<32))return '/account';
+  try{return new URL(value,window.location.origin).origin===window.location.origin?value:'/account';}
+  catch{return '/account';}
+}
+
 export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean }) {
   const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
@@ -52,7 +60,7 @@ export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean })
         setMode('verification');
         setPassword('');
         setNotice({ kind: 'success', text: 'Check your inbox for a verification link. You can close this page and return later.' });
-      } else window.location.assign('/account');
+      } else window.location.assign(returnPath());
     } catch {
       setNotice({ kind: 'error', text: 'Connection lost. Please try again.' });
     } finally { setBusy(false); }
@@ -73,7 +81,7 @@ export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean })
     if (!googleEnabled || busy) return;
     setBusy(true); setNotice(null);
     try {
-      const response = await submitAuth('/sign-in/social', { provider: 'google', callbackURL: '/account' });
+      const response = await submitAuth('/sign-in/social', { provider: 'google', callbackURL: returnPath() });
       if (!response.ok) throw new Error('Google sign-in unavailable');
       const result: unknown = await response.json();
       const url = result && typeof result === 'object' && 'url' in result ? (result as { url?: unknown }).url : undefined;

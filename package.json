@@ -45,7 +45,9 @@
     "local:storage:prepare": "node tools/prepare-local-storage.mjs",
     "local:storage:bucket": "node --env-file=.env.local tools/create-local-storage-bucket.mjs",
     "local:auth:up": "pnpm local:auth:setup && pnpm local:storage:prepare && docker compose --env-file .env.local -f compose.local.yaml up -d postgres mail storage && pnpm local:storage:bucket",
-    "local:auth:migrate": "node --env-file=.env.local tools/run-local-migrations.mjs"
+    "local:auth:migrate": "node --env-file=.env.local tools/run-local-migrations.mjs",
+    "test:postgres:m10": "pnpm build && sh tools/test-m10-postgres.sh",
+    "test:browser:m10": "pnpm build && sh tools/test-m10-browser.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1146.0",

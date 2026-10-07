@@ -69,7 +69,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0012`    P2         §3       `TODO`   ---              ---        ---
 
-  `PRD-0013`    P1         §4       `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0013
+  `PRD-0013`    P1         §4       `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0013 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0014`    P2         §4       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0014
 
@@ -129,15 +129,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0030`    P1         §7       `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts   tests/worker-cli.test.mjs   All execution readiness checks still pending backlog:WRK-0030
 
-  `PRD-0022`    P1         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0022
+  `PRD-0022`    P1         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0022 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0023`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0023
+  `PRD-0023`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0023 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0024`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0024
 
-  `PRD-0025`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0025
+  `PRD-0025`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0025 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0026`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0026
+  `PRD-0026`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0026 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0027`    P2         §8       `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0027 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0027
 
@@ -171,17 +171,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0007`    P1         §11      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,apps/worker/src/job-admission.ts,apps/worker/src/execution-supervisor.ts,apps/worker/src/dispatch-loop.ts,packages/worker-protocol/src/messages.ts   tests/worker-admission.test.mjs,tests/m07-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0007 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0007
 
-  `IO-0001`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0001 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0001
+  `IO-0001`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0001 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0001 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0002`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0002 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0002
+  `IO-0002`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0002 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0002 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0003`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0003 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0003
+  `IO-0003`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0003 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0003 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0004`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0004 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0004
+  `IO-0004`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0004 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0004 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0005`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0005 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0005
+  `IO-0005`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0005 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0005 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0006`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0006 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0006
+  `IO-0006`     P1         §12      `DEFERRED_VERIFICATION`   apps/worker/src/input-staging.ts,apps/worker/src/execution-supervisor.ts,packages/sandbox-adapter/src/docker.ts,packages/persistence/src/job-execution.ts   tests/input-staging.test.mjs,tests/docker-openclaw-file-tools-local-integration.mjs,tests/docker-output-storage-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:IO-0006 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:IO-0006 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `SEC-0001`    P1         §13      `DEFERRED_VERIFICATION`   packages/openclaw-adapter/src/job-config.ts,apps/worker/src/broker-sidecar.ts,packages/application/src/completion-broker.ts   tests/openclaw-job-config.test.mjs,tests/openclaw-completion-broker.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:SEC-0001
 
@@ -239,13 +239,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0021`    P0         §16     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:SEC-0021 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:SEC-0021
 
-  `SEC-0022`    P1         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0022
+  `SEC-0022`    P1         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0022 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `SEC-0023`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0023
+  `SEC-0023`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0023 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `SEC-0024`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0024
+  `SEC-0024`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0024 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `SEC-0025`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0025
+  `SEC-0025`    P0         §17     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:SEC-0025 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0031`    P1         §18     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/docker.ts tests/docker-sandbox-local-integration.mjs offline canary only; backlog:PRD-0031 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -477,9 +477,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0042`    P2         §25      `DEFERRED_VERIFICATION`   packages/persistence/src/provider-usage.ts,packages/application/src/seller-economics.ts,runtime/openclaw/plugin/tool-budget.mjs   tests/m06-postgres-integration.mjs,tests/seller-economics.test.mjs,tests/openclaw-tool-budget.test.mjs   M08 component evidence only; backlog:PRD-0042
 
-  `AVL-0001`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0001
+  `AVL-0001`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0001 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0002`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0002
+  `AVL-0002`    P1         §26      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0002 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `WRK-0048`    P1         §27      `TODO`   ---              ---        ---
 
@@ -489,13 +489,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0051`    P1         §27      `TODO`   ---              ---        ---
 
-  `PRD-0043`    P1         §28      `TODO`   ---              ---        ---
+  `PRD-0043`    P1         §28      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0043
 
-  `OBS-0001`    P1         §29      `TODO`   ---              ---        ---
+  `OBS-0001`    P1         §29      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller-visible structured execution audit; M10 public catalog primitive available where applicable
 
-  `OBS-0002`    P2         §29      `TODO`   ---              ---        ---
+  `OBS-0002`    P2         §29      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller-visible structured execution audit; M10 public catalog primitive available where applicable
 
-  `OBS-0003`    P2         §29      `TODO`   ---              ---        ---
+  `OBS-0003`    P2         §29      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller audit presentation with M16 hostile-input redaction test; M10 public catalog primitive available where applicable
 
   `SEC-0032`    P1         §30      `TODO`   ---              ---        ---
 
@@ -595,7 +595,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `WRK-0055`    P1         §49      `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   M06 component evidence; backlog:WRK-0055 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:WRK-0055
 
-  `WRK-0056`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0056
+  `WRK-0056`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0056 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `WRK-0057`    P1         §49      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0057 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:WRK-0057
 
@@ -691,37 +691,37 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0037`    P1         §60      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0037 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0037
 
-  `IO-0013`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0013
+  `IO-0013`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0013 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0014`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0014
+  `IO-0014`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0014 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0015`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0015
+  `IO-0015`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0015 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0016`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0016
+  `IO-0016`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0016 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0017`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0017
+  `IO-0017`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0017 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0018`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0018
+  `IO-0018`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0018 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0019`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0019
+  `IO-0019`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0019 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0020`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0020
+  `IO-0020`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0020 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0021`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0021
+  `IO-0021`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0021 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0022`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0022
+  `IO-0022`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0022 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0023`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0023
+  `IO-0023`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0023 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0024`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0024
+  `IO-0024`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0024 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0025`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0025
+  `IO-0025`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0025 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0026`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0026
+  `IO-0026`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0026 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0027`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0027
+  `IO-0027`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0027 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0028`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0028
+  `IO-0028`     P1         §61      `DEFERRED_VERIFICATION`   packages/persistence/src/job-execution.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs,tests/m07-result-postgres-integration.mjs   M05/M07/M09 component evidence; full buyer flow OPEN; backlog:IO-0028 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `IO-0029`     P1         §62      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0029
 
@@ -735,13 +735,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0034`     P1         §63      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:IO-0034
 
-  `JOB-0038`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0038
+  `JOB-0038`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0038 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `JOB-0039`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0039
+  `JOB-0039`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0039 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `JOB-0040`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0040
+  `JOB-0040`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0040 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `JOB-0041`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0041
+  `JOB-0041`    P1         §64      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:JOB-0041 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `PRD-0061`    P1         §65      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0061
 
@@ -817,11 +817,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0062`    P1         §75     `DEFERRED_VERIFICATION`   packages/policy-engine/src/permission-diff.ts tests/permission-diff.test.mjs baseline only; backlog:SEC-0062
 
-  `PRD-0063`    P1         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0063
+  `PRD-0063`    P1         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0063 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0064`    P2         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0064
+  `PRD-0064`    P2         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0064 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0065`    P2         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0065
+  `PRD-0065`    P2         §76     `DEFERRED_VERIFICATION`   --- --- no executable stage evidence; backlog:PRD-0065 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `CAP-0016`    P1         §77     `DEFERRED_VERIFICATION`   packages/policy-engine/src/permission-diff.ts tests/permission-diff.test.mjs baseline only; backlog:CAP-0016
 
@@ -865,15 +865,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `OBS-0006`    P2         §84      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:OBS-0006
 
-  `PRD-0068`    P1         §85      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0068
+  `PRD-0068`    P1         §85      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0068 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0069`    P2         §85      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0069
+  `PRD-0069`    P2         §85      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0069 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0070`    P1         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0070 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0070
+  `PRD-0070`    P1         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0070 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0070 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0071`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0071 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PRD-0071
+  `PRD-0071`    P1         §86      `VERIFIED`   packages/persistence/src/marketplace-social.ts,packages/persistence/migrations/0017_marketplace.sql   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   Settled delivery only; unpaid, duplicate and cross-buyer reviews rejected
 
-  `PRD-0072`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0072
+  `PRD-0072`    P2         §86      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0072 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `PAY-0074`    P1         §87      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PAY-0074 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0074
 
@@ -1109,233 +1109,233 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0051`    P1         §118     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0051 M06 component review:docs/milestones/M06.md M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `PRD-0080`    P1         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0080 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0080`    P1         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0080 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0081`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0081 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0081`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0081 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0082`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0082 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0082`    P2         §119     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0082 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0083`    P1         §120     `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0083`    P1         §120      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 combined buyer/seller activation under one login; M10 public catalog primitive available where applicable
 
-  `PRD-0084`    P2         §120     `DEFERRED_VERIFICATION`   packages/contracts/src/account.ts,packages/persistence/migrations/0001_foundation.sql tests/account.test.mjs,tests/sql/m01_foundation.sql baseline only;  backlog:PRD-0084
+  `PRD-0084`    P2         §120      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 combined buyer/seller account journey; M10 public catalog primitive available where applicable
 
-  `PRD-0085`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0085 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0085`    P2         §120      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0085 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0086`    P2         §120     `DEFERRED_VERIFICATION`   packages/domain/src/account.ts tests/account.test.mjs baseline only;  backlog:PRD-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0086`    P2         §120      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller prerequisites and publishing UI; M10 public catalog primitive available where applicable
 
-  `PRD-0087`    P2         §120     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:PRD-0087
+  `PRD-0087`    P2         §120      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 AI Request and M14 seller workspace sections; M10 public catalog primitive available where applicable
 
-  `PRD-0088`    P1         §121     `TODO`   ---              ---        ---
+  `PRD-0088`    P1         §121      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller earnings journey under the buyer login; M10 public catalog primitive available where applicable
 
-  `PRD-0089`    P2         §121     `TODO`   ---              ---        ---
+  `PRD-0089`    P2         §121      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0090`    P1         §122     `TODO`   ---              ---        ---
+  `PRD-0090`    P1         §122      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0091`    P2         §122     `TODO`   ---              ---        ---
+  `PRD-0091`    P2         §122      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0092`    P1         §123     `TODO`   ---              ---        ---
+  `PRD-0092`    P1         §123      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0093`    P2         §123     `TODO`   ---              ---        ---
+  `PRD-0093`    P2         §123      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0094`    P2         §123     `TODO`   ---              ---        ---
+  `PRD-0094`    P2         §123      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0095`    P1         §124     `TODO`   ---              ---        ---
+  `PRD-0095`    P1         §124      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Ask Marketplace Agent action on capability detail; M10 public catalog primitive available where applicable
 
-  `PRD-0096`    P2         §124     `TODO`   ---              ---        ---
+  `PRD-0096`    P2         §124      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0097`    P1         §125     `TODO`   ---              ---        ---
+  `PRD-0097`    P1         §125      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0098`    P2         §125     `TODO`   ---              ---        ---
+  `PRD-0098`    P2         §125      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0052`    P1         §126     `TODO`   ---              ---        ---
+  `CAP-0052`    P1         §126      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `JOB-0056`    P1         §127     `TODO`   ---              ---        ---
+  `JOB-0056`    P1         §127      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:JOB-0056
 
-  `JOB-0057`    P1         §127     `TODO`   ---              ---        ---
+  `JOB-0057`    P1         §127      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `JOB-0058`    P1         §127     `TODO`   ---              ---        ---
+  `JOB-0058`    P1         §127      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `JOB-0059`    P1         §127     `TODO`   ---              ---        ---
+  `JOB-0059`    P1         §127      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0099`    P1         §128     `TODO`   ---              ---        ---
+  `PRD-0099`    P1         §128      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0100`    P2         §128     `TODO`   ---              ---        ---
+  `PRD-0100`    P2         §128      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0101`    P1         §129     `TODO`   ---              ---        ---
+  `PRD-0101`    P1         §129      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0102`    P2         §129     `TODO`   ---              ---        ---
+  `PRD-0102`    P2         §129      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0103`    P1         §130     `TODO`   ---              ---        ---
+  `PRD-0103`    P1         §130      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0104`    P2         §130     `TODO`   ---              ---        ---
+  `PRD-0104`    P2         §130      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0105`    P1         §131     `TODO`   ---              ---        ---
+  `PRD-0105`    P1         §131      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0106`    P2         §131     `TODO`   ---              ---        ---
+  `PRD-0106`    P2         §131      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0107`    P2         §131     `TODO`   ---              ---        ---
+  `PRD-0107`    P2         §131      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0108`    P2         §131     `TODO`   ---              ---        ---
+  `PRD-0108`    P2         §131      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0109`    P2         §131     `TODO`   ---              ---        ---
+  `PRD-0109`    P2         §131      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0110`    P1         §132     `TODO`   ---              ---        ---
+  `PRD-0110`    P1         §132      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0111`    P2         §132     `TODO`   ---              ---        ---
+  `PRD-0111`    P2         §132      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0112`    P1         §133     `TODO`   ---              ---        ---
+  `PRD-0112`    P1         §133      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0113`    P2         §133     `TODO`   ---              ---        ---
+  `PRD-0113`    P2         §133      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0114`    P2         §133     `TODO`   ---              ---        ---
+  `PRD-0114`    P2         §133      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0115`    P2         §133     `TODO`   ---              ---        ---
+  `PRD-0115`    P2         §133      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0116`    P1         §134     `TODO`   ---              ---        ---
+  `PRD-0116`    P1         §134      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0035`    P1         §135     `TODO`   ---              ---        ---
+  `AGT-0035`    P1         §135      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0036`    P1         §135     `TODO`   ---              ---        ---
+  `AGT-0036`    P1         §135      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0037`    P1         §135     `TODO`   ---              ---        ---
+  `AGT-0037`    P1         §135      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0117`    P1         §136     `TODO`   ---              ---        ---
+  `PRD-0117`    P1         §136      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0118`    P2         §136     `TODO`   ---              ---        ---
+  `PRD-0118`    P2         §136      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0038`    P1         §137     `TODO`   ---              ---        ---
+  `AGT-0038`    P1         §137      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0039`    P1         §137     `TODO`   ---              ---        ---
+  `AGT-0039`    P1         §137      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0119`    P1         §138     `TODO`   ---              ---        ---
+  `PRD-0119`    P1         §138      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0120`    P2         §138     `TODO`   ---              ---        ---
+  `PRD-0120`    P2         §138      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0121`    P2         §138     `TODO`   ---              ---        ---
+  `PRD-0121`    P2         §138      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0042`     P1         §139     `TODO`   ---              ---        ---
+  `IO-0042`    P1         §139      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0043`     P1         §139     `TODO`   ---              ---        ---
+  `IO-0043`    P1         §139      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0044`     P1         §139     `TODO`   ---              ---        ---
+  `IO-0044`    P1         §139      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0060`    P1         §140     `TODO`   ---              ---        ---
+  `JOB-0060`    P1         §140      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0061`    P1         §140     `TODO`   ---              ---        ---
+  `JOB-0061`    P1         §140      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0062`    P1         §140     `TODO`   ---              ---        ---
+  `JOB-0062`    P1         §140      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0063`    P1         §140     `TODO`   ---              ---        ---
+  `JOB-0063`    P1         §140      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0064`    P1         §141     `TODO`   ---              ---        ---
+  `JOB-0064`    P1         §141      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `JOB-0065`    P1         §141     `TODO`   ---              ---        ---
+  `JOB-0065`    P1         §141      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PAY-0075`    P1         §142     `TODO`   ---              ---        ---
+  `PAY-0075`    P1         §142      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PAY-0076`    P0         §142     `TODO`   ---              ---        ---
+  `PAY-0076`    P0         §142      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PAY-0077`    P0         §142     `TODO`   ---              ---        ---
+  `PAY-0077`    P0         §142      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0040`    P1         §143     `TODO`   ---              ---        ---
+  `AGT-0040`    P1         §143      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0041`    P1         §143     `TODO`   ---              ---        ---
+  `AGT-0041`    P1         §143      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0042`    P1         §143     `TODO`   ---              ---        ---
+  `AGT-0042`    P1         §143      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0043`    P1         §143     `TODO`   ---              ---        ---
+  `AGT-0043`    P1         §143      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0044`    P1         §143     `TODO`   ---              ---        ---
+  `AGT-0044`    P1         §143      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0122`    P1         §144     `TODO`   ---              ---        ---
+  `PRD-0122`    P1         §144      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0123`    P2         §144     `TODO`   ---              ---        ---
+  `PRD-0123`    P2         §144      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0124`    P2         §144     `TODO`   ---              ---        ---
+  `PRD-0124`    P2         §144      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0125`    P2         §144     `TODO`   ---              ---        ---
+  `PRD-0125`    P2         §144      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0045`    P1         §145     `TODO`   ---              ---        ---
+  `AGT-0045`    P1         §145      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `AGT-0046`    P1         §145     `TODO`   ---              ---        ---
+  `AGT-0046`    P1         §145      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0126`    P1         §146     `TODO`   ---              ---        ---
+  `PRD-0126`    P1         §146      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0127`    P2         §146     `TODO`   ---              ---        ---
+  `PRD-0127`    P2         §146      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0128`    P2         §146     `TODO`   ---              ---        ---
+  `PRD-0128`    P2         §146      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0129`    P2         §146     `TODO`   ---              ---        ---
+  `PRD-0129`    P2         §146      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0130`    P1         §147     `TODO`   ---              ---        ---
+  `PRD-0130`    P1         §147      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0131`    P2         §147     `TODO`   ---              ---        ---
+  `PRD-0131`    P2         §147      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0132`    P2         §147     `TODO`   ---              ---        ---
+  `PRD-0132`    P2         §147      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `CAP-0053`    P1         §148     `TODO`   ---              ---        ---
+  `CAP-0053`    P1         §148      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `CAP-0054`    P1         §148     `TODO`   ---              ---        ---
+  `CAP-0054`    P1         §148      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0133`    P1         §149     `TODO`   ---              ---        ---
+  `PRD-0133`    P1         §149      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0134`    P1         §150     `TODO`   ---              ---        ---
+  `PRD-0134`    P1         §150      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0135`    P2         §150     `TODO`   ---              ---        ---
+  `PRD-0135`    P2         §150      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0136`    P2         §150     `TODO`   ---              ---        ---
+  `PRD-0136`    P2         §150      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0137`    P1         §151     `TODO`   ---              ---        ---
+  `PRD-0137`    P1         §151      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0138`    P2         §151     `TODO`   ---              ---        ---
+  `PRD-0138`    P2         §151      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0139`    P2         §151     `TODO`   ---              ---        ---
+  `PRD-0139`    P2         §151      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent and orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0140`    P1         §152     `TODO`   ---              ---        ---
+  `PRD-0140`    P1         §152      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 AI Request navigation; M10 public catalog primitive available where applicable
 
-  `PRD-0141`    P2         §152     `TODO`   ---              ---        ---
+  `PRD-0141`    P2         §152      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 AI Request navigation; M10 public catalog primitive available where applicable
 
-  `PRD-0142`    P1         §153     `TODO`   ---              ---        ---
+  `PRD-0142`    P1         §153      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0143`    P2         §153     `TODO`   ---              ---        ---
+  `PRD-0143`    P2         §153      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0144`    P1         §154     `TODO`   ---              ---        ---
+  `PRD-0144`    P1         §154      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0145`    P2         §154     `TODO`   ---              ---        ---
+  `PRD-0145`    P2         §154      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 semantic Agent matching over category-independent public documents; M10 public catalog primitive available where applicable
 
-  `PRD-0146`    P1         §155     `TODO`   ---              ---        ---
+  `PRD-0146`    P1         §155      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent semantic discovery index consumer; M10 public catalog primitive available where applicable
 
-  `PRD-0147`    P2         §155     `TODO`   ---              ---        ---
+  `PRD-0147`    P2         §155      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0148`    P2         §155     `TODO`   ---              ---        ---
+  `PRD-0148`    P2         §155      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0055`    P1         §156     `TODO`   ---              ---        ---
+  `CAP-0055`    P1         §156      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `IO-0045`     P1         §157     `TODO`   ---              ---        ---
+  `IO-0045`    P1         §157      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0046`     P1         §158     `TODO`   ---              ---        ---
+  `IO-0046`    P1         §158      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0047`     P1         §158     `TODO`   ---              ---        ---
+  `IO-0047`    P1         §158      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0048`     P1         §158     `TODO`   ---              ---        ---
+  `IO-0048`    P1         §158      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `IO-0049`     P1         §158     `TODO`   ---              ---        ---
+  `IO-0049`    P1         §158      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0149`    P1         §159     `TODO`   ---              ---        ---
+  `PRD-0149`    P1         §159      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0150`    P2         §159     `TODO`   ---              ---        ---
+  `PRD-0150`    P2         §159      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0151`    P2         §159     `TODO`   ---              ---        ---
+  `PRD-0151`    P2         §159      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0152`    P1         §160     `TODO`   ---              ---        ---
+  `PRD-0152`    P1         §160      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0153`    P2         §160     `TODO`   ---              ---        ---
+  `PRD-0153`    P2         §160      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0154`    P2         §160     `TODO`   ---              ---        ---
+  `PRD-0154`    P2         §160      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0155`    P1         §161     `TODO`   ---              ---        ---
+  `PRD-0155`    P1         §161      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
-  `PRD-0156`    P2         §161     `TODO`   ---              ---        ---
+  `PRD-0156`    P2         §161      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent evaluation/orchestration; M10 public catalog primitive available where applicable
 
   `PRD-0157`    P1         §162     `TODO`   ---              ---        ---
 
@@ -1529,29 +1529,29 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0184`    P2         §191     `TODO`   ---              ---        ---
 
-  `IO-0057`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0057
+  `IO-0057`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0057 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0058`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0058
+  `IO-0058`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0058 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0059`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0059
+  `IO-0059`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0059 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0060`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0060
+  `IO-0060`     P1         §192     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:IO-0060 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0061`     P1         §193     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0061
+  `IO-0061`     P1         §193     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0061 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0062`     P1         §193     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0062
+  `IO-0062`     P1         §193     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0062 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0063`     P1         §194     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0063
+  `IO-0063`     P1         §194     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0063 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0064`     P1         §194     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0064
+  `IO-0064`     P1         §194     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0064 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0065`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0065
+  `IO-0065`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0065 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0066`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0066
+  `IO-0066`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0066 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0067`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0067
+  `IO-0067`     P1         §195     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0067 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `UI-0019`     P1         §196     `DEFERRED_VERIFICATION`   ---              ---        backlog:UI-0019
+  `UI-0019`     P1         §196     `DEFERRED_VERIFICATION`   ---              ---        backlog:UI-0019 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `IO-0068`     P1         §197     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/application/src/input-object-validation.ts tests/input-object-validation.test.mjs file schema/storage validator; upload API OPEN backlog:IO-0068 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -1563,23 +1563,23 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `UI-0021`     P2         §198     `DEFERRED_VERIFICATION`   packages/contracts/src/media-presets.ts,packages/contracts/src/file-types.ts tests/media-presets.test.mjs preset compiler exists; seller UI OPEN backlog:UI-0021
 
-  `IO-0071`     P1         §199     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0071
+  `IO-0071`     P1         §199     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0071 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0185`    P1         §200     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0185
+  `PRD-0185`    P1         §200     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0185 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0072`     P1         §201     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0072
+  `IO-0072`     P1         §201     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0072 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0073`     P1         §201     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0073
+  `IO-0073`     P1         §201     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0073 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0074`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0074
+  `IO-0074`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0074 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0075`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0075
+  `IO-0075`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0075 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0076`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0076
+  `IO-0076`     P1         §202     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0076 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0077`     P1         §203     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0077
+  `IO-0077`     P1         §203     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0077 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0078`     P1         §203     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0078
+  `IO-0078`     P1         §203     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0078 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `UI-0022`     P1         §204     `DEFERRED_VERIFICATION`   ---              ---        backlog:UI-0022
 
@@ -1589,7 +1589,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0081`     P1         §205     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0081
 
-  `PRD-0186`    P1         §206     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0186
+  `PRD-0186`    P1         §206     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0186 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `CAP-0056`    P1         §207     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0056 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -1599,29 +1599,29 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0189`    P2         §208     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0189
 
-  `IO-0082`    P1         §209     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts tests/capability-io.test.mjs scalar default baseline; UI/Worker parity OPEN backlog:IO-0082
+  `IO-0082`    P1         §209     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts tests/capability-io.test.mjs scalar default baseline; UI/Worker parity OPEN backlog:IO-0082 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0083`    P1         §209     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts tests/capability-io.test.mjs strict schemas reject file defaults; published consumers OPEN backlog:IO-0083
+  `IO-0083`    P1         §209     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/contracts/src/contract-values.ts tests/capability-io.test.mjs strict schemas reject file defaults; published consumers OPEN backlog:IO-0083 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `CAP-0057`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0057
+  `CAP-0057`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0057 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `CAP-0058`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0058
+  `CAP-0058`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0058 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `CAP-0059`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0059
+  `CAP-0059`    P1         §210     `DEFERRED_VERIFICATION`   ---              ---        backlog:CAP-0059 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0084`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0084
+  `IO-0084`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0084 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0085`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0085
+  `IO-0085`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0085 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0086`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0086
+  `IO-0086`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0086 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0087`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0087
+  `IO-0087`    P1         §211     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0087 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0088`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0088
+  `IO-0088`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0088 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0089`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0089
+  `IO-0089`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs real Docker transfer and private storage pass; authoritative job finalization OPEN backlog:IO-0089 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0090`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-sandbox-output-local-integration.mjs path/symlink denial passes; delivered OpenClaw job OPEN backlog:IO-0090
+  `IO-0090`    P1         §212     `DEFERRED_VERIFICATION`   packages/contracts/src/local-result.ts,packages/sandbox-adapter/src/output-collector.ts,packages/sandbox-adapter/src/output-transfer.ts,apps/worker/src/output-upload.ts tests/local-result.test.mjs,tests/output-collector.test.mjs,tests/docker-sandbox-output-local-integration.mjs path/symlink denial passes; delivered OpenClaw job OPEN backlog:IO-0090 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `IO-0091`     P1         §213     `DEFERRED_VERIFICATION`   packages/application/src/job-instructions.ts tests/job-instructions.test.mjs fixed envelope exists; OpenClaw runtime consumer OPEN backlog:IO-0091
 
@@ -1655,13 +1655,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0106`     P1         §217     `DEFERRED_VERIFICATION`   packages/domain/src/io-readiness.ts tests/io-readiness.test.mjs archives are unsupported until safe extraction; publish gate OPEN backlog:IO-0106
 
-  `IO-0107`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0107
+  `IO-0107`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0107 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0108`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0108
+  `IO-0108`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0108 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0109`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0109
+  `IO-0109`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts tests/s3-storage-local-integration.mjs,tests/docker-output-storage-local-integration.mjs real Docker-to-private-storage stream passes; direct buyer upload/API/multipart OPEN backlog:IO-0109 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0110`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts,apps/worker/src/input-staging.ts tests/docker-output-storage-local-integration.mjs,tests/input-staging.test.mjs Worker streaming passes; browser large-file/multipart E2E OPEN backlog:IO-0110
+  `IO-0110`    P1         §218     `DEFERRED_VERIFICATION`   packages/infrastructure/s3/src/storage.ts,apps/worker/src/output-upload.ts,apps/worker/src/input-staging.ts tests/docker-output-storage-local-integration.mjs,tests/input-staging.test.mjs Worker streaming passes; browser large-file/multipart E2E OPEN backlog:IO-0110 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `CAP-0060`    P1         §219     `DEFERRED_VERIFICATION`   packages/contracts/src/file-limits.ts,packages/contracts/src/capability-io.ts tests/media-presets.test.mjs central policy/schema; UI and runtime parity OPEN backlog:CAP-0060
 
@@ -1675,23 +1675,23 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0113`     P1         §221     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts,packages/domain/src/io-compatibility.ts tests/capability-version.test.mjs,tests/io-compatibility.test.mjs version snapshot/classification; published revision flow OPEN backlog:IO-0113
 
-  `IO-0114`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs pure classification; publication migration OPEN backlog:IO-0114
+  `IO-0114`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs pure classification; publication migration OPEN backlog:IO-0114 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0115`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs required-field breaking classification passes; persisted version/history OPEN backlog:IO-0115
+  `IO-0115`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs required-field breaking classification passes; persisted version/history OPEN backlog:IO-0115 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0116`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs required-output breaking classification passes; persisted version/history OPEN backlog:IO-0116
+  `IO-0116`     P1         §222     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs required-output breaking classification passes; persisted version/history OPEN backlog:IO-0116 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `IO-0117`     P1         §223     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs deterministic field mapping; orchestration planner OPEN backlog:IO-0117
 
-  `PRD-0190`    P1         §224     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs semantic tags constrain mapping; Agent/UI OPEN backlog:PRD-0190
+  `PRD-0190`    P1         §224     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts,packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs semantic tags constrain mapping; Agent/UI OPEN backlog:PRD-0190 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0191`    P2         §224     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs semantic uncertainty represented; Agent/UI OPEN backlog:PRD-0191
+  `PRD-0191`    P2         §224     `DEFERRED_VERIFICATION`   packages/domain/src/io-compatibility.ts tests/io-compatibility.test.mjs semantic uncertainty represented; Agent/UI OPEN backlog:PRD-0191 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0118`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0118
+  `IO-0118`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0118 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0119`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0119
+  `IO-0119`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0119 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0120`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0120
+  `IO-0120`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0120 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `IO-0121`    P1         §226     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0121
 
@@ -1701,19 +1701,19 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0124`    P1         §226     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0124
 
-  `PRD-0192`    P1         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0192
+  `PRD-0192`    P1         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0192 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0193`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0193
+  `PRD-0193`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0193 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0194`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0194
+  `PRD-0194`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0194 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0195`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0195
+  `PRD-0195`    P2         §227     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0195 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `IO-0125`     P1         §228     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0012_asset_retention_guards.sql tests/sql/m05_assets.sql retention extension/grant constraints; sweeper and buyer UI OPEN backlog:IO-0125
+  `IO-0125`     P1         §228     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0012_asset_retention_guards.sql tests/sql/m05_assets.sql retention extension/grant constraints; sweeper and buyer UI OPEN backlog:IO-0125 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0126`     P1         §228     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0126
+  `IO-0126`     P1         §228     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0126 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0127`     P1         §228     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0012_asset_retention_guards.sql tests/sql/m05_assets.sql cloud grant lifetime guard; Worker local cleanup policy OPEN backlog:IO-0127
+  `IO-0127`     P1         §228     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0012_asset_retention_guards.sql tests/sql/m05_assets.sql cloud grant lifetime guard; Worker local cleanup policy OPEN backlog:IO-0127 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0196`    P1         §229     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0196
 
@@ -1723,7 +1723,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `IO-0129`     P1         §230     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-test-case.ts tests/capability-test-case.test.mjs test-case contract exists; seller authoring and runner OPEN backlog:IO-0129
 
-  `TST-0019`    P1         §231     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/output-collector.ts,apps/worker/src/output-upload.ts tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs technical validity only; quality/review OPEN backlog:TST-0019
+  `TST-0019`    P1         §231     `DEFERRED_VERIFICATION`   packages/sandbox-adapter/src/output-collector.ts,apps/worker/src/output-upload.ts tests/output-collector.test.mjs,tests/docker-output-storage-local-integration.mjs technical validity only; quality/review OPEN backlog:TST-0019 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PAY-0078`    P1         §232     `DEFERRED_VERIFICATION`   ---              ---        backlog:PAY-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -1739,15 +1739,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0201`    P2         §233     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0201
 
-  `IO-0130`     P1         §234     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0130
+  `IO-0130`    P1         §234      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Current I/O contract drives concise card input/output badges
 
-  `IO-0131`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0131 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `IO-0131`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0131 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0132`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0132 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `IO-0132`     P1         §235     `DEFERRED_VERIFICATION`   ---              ---        backlog:IO-0132 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0202`    P1         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0202
+  `PRD-0202`    P1         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0202 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0203`    P2         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0203
+  `PRD-0203`    P2         §236     `DEFERRED_VERIFICATION`   ---              ---        backlog:PRD-0203 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0204`    P1         §237     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:PRD-0204
 
@@ -1855,11 +1855,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0238`    P2         §257     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0238
 
-  `PRD-0239`    P1         §258     `DEFERRED_VERIFICATION`   ---   ---   partial M06 evidence; backlog:PRD-0239
+  `PRD-0239`    P1         §258     `DEFERRED_VERIFICATION`   ---   ---   partial M06 evidence; backlog:PRD-0239 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0240`    P1         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0240
+  `PRD-0240`    P1         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0240 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0241`    P2         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0241
+  `PRD-0241`    P2         §259     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0241 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0242`    P1         §260     `DEFERRED_VERIFICATION`   tests/fixtures/m06-advertising-capability.json   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0242 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -1889,15 +1889,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0252`    P2         §264     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-fixture.test.mjs   partial M06 evidence; backlog:PRD-0252
 
-  `PRD-0253`    P1         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0253
+  `PRD-0253`    P1         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0253 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0254`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0254
+  `PRD-0254`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0254 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0255`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0255
+  `PRD-0255`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0255 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0256`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0256
+  `PRD-0256`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0256 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0257`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0257
+  `PRD-0257`    P2         §265     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0257 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `SEC-0082`    P1         §266     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-destination.ts,packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:SEC-0082
 
@@ -1927,9 +1927,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0265`    P2         §270     `DEFERRED_VERIFICATION`   packages/infrastructure/http/src/brave-search.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0265
 
-  `PRD-0266`    P1         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0266
+  `PRD-0266`    P1         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0266 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0267`    P2         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0267
+  `PRD-0267`    P2         §271     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0267 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `CAP-0065`    P1         §272     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-package.ts,packages/contracts/src/capability-version.ts,packages/domain/src/capability-version.ts,packages/policy-engine/src/permission-diff.ts   tests/capability-version.test.mjs,tests/permission-diff.test.mjs   partial M06 evidence; backlog:CAP-0065
 
@@ -1949,13 +1949,13 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0272`    P2         §275     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/policy-engine/src/public-destination.ts   tests/research-broker.test.mjs   partial M06 evidence; backlog:PRD-0272
 
-  `PRD-0273`    P1         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0273 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0273`    P1         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0273 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0274`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0274 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0274`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0274 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0275`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0275 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0275`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0275 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0276`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0276 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0276`    P2         §276     `DEFERRED_VERIFICATION`   packages/application/src/research-broker.ts,packages/persistence/src/research-usage.ts   tests/research-broker.test.mjs,tests/m06-postgres-integration.mjs   partial M06 evidence; backlog:PRD-0276 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `SEC-0090`    P1         §277     `DEFERRED_VERIFICATION`   packages/contracts/src/internet-policy.ts,packages/policy-engine/src/public-destination.ts,packages/policy-engine/src/sandbox.ts   tests/research-broker.test.mjs,tests/docker-sandbox-local-integration.mjs   partial M06 evidence; backlog:SEC-0090
 
@@ -1971,7 +1971,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0281`    P2         §279     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
-  `PRD-0282`    P2         §279     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0282
+  `PRD-0282`    P2         §279     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0282 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0283`    P2         §279     `TODO`   ---   ---   OPEN later-owned implementation: M10 buyer billing and price UI plus M13 authenticated API; docs/milestones/M08.md
 
@@ -2067,7 +2067,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0308`    P1         §297     `TODO`   ---   ---   OPEN later-owned implementation: M10/M14 product copy and full UI acceptance; docs/milestones/M08.md
 
-  `PRD-0309`    P2         §297     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0309
+  `PRD-0309`    P2         §297     `DEFERRED_VERIFICATION`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 component evidence only; backlog:PRD-0309 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0310`    P2         §297     `VERIFIED`   packages/persistence/src/price-tiers.ts,packages/persistence/src/job-execution.ts,packages/persistence/src/finance.ts   tests/m08-finance-postgres-integration.mjs,tests/finance-policy.test.mjs   M08 Core/PostgreSQL boundary verified; docs/milestones/M08.md
 
@@ -2081,27 +2081,27 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0315`    P2         §298     `TODO`   ---   ---   OPEN later-owned implementation: M12 seller dashboard and M14 seller publishing UI; docs/milestones/M08.md
 
-  `SEC-0092`    P1         §299     `DEFERRED_VERIFICATION`   packages/contracts/src/permission-policy.ts,packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0092
+  `SEC-0092`    P1         §299     `DEFERRED_VERIFICATION`   packages/contracts/src/permission-policy.ts,packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0092 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0093`    P0         §299     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0093
+  `SEC-0093`    P0         §299     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0093 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0094`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0094
+  `SEC-0094`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0094 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0095`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0095
+  `SEC-0095`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0095 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0096`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0096
+  `SEC-0096`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0096 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0097`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0097
+  `SEC-0097`    P0         §299     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:SEC-0097 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `SEC-0098`    P1         §300     `DEFERRED_VERIFICATION`   packages/contracts/src/permission-policy.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0098
+  `SEC-0098`    P1         §300     `DEFERRED_VERIFICATION`   packages/contracts/src/permission-policy.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0098 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `CAP-0067`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0067
+  `CAP-0067`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0067 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `CAP-0068`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0068
+  `CAP-0068`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0068 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `CAP-0069`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0069
+  `CAP-0069`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0069 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `CAP-0070`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0070
+  `CAP-0070`    P1         §301     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0070 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `SEC-0099`    P1         §302     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0099
 
@@ -2109,7 +2109,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0101`    P0         §302     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts tests/permission-policy.test.mjs baseline only;  backlog:SEC-0101
 
-  `SEC-0102`    P1         §303     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts,packages/policy-engine/src/permission-diff.ts tests/permission-policy.test.mjs,tests/permission-diff.test.mjs exact-reference diff baseline only;  backlog:SEC-0102
+  `SEC-0102`    P1         §303     `DEFERRED_VERIFICATION`   packages/policy-engine/src/public-manifest.ts,packages/policy-engine/src/permission-diff.ts tests/permission-policy.test.mjs,tests/permission-diff.test.mjs exact-reference diff baseline only;  backlog:SEC-0102 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `SEC-0103`    P0         §303     `DEFERRED_VERIFICATION`   packages/policy-engine/src/permission-diff.ts tests/permission-diff.test.mjs exact-reference diff baseline only; seller review/publish gate absent;  backlog:SEC-0103
 
@@ -2133,7 +2133,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0077`    P1         §307     `DEFERRED_VERIFICATION`   packages/persistence/migrations/0001_foundation.sql tests/sql/m01_foundation.sql baseline only;  backlog:CAP-0077
 
-  `CAP-0078`    P1         §307     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0078
+  `CAP-0078`    P1         §307     `DEFERRED_VERIFICATION`   ---              ---        --- backlog:CAP-0078 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `CAP-0079`    P1         §308     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-version.ts,packages/domain/src/capability-version.ts tests/capability-version.test.mjs baseline only;  backlog:CAP-0079
 
@@ -2147,31 +2147,31 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `SEC-0107`    P1         §311     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:SEC-0107
 
-  `CAP-0084`    P1         §312     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0084
+  `CAP-0084`    P1         §312     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0084 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `CAP-0085`    P1         §312     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0085
+  `CAP-0085`    P1         §312     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0085 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `TST-0020`    P1         §313     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:TST-0020
+  `TST-0020`    P1         §313     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:TST-0020 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0316`    P1         §314     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0316
+  `PRD-0316`    P1         §314     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0316 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0317`    P2         §314     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0317
+  `PRD-0317`    P2         §314     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0317 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0318`    P1         §315     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0318
+  `PRD-0318`    P1         §315     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0318 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0319`    P2         §315     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0319
+  `PRD-0319`    P2         §315     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:PRD-0319 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `CAP-0086`    P1         §316     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `CAP-0086`    P1         §316     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:CAP-0086 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0066`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0066
+  `JOB-0066`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0066 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0067`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0067
+  `JOB-0067`    P1         §317     `DEFERRED_VERIFICATION`   packages/contracts/src/capability-visibility.ts,packages/domain/src/capability-visibility.ts,packages/persistence/migrations/0008_capability_visibility.sql   tests/capability-visibility.test.mjs,tests/sql/m03_visibility.sql   Visibility/version state and private grants constrained; authenticated marketplace/API/Worker E2E pending baseline/open; backlog:JOB-0067 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0320`    P1         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0320 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0320`    P1         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0320 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0321`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0321 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0321`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0321 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0322`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0322 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `PRD-0322`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0322 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `API-0008`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0008
 
@@ -2191,9 +2191,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `API-0016`    P1         §321     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0016
 
-  `IO-0136`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0136 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `IO-0136`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0136 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0137`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0137 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `IO-0137`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0137 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `CAP-0087`    P1         §323     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0087 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -2253,9 +2253,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0073`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0073 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AVL-0004`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0004 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `AVL-0004`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0004 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0005`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0005 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `AVL-0005`    P1         §337     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0005 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0074`    P1         §338     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0074
 
@@ -2263,19 +2263,19 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0076`    P1         §338     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0076
 
-  `JOB-0077`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0077 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `JOB-0077`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0077 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0078`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `JOB-0078`    P1         §339     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0078 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0079`    P1         §339      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `AVL-0006`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0006
+  `AVL-0006`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0006 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0007`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0007
+  `AVL-0007`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0007 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `AVL-0008`    P1         §340      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `AVL-0009`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0009
+  `AVL-0009`    P1         §340     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0009 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0080`    P1         §341     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0080
 
@@ -2315,9 +2315,9 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0016`    P1         §348     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0016
 
-  `UI-0024`    P1         §349     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0024
+  `UI-0024`    P1         §349      `VERIFIED`   packages/persistence/src/availability.ts,apps/web/app/discover/marketplace-ui.tsx,apps/web/app/capabilities/[slug]/page.tsx   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   Browser checked ONLINE, BUSY, SCHEDULED_OFFLINE, OFFLINE, PAUSED and readiness blocked with text on card/detail
 
-  `UI-0025`    P2         §349     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:UI-0025
+  `UI-0025`    P2         §349      `VERIFIED`   packages/persistence/src/availability.ts,apps/web/app/discover/marketplace-ui.tsx,apps/web/app/capabilities/[slug]/page.tsx   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   Browser checked ONLINE, BUSY, SCHEDULED_OFFLINE, OFFLINE, PAUSED and readiness blocked with text on card/detail
 
   `AVL-0017`    P1         §350     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0017
 
@@ -2351,71 +2351,71 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `CAP-0094`    P1         §355     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0094
 
-  `PRD-0331`    P1         §356     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0331
+  `PRD-0331`    P1         §356      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent, M13 REST/MCP consumers and M19 provider parity; M10 public catalog primitive available where applicable
 
-  `PRD-0332`    P2         §356     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0332
+  `PRD-0332`    P2         §356      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent, M13 REST/MCP consumers and M19 provider parity; M10 public catalog primitive available where applicable
 
-  `CAP-0095`    P1         §357     `TODO`   ---              ---        ---
+  `CAP-0095`    P1         §357      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller example authoring UI; M10 public catalog primitive available where applicable
 
-  `CAP-0096`    P1         §357     `TODO`   ---              ---        ---
+  `CAP-0096`    P1         §357      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0097`    P1         §357     `TODO`   ---              ---        ---
+  `CAP-0097`    P1         §357      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller example authoring guidance; M10 public catalog primitive available where applicable
 
-  `CAP-0098`    P1         §358     `TODO`   ---              ---        ---
+  `CAP-0098`    P1         §358      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0099`    P1         §358     `TODO`   ---              ---        ---
+  `CAP-0099`    P1         §358      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0100`    P1         §358     `TODO`   ---              ---        ---
+  `CAP-0100`    P1         §358      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0101`    P1         §359     `TODO`   ---              ---        ---
+  `CAP-0101`    P1         §359      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 real seller Test Playground→example publication; M10 public catalog primitive available where applicable
 
-  `PRD-0333`    P1         §360     `TODO`   ---              ---        ---
+  `PRD-0333`    P1         §360      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0333
 
-  `PRD-0334`    P2         §360     `TODO`   ---              ---        ---
+  `PRD-0334`    P2         §360      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0335`    P2         §360     `TODO`   ---              ---        ---
+  `PRD-0335`    P2         §360      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `IO-0138`     P1         §361     `TODO`   ---              ---        ---
+  `IO-0138`    P1         §361      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:IO-0138
 
-  `IO-0139`     P1         §361     `TODO`   ---              ---        ---
+  `IO-0139`    P1         §361      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:IO-0139
 
-  `CAP-0102`    P1         §362     `TODO`   ---              ---        ---
+  `CAP-0102`    P1         §362      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0103`    P1         §362     `TODO`   ---              ---        ---
+  `CAP-0103`    P1         §362      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0104`    P1         §362     `TODO`   ---              ---        ---
+  `CAP-0104`    P1         §362      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `PRD-0336`    P1         §363     `TODO`   ---              ---        ---
+  `PRD-0336`    P1         §363      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller approval UI for public example assets; M10 public catalog primitive available where applicable
 
-  `PRD-0337`    P2         §363     `TODO`   ---              ---        ---
+  `PRD-0337`    P2         §363      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0337
 
-  `PRD-0338`    P2         §363     `TODO`   ---              ---        ---
+  `PRD-0338`    P2         §363      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0338
 
-  `PRD-0339`    P2         §363     `TODO`   ---              ---        ---
+  `PRD-0339`    P2         §363      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 component evidence; full gate OPEN; backlog:PRD-0339
 
-  `IO-0140`     P1         §364     `TODO`   ---              ---        ---
+  `IO-0140`    P1         §364      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `IO-0141`     P1         §364     `TODO`   ---              ---        ---
+  `IO-0141`    P1         §364      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `IO-0142`     P1         §364     `TODO`   ---              ---        ---
+  `IO-0142`    P1         §364      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0105`    P1         §365     `TODO`   ---              ---        ---
+  `CAP-0105`    P1         §365      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 version-change example compatibility workflow; M10 public catalog primitive available where applicable
 
-  `CAP-0106`    P1         §365     `TODO`   ---              ---        ---
+  `CAP-0106`    P1         §365      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0107`    P1         §365     `TODO`   ---              ---        ---
+  `CAP-0107`    P1         §365      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller revalidation before using an old example; M10 public catalog primitive available where applicable
 
-  `CAP-0108`    P1         §365     `TODO`   ---              ---        ---
+  `CAP-0108`    P1         §365      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 runtime/model/skill-change rerun guidance; M10 public catalog primitive available where applicable
 
-  `PRD-0340`    P1         §366     `TODO`   ---              ---        ---
+  `PRD-0340`    P1         §366      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent; M10 public catalog primitive available where applicable
 
-  `PRD-0341`    P2         §366     `TODO`   ---              ---        ---
+  `PRD-0341`    P2         §366      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Marketplace Agent; M10 public catalog primitive available where applicable
 
-  `IO-0143`     P1         §367     `TODO`   ---              ---        ---
+  `IO-0143`    P1         §367      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `IO-0144`     P1         §367     `TODO`   ---              ---        ---
+  `IO-0144`    P1         §367      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   M10 PostgreSQL/browser evidence; docs/milestones/M10.md
 
-  `CAP-0109`    P1         §368     `TODO`   ---              ---        ---
+  `CAP-0109`    P1         §368      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent, M14 real test publication and M16 media acceptance; M10 public catalog primitive available where applicable
 
   `OBS-0007`    P1         §369     `DEFERRED_VERIFICATION`   ---   ---   OPEN; see backlog
 
@@ -2553,7 +2553,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `PRD-0350`    P2         §396      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0350
 
-  `AVL-0021`    P1         §397      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0021
+  `AVL-0021`    P1         §397      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   PUBLIC schedule-closed listing and next availability on detail
 
   `AVL-0022`    P1         §398      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0022
 
@@ -2579,11 +2579,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0031`    P1         §402      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0032`    P1         §403      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0032
+  `AVL-0032`    P1         §403      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Browser rendered all five authoritative availability states
 
-  `AVL-0033`    P1         §404      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0033
+  `AVL-0033`    P1         §404      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Immediate schedule-closed checkout refused before reservation
 
-  `AVL-0034`    P1         §404      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0034
+  `AVL-0034`    P1         §404      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Immediate schedule-closed checkout refused before reservation
 
   `AVL-0035`    P1         §405      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M11 Marketplace Agent; M09 Core evidence in docs/milestones/M09.md
 
@@ -2675,15 +2675,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0053`    P1         §423      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0054`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0054
+  `AVL-0054`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0054 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0055`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0055
+  `AVL-0055`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0055 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0056`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0056
+  `AVL-0056`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0056 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0057`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0057
+  `AVL-0057`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0057 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `AVL-0058`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0058
+  `AVL-0058`    P1         §424      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0058 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0360`    P1         §425      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0360
 
@@ -2773,11 +2773,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0173`    P1         §436     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:JOB-0173
 
-  `PRD-0365`    P1         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0365
+  `PRD-0365`    P1         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0365 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0366`    P2         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0366
+  `PRD-0366`    P2         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0366 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0367`    P2         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0367
+  `PRD-0367`    P2         §437     `DEFERRED_VERIFICATION`   ---   ---   M07 implementation evidence; cross-milestone gate backlog:PRD-0367 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `JOB-0174`    P1         §438     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts   tests/worker-job-control.test.mjs,tests/docker-controlled-execution-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0174 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0174
 
@@ -2805,11 +2805,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0186`    P1         §442     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/local-state.ts   tests/worker-job-control.test.mjs,tests/worker-local-state.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0186
 
-  `JOB-0187`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0187
+  `JOB-0187`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0187 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0188`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0188
+  `JOB-0188`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0188 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0189`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0189
+  `JOB-0189`    P1         §443     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/domain/src/job-lifecycle.ts   tests/worker-job-control.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0189 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0190`    P1         §444     `DEFERRED_VERIFICATION`   packages/domain/src/job-lifecycle.ts,packages/persistence/src/job-execution.ts   tests/job-lifecycle.test.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0190
 
@@ -2837,11 +2837,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0202`    P1         §448     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,packages/persistence/migrations/0014_job_execution.sql   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0202
 
-  `JOB-0203`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0203 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0203
+  `JOB-0203`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0203 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0203 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0204`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0204 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0204
+  `JOB-0204`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0204 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0204 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0205`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0205 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0205
+  `JOB-0205`    P1         §449     `DEFERRED_VERIFICATION`   apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts,packages/persistence/src/job-execution.ts   tests/worker-job-control.test.mjs,tests/m07-result-postgres-integration.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0205 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:JOB-0205 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0206`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0206 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -2853,7 +2853,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0210`    P1         §450     `DEFERRED_VERIFICATION`   apps/worker/src/cli.ts,apps/worker/src/job-control.ts,apps/worker/src/execution-supervisor.ts   tests/worker-job-control.test.mjs,tests/docker-worker-supervisor-local-integration.mjs   M07 implementation evidence; cross-milestone gate backlog:JOB-0210 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `AVL-0059`    P1         §451      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0059
+  `AVL-0059`    P1         §451      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Scheduled browser purchase booked for a future window
 
   `AVL-0060`    P1         §451      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
@@ -2879,15 +2879,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0218`    P1         §457      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0219`    P1         §457      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0219
+  `JOB-0219`    P1         §457      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Earliest eligibility shown without guaranteed start
 
   `JOB-0220`    P1         §458      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 buyer copy; M09 Core evidence in docs/milestones/M09.md
 
-  `JOB-0221`    P1         §459      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0221
+  `JOB-0221`    P1         §459      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Buyer sees unknown completion ETA instead of invented precision
 
-  `JOB-0222`    P1         §459      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0222
+  `JOB-0222`    P1         §459      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Buyer sees unknown completion ETA instead of invented precision
 
-  `PAY-0109`    P1         §460      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PAY-0109
+  `PAY-0109`    P1         §460      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Scheduled quote discloses credit reservation now and later execution
 
   `PAY-0110`    P0         §460      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 checkout disclosure; M09 Core evidence in docs/milestones/M09.md
 
@@ -2907,7 +2907,7 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0065`    P1         §463      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0223`    P1         §464      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0223
+  `JOB-0223`    P1         §464      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0223 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `JOB-0224`    P1         §464      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M10 job page; M09 Core evidence in docs/milestones/M09.md
 
@@ -2917,17 +2917,17 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0227`    P1         §466      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0370`    P1         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0370
+  `PRD-0370`    P1         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0370 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0371`    P2         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0371
+  `PRD-0371`    P2         §467      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0371 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `PRD-0372`    P1         §468      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
   `PRD-0373`    P2         §468      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0066`    P1         §469      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0066
+  `AVL-0066`    P1         §469      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0066 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `PRD-0374`    P1         §470      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0374
+  `PRD-0374`    P1         §470      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0374 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `PRD-0375`    P2         §470      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
@@ -2943,11 +2943,11 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `AVL-0069`    P1         §472      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `JOB-0231`    P1         §473      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0231
+  `JOB-0231`    P1         §473      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0231 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `CAP-0114`    P1         §474      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `AVL-0070`    P1         §475      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0070
+  `AVL-0070`    P1         §475      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:AVL-0070 M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
   `AVL-0071`    P1         §475      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
@@ -2993,15 +2993,15 @@ feature post-MVP or the user explicitly approves the deferral.
 
   `JOB-0240`    P1         §485      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0240
 
-  `JOB-0241`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0241
+  `JOB-0241`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0241 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `JOB-0242`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0242
+  `JOB-0242`    P1         §486      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:JOB-0242 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
   `JOB-0243`    P1         §486      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
-  `PRD-0382`    P1         §487      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0382
+  `PRD-0382`    P1         §487      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Schedule-closed capability remains discoverable and schedulable
 
-  `PRD-0383`    P2         §487      `DEFERRED_VERIFICATION`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 component evidence; full gate OPEN; backlog:PRD-0383
+  `PRD-0383`    P2         §487      `VERIFIED`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts,tests/m09-postgres-integration.mjs   Schedule-closed capability remains discoverable and schedulable
 
   `AVL-0074`    P1         §488     `TODO`   ---              ---        ---
 

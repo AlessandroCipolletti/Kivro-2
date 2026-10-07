@@ -225,12 +225,19 @@ export class PostgresJobExecutionRepository {
       const versionResult = await client.query<{ version_snapshot: unknown }>(
         'SELECT version_snapshot FROM capability_versions WHERE id=$1 FOR SHARE', [job.capability_version_id]);
       const version = PublishedCapabilityVersionSchema.parse(versionResult.rows[0]?.version_snapshot);
+      const schedulePlan = await client.query<{latest_start_at:Date}>(
+        'SELECT latest_start_at FROM job_schedule_plans WHERE job_id=$1',[jobId]);
+      const latestStart = schedulePlan.rows[0]?.latest_start_at;
+      const minimumRetention = latestStart ?
+        new Date(latestStart.getTime()+version.resourceLimits.timeoutSeconds*1000+86_400_000) : null;
+      if (minimumRetention && !Number.isFinite(minimumRetention.getTime()))
+        throw new JobExecutionError('NOT_ELIGIBLE');
       let totalBytes = Buffer.byteLength(canonicalJson(payload), 'utf8');
       const assetEvidence: { id: string; sizeBytes: number; sha256: string }[] = [];
       for (const id of ids) {
         const result = await client.query<{ id: string; owner_account_id: string; state: string;
           size_bytes: string; sha256: string; retain_until: Date }>(
-          'SELECT id,owner_account_id,state,size_bytes,sha256,retain_until FROM assets WHERE id=$1 FOR SHARE', [id]);
+          'SELECT id,owner_account_id,state,size_bytes,sha256,retain_until FROM assets WHERE id=$1 FOR UPDATE', [id]);
         const asset = result.rows[0];
         if (!asset || asset.owner_account_id !== job.buyer_account_id || asset.state !== 'READY' ||
           asset.retain_until.getTime() <= Date.now()) throw new JobExecutionError('NOT_ELIGIBLE');
@@ -239,9 +246,16 @@ export class PostgresJobExecutionRepository {
         totalBytes += sizeBytes;
         assetEvidence.push({ id, sizeBytes, sha256: asset.sha256 });
         if (totalBytes > version.resourceLimits.maxInputBytes) throw new JobExecutionError('NOT_ELIGIBLE');
+        if (minimumRetention && asset.retain_until < minimumRetention) {
+          await client.query('UPDATE assets SET retain_until=$2 WHERE id=$1',
+            [id,minimumRetention]);
+        }
+        const grantExpiresAt=minimumRetention && minimumRetention>asset.retain_until?
+          minimumRetention:asset.retain_until;
         await client.query(`INSERT INTO asset_read_grants(id,asset_id,target_job_id,expires_at)
-          VALUES($1,$2,$3,$4) ON CONFLICT(asset_id,target_job_id) DO NOTHING`,
-        [randomUUID(), id, jobId, asset.retain_until]);
+          VALUES($1,$2,$3,$4) ON CONFLICT(asset_id,target_job_id) DO UPDATE
+          SET expires_at=GREATEST(asset_read_grants.expires_at,EXCLUDED.expires_at)`,
+        [randomUUID(), id, jobId, grantExpiresAt]);
       }
       if (totalBytes > version.resourceLimits.maxInputBytes) throw new JobExecutionError('NOT_ELIGIBLE');
       const schemaHash = hashCanonicalJson(snapshot.inputContractSnapshot);

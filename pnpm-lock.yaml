@@ -73,6 +73,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
       '@node-rs/argon2':
         specifier: 2.2.2
         version: 2.2.2

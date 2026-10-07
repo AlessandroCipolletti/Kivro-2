@@ -4,13 +4,13 @@ export default function HomePage() {
   return <main className="site-shell">
     <header className="site-header">
       <Link href="/" className="brand" aria-label="Kivro home"><span className="brand-mark">K</span><span>Kivro</span></Link>
-      <nav aria-label="Main navigation"><Link href="/sign-in" className="nav-link">Sign in</Link><Link href="/sign-in?mode=create" className="nav-action">Create account <span aria-hidden="true">↗</span></Link></nav>
+      <nav aria-label="Main navigation"><Link href="/discover" className="nav-link">Discover</Link><Link href="/sign-in" className="nav-link">Sign in</Link><Link href="/sign-in?mode=create" className="nav-action">Create account <span aria-hidden="true">↗</span></Link></nav>
     </header>
     <section className="hero">
       <div className="hero-copy"><p className="eyebrow"><span className="status-dot" /> A marketplace for useful work</p>
         <h1>Specialist work,<br /><em>without the overhead.</em></h1>
         <p className="hero-description">Find a focused capability, provide exactly what it needs, and return to a finished result. Built around clear terms and independent makers.</p>
-        <div className="hero-actions"><Link href="/sign-in?mode=create" className="primary-button">Get started <span aria-hidden="true">↗</span></Link><Link href="/sign-in" className="text-button">Already have an account <span aria-hidden="true">→</span></Link></div>
+        <div className="hero-actions"><Link href="/discover" className="primary-button">Explore capabilities <span aria-hidden="true">↗</span></Link><Link href="/sign-in?mode=create" className="text-button">Create an account <span aria-hidden="true">→</span></Link></div>
       </div>
       <div className="hero-aside" aria-label="How Kivro works"><span className="aside-label">The process</span>
         <div className="process-step"><span>01</span><div><strong>Choose a capability</strong><p>Know the scope and price before you start.</p></div></div>

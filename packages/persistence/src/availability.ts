@@ -646,6 +646,25 @@ export class PostgresAvailabilityRepository {
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())`,
       [job.id,q.id,cap.id,q.execution_mode,q.earliest_eligible_at,window.startAt,next,
         q.latest_start_at,immediate?now:null,immediate?now:null]);
+      // An input uploaded before a future booking must remain readable through
+      // the immutable latest start plus runtime. The grant guard permits only
+      // one-way extension for this active scheduled job; an expired asset is
+      // never revived. All changes roll back with the financial reservation.
+      const manifest=await client.query<{file_count:number}>(
+        'SELECT file_count FROM job_input_manifests WHERE job_id=$1',[job.id]);
+      if (manifest.rows[0]?.file_count) {
+        const extended=await client.query<{id:string}>(`UPDATE assets a SET retain_until=GREATEST(
+          a.retain_until,$3::timestamptz+($4::numeric*interval '1 second')+interval '1 day')
+          FROM asset_read_grants g WHERE g.asset_id=a.id AND g.target_job_id=$1
+          AND a.owner_account_id=$2 AND a.state='READY' AND a.retain_until>now()
+          RETURNING a.id`,[job.id,input.buyerAccountId,q.latest_start_at,
+          version.resourceLimits.timeoutSeconds]);
+        if (extended.rows.length!==manifest.rows[0].file_count)
+          throw new AvailabilityError('NOT_ELIGIBLE');
+        await client.query(`UPDATE asset_read_grants g SET expires_at=GREATEST(
+          g.expires_at,a.retain_until) FROM assets a
+          WHERE g.asset_id=a.id AND g.target_job_id=$1`,[job.id]);
+      }
       await client.query('UPDATE job_schedule_quotes SET accepted_job_id=$2 WHERE id=$1',[q.id,job.id]);
       await this.event(client,job.id,'BOOKED',`job:${job.id}:book`,
         { quoteId:q.id,executionMode:q.execution_mode,nextEligibleAt:iso(next) });
