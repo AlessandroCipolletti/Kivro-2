@@ -19,7 +19,7 @@ export function jobStatusLabel(status:string){return ({PAYMENT_RESERVED:'Payment
     Record<string,string>)[status]??'Updating';}
 export function MarketplaceHeader({signedIn=false}:{signedIn?:boolean}){
   return <header className="site-header market-header"><Link href="/" className="brand" aria-label="Kivro home"><span className="brand-mark">K</span><span>Kivro</span></Link>
-    <nav aria-label="Marketplace navigation"><Link href="/discover">Discover</Link><Link href="/discover#categories">Categories</Link>
+    <nav aria-label="Marketplace navigation"><Link href="/discover">Discover</Link><Link href="/ai-request">AI Request</Link><Link href="/discover#categories">Categories</Link>
       {signedIn?<><Link href="/buyer?view=favorites">Favorites</Link><Link href="/buyer">My jobs</Link><Link href="/seller">Selling</Link><Link className="nav-action" href="/account">Account ↗</Link></>:<Link className="nav-action" href="/sign-in">Sign in ↗</Link>}</nav></header>;
 }
 export function Card({item}:{item:CapabilityCard}){

@@ -9,6 +9,7 @@ const dbPassword = randomBytes(24).toString('hex');
 const authSecret = randomBytes(48).toString('base64');
 const outboxKey = randomBytes(32).toString('base64');
 const financeCronSecret = randomBytes(32).toString('hex');
+const agentCronSecret = randomBytes(32).toString('hex');
 const contents = [
   '# Local development only. Never use these credentials for a hosted profile.',
   'NODE_ENV=development',
@@ -19,6 +20,7 @@ const contents = [
   `AUTH_OUTBOX_KEY_BASE64=${outboxKey}`,
   'KIVRO_STRIPE_MODE=test',
   `FINANCE_CRON_SECRET=${financeCronSecret}`,
+  `AGENT_CRON_SECRET=${agentCronSecret}`,
   'SMTP_HOST=127.0.0.1',
   'SMTP_PORT=11025',
   'SMTP_FROM="Kivro Dev <no-reply@kivro.local>"',

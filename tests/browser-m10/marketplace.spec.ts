@@ -7,6 +7,10 @@ import { PostgresFinanceRepository } from '../../dist/packages/persistence/src/f
 import { PostgresWorkerHeartbeatRepository } from '../../dist/packages/persistence/src/worker-heartbeat.js';
 import { S3PrivateObjectStorage } from '../../dist/packages/infrastructure/s3/src/storage.js';
 import { WORKER_PROTOCOL_VERSION } from '../../dist/packages/worker-protocol/src/messages.js';
+import { getMarketplaceService } from '../../dist/apps/web/src/marketplace/server.js';
+import { MarketplaceAgentRepository } from '../../dist/packages/persistence/src/marketplace-agent.js';
+import { MarketplaceAgentPlanner } from '../../dist/packages/application/src/marketplace-agent-planner.js';
+import type { PlatformInferenceRouter } from '../../dist/packages/application/src/platform-inference-router.js';
 
 async function verificationLink(email:string):Promise<string>{
   const list=await fetch('http://127.0.0.1:18025/api/v1/messages').then((r)=>r.json()) as {
@@ -60,6 +64,12 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
     await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByRole('heading',{name:'Privacy & access'})).toBeVisible();
+    await expect(page.getByRole('link',{name:'Ask Marketplace Agent ↗'})).toHaveAttribute(
+      'href',`/ai-request?capabilityId=${capability.id}`);
+    await page.goto('/privacy');
+    await expect(page.getByRole('heading',{name:'Know where your request goes.'})).toBeVisible();
+    await expect(page.getByText(/It does not send your private file bytes/)).toBeVisible();
+    await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByText('Excellent result')).toBeVisible();
     await expect(page.locator('.example-pair')).toContainText('Question:');
     await expect(page.locator('.example-pair')).toContainText('Supporting file:');
@@ -156,6 +166,40 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await statusOnCard('Temporarily unavailable');
     await report(0,true);
     await statusOnCard('Available now');
+    const marketplace=getMarketplaceService();
+    const agentRepo=new MarketplaceAgentRepository(pool);
+    const conversationId=randomUUID();
+    await agentRepo.createConversation(buyer,conversationId);
+    const agentPlanner=new MarketplaceAgentPlanner(marketplace.catalog,
+      marketplace.availability,marketplace.getBuyer,agentRepo,{generate:async()=>({
+        structuredOutput:{steps:[{key:'research',capabilityId:capability.id,
+          dependsOnKeys:[],inputValues:[{fieldKey:'question',value:'Research Acme'}],
+          inputAssetIds:[],mappings:[]}]}})} as unknown as PlatformInferenceRouter);
+    const agentPlan=(await agentPlanner.propose({buyerId:buyer,conversationId,
+      goal:'Research Acme',constraints:{maxTotalSpendMinor:2000,onlineOnly:false,
+        outputTypes:[],requiredInputTypes:[],blockedSellerIds:[],preferredCapabilityIds:[],
+        permissionLimits:[],timing:{mode:'IMMEDIATE',maxQueueWaitSeconds:0}},
+      candidateIds:[capability.id],ownedAssetIds:[]})).plan;
+    await page.setViewportSize({width:1280,height:900});
+    await page.goto(`/ai-request?planId=${agentPlan.id}`);
+    await expect(page.getByRole('heading',{name:'Review the plan'})).toBeVisible();
+    await expect(page.locator('.ai-plan-steps')).toContainText('Research brief');
+    await expect(page.locator('.ai-plan-total')).toContainText('$20.00');
+    await page.screenshot({path:'test-results/m11-agent-plan-desktop.png',fullPage:true,
+      animations:'disabled'});
+    await page.setViewportSize({width:390,height:844});
+    await expect(page.locator('.ai-history')).toBeVisible();
+    await page.screenshot({path:'test-results/m11-agent-mobile-top.png',
+      animations:'disabled'});
+    await page.locator('.ai-plan').scrollIntoViewIfNeeded();
+    await page.screenshot({path:'test-results/m11-agent-mobile-plan.png',
+      animations:'disabled'});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
+    await page.getByRole('checkbox',{name:/I reviewed this plan/}).check();
+    await page.getByRole('button',{name:/Approve plan/}).click();
+    await expect(page.locator('.ai-plan-steps')).toContainText('In queue');
+    await page.getByRole('button',{name:'Cancel remaining work'}).click();
+    await expect(page.getByText('No further jobs will start.')).toBeVisible();
     await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByRole('heading',{name:'PROJECT'})).toBeVisible();
     await expect(page.getByRole('heading',{name:'SOURCE'})).toBeVisible();

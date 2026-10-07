@@ -54,6 +54,7 @@ const markdown = z.strictObject({ ...base, type: z.literal('MARKDOWN'), constrai
 export const InputFieldSchema = z.discriminatedUnion('type', [
   shortText.extend({ defaultValue: z.string().optional() }),
   longText.extend({ defaultValue: z.string().optional() }),
+  markdown.extend({ defaultValue: z.string().optional() }),
   integer.extend({ defaultValue: z.number().int().optional() }),
   number.extend({ defaultValue: z.number().finite().optional() }),
   boolean.extend({ defaultValue: z.boolean().optional() }),
@@ -82,9 +83,11 @@ function reachableConditionValue(field: z.infer<typeof InputFieldSchema>,
         expected >= (field.constraints?.minimum ?? -Infinity) &&
         expected <= (field.constraints?.maximum ?? Infinity);
     case 'SHORT_TEXT':
+    case 'LONG_TEXT':
+    case 'MARKDOWN':
       return typeof expected === 'string' &&
         expected.length >= Math.max(field.required ? 1 : 0, field.constraints?.minLength ?? 0) &&
-        expected.length <= (field.constraints?.maxLength ?? 256);
+        expected.length <= (field.constraints?.maxLength ?? (field.type==='SHORT_TEXT'?256:10_000));
     default:
       return false;
   }
@@ -105,7 +108,7 @@ export const InputContractSchema = z.strictObject({
     if ('defaultValue' in field && field.defaultValue !== undefined) {
       const value = field.defaultValue;
       const valid = field.type === 'SELECT' ? field.constraints.allowedValues.includes(value as string) :
-        field.type === 'SHORT_TEXT' || field.type === 'LONG_TEXT' ?
+        field.type === 'SHORT_TEXT' || field.type === 'LONG_TEXT' || field.type === 'MARKDOWN' ?
           (value as string).length >= Math.max(field.required ? 1 : 0, field.constraints?.minLength ?? 0) &&
           (value as string).length <= (field.constraints?.maxLength ?? (field.type === 'SHORT_TEXT' ? 256 : 10_000)) :
           field.type === 'INTEGER' || field.type === 'NUMBER' ?

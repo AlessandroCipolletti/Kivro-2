@@ -236,11 +236,20 @@ export class PostgresJobExecutionRepository {
       const assetEvidence: { id: string; sizeBytes: number; sha256: string }[] = [];
       for (const id of ids) {
         const result = await client.query<{ id: string; owner_account_id: string; state: string;
-          size_bytes: string; sha256: string; retain_until: Date }>(
-          'SELECT id,owner_account_id,state,size_bytes,sha256,retain_until FROM assets WHERE id=$1 FOR UPDATE', [id]);
+          kind:string;source_job_id:string|null;size_bytes: string; sha256: string; retain_until: Date }>(
+          'SELECT id,owner_account_id,state,kind,source_job_id,size_bytes,sha256,retain_until FROM assets WHERE id=$1 FOR UPDATE', [id]);
         const asset = result.rows[0];
         if (!asset || asset.owner_account_id !== job.buyer_account_id || asset.state !== 'READY' ||
           asset.retain_until.getTime() <= Date.now()) throw new JobExecutionError('NOT_ELIGIBLE');
+        if(asset.kind==='JOB_OUTPUT'){
+          const delivered=await client.query(`SELECT 1 FROM jobs source
+            JOIN job_payment_states payment ON payment.job_id=source.id AND payment.state='SETTLED'
+            JOIN job_result_manifests manifest ON manifest.job_id=source.id
+            JOIN job_result_assets result ON result.manifest_id=manifest.id AND result.asset_id=$2
+            WHERE source.id=$1 AND source.buyer_account_id=$3 AND source.status='COMPLETED'`,
+          [asset.source_job_id,id,job.buyer_account_id]);
+          if(!delivered.rows[0])throw new JobExecutionError('NOT_ELIGIBLE');
+        }
         const sizeBytes = Number(asset.size_bytes);
         if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) throw new JobExecutionError('NOT_ELIGIBLE');
         totalBytes += sizeBytes;

@@ -29,6 +29,37 @@ export class MarketplaceBuyerRepository {
     private readonly finance:PostgresFinanceRepository,
     private readonly execution:PostgresJobExecutionRepository){}
 
+  async recentOwnedInputAssets(buyerId:string):Promise<readonly {id:string;
+    fileName:string;mimeType:string;sizeBytes:number}[]>{
+    const rows=await this.pool.query<{id:string;file_name:string;detected_mime_type:string;
+      size_bytes:string}>(`SELECT a.id,u.file_name,a.detected_mime_type,a.size_bytes
+      FROM assets a JOIN buyer_direct_uploads u ON u.asset_id=a.id
+      WHERE a.owner_account_id=$1 AND a.kind='BUYER_INPUT' AND a.state='READY'
+        AND a.retain_until>now() AND u.finalized_at IS NOT NULL
+      ORDER BY u.finalized_at DESC LIMIT 50`,[uuid.parse(buyerId)]);
+    return rows.rows.map((row)=>({id:row.id,fileName:row.file_name,
+      mimeType:row.detected_mime_type,sizeBytes:Number(row.size_bytes)}));
+  }
+
+  /** Only finalized buyer uploads with known file names can be mapped by the Agent. */
+  async ownedInputAssets(buyerId:string,assetIds:readonly string[]):Promise<readonly {
+    id:string;fileName:string;extension:string;mimeType:string;sizeBytes:number}[]>{
+    uuid.parse(buyerId);
+    if(assetIds.length>50||new Set(assetIds).size!==assetIds.length)
+      throw new BuyerMarketplaceError('INVALID_INPUT');
+    assetIds.forEach((value)=>uuid.parse(value));
+    if(!assetIds.length)return [];
+    const rows=await this.pool.query<{id:string;file_name:string;detected_mime_type:string;
+      size_bytes:string}>(`SELECT a.id,u.file_name,a.detected_mime_type,a.size_bytes
+      FROM assets a JOIN buyer_direct_uploads u ON u.asset_id=a.id
+      WHERE a.id=ANY($1::uuid[]) AND a.owner_account_id=$2 AND a.kind='BUYER_INPUT'
+        AND a.state='READY' AND a.retain_until>now() AND u.finalized_at IS NOT NULL`,
+    [assetIds,buyerId]);
+    return rows.rows.map((row)=>({id:row.id,fileName:row.file_name,
+      extension:row.file_name.match(/\.[A-Za-z0-9]{1,16}$/)?.[0]?.toLowerCase()??'',
+      mimeType:row.detected_mime_type,sizeBytes:Number(row.size_bytes)}));
+  }
+
   async termsStatus(buyerId:string):Promise<boolean>{
     const row=await this.pool.query<{accepted:boolean}>(`SELECT EXISTS(
       SELECT 1 FROM marketplace_terms_acceptances WHERE account_id=$1 AND version=1
@@ -77,8 +108,14 @@ export class MarketplaceBuyerRepository {
     const version=PublishedCapabilityVersionSchema.parse(versionRow.rows[0]?.version_snapshot);
     const payload=validateInputPayload(version.ioContract.input,input.payload);
     for(const assetId of Object.values(payload.assets).flat()){
-      const asset=await this.pool.query<{id:string}>(`SELECT id FROM assets WHERE id=$1
-        AND owner_account_id=$2 AND state='READY' AND retain_until>now()`,
+      const asset=await this.pool.query<{id:string}>(`SELECT a.id FROM assets a WHERE a.id=$1
+        AND a.owner_account_id=$2 AND a.state='READY' AND a.retain_until>now()
+        AND (a.kind<>'JOB_OUTPUT' OR EXISTS(SELECT 1 FROM jobs source
+          JOIN job_payment_states payment ON payment.job_id=source.id AND payment.state='SETTLED'
+          JOIN job_result_manifests manifest ON manifest.job_id=source.id
+          JOIN job_result_assets result ON result.manifest_id=manifest.id AND result.asset_id=a.id
+          WHERE source.id=a.source_job_id AND source.buyer_account_id=$2
+            AND source.status='COMPLETED'))`,
       [assetId,input.buyerId]);
       if(!asset.rows[0])throw new BuyerMarketplaceError('INVALID_INPUT');
     }

@@ -68,8 +68,10 @@ export type CapabilityDetail = z.infer<typeof CapabilityDetailSchema>;
 
 /** M11 discovery consumes this public projection, never Worker configuration or SQL. */
 export const CapabilityDiscoveryDocumentSchema=z.strictObject({
-  capabilityId:z.uuid(),capabilityVersionId:z.uuid(),name:z.string(),
+  capabilityId:z.uuid(),capabilityVersionId:z.uuid(),slug:z.string(),sellerId:z.uuid(),name:z.string(),
   description:z.string(),category:MarketplaceCategorySchema,tags:z.array(z.string()),
+  ioContract:CapabilityIOContractSchema,
+  permissionManifest:PublicPermissionManifestSchema,
   accepts:z.array(z.strictObject({key:z.string(),type:z.string(),required:z.boolean()})),
   outputs:z.array(z.strictObject({key:z.string(),type:z.string(),required:z.boolean()})),
   strengths:z.array(z.string()),limitations:z.array(z.string()),

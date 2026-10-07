@@ -60,9 +60,9 @@ export function assessFieldMapping(rawOutputField: unknown, rawInputField: unkno
     }
     status = 'DIRECT'; code = 'FILE_SAFE';
   } else if (['SHORT_TEXT', 'LONG_TEXT', 'MARKDOWN'].includes(output.type) &&
-    ['SHORT_TEXT', 'LONG_TEXT'].includes(input.type)) {
+    ['SHORT_TEXT', 'LONG_TEXT', 'MARKDOWN'].includes(input.type)) {
     const source = textLimits(output as Extract<OutputField, { type: 'SHORT_TEXT' | 'LONG_TEXT' | 'MARKDOWN' }>);
-    const target = textLimits(input as Extract<InputField, { type: 'SHORT_TEXT' | 'LONG_TEXT' }>);
+    const target = textLimits(input as Extract<InputField, { type: 'SHORT_TEXT' | 'LONG_TEXT' | 'MARKDOWN' }>);
     if (source.min < target.min || source.max > target.max) return { status, code: 'TEXT_BOUNDS' };
     status = output.type === input.type ? 'DIRECT' : 'SAFE_TEXT_MAPPING';
     code = output.type === input.type ? 'SCALAR_SAFE' : 'TEXT_ADAPTATION';

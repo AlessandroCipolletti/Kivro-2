@@ -15,6 +15,19 @@ type CatalogRow = { id: string; slug: string; name: string; description: string;
   rating_3: number; rating_4: number; rating_5: number; completed_jobs: number;
   typical_runtime_seconds: string | null; favorite: boolean; relevance: number };
 
+// Only the public contract/marketplace projection enters search. The rest of
+// the version snapshot, Worker manifest, seller config and secrets stay out.
+const publicSearchText=`c.name||' '||c.description||' '||coalesce(m.category,'')||' '||
+  coalesce(m.short_description,'')||' '||
+  array_to_string(coalesce(m.tags,'{}'::text[]),' ')||' '||
+  array_to_string(coalesce(m.strengths,'{}'::text[]),' ')||' '||
+  array_to_string(coalesce(m.limitations,'{}'::text[]),' ')||' '||
+  coalesce((v.version_snapshot->'ioContract'->'input'->'fields')::text,'')||' '||
+  coalesce((v.version_snapshot->'ioContract'->'output'->'fields')::text,'')||' '||
+  coalesce((SELECT string_agg(e.title||' '||e.description,' ') FROM capability_examples e
+    WHERE e.capability_id=c.id AND e.capability_version_id=v.id
+      AND e.publication_state='PUBLISHED'),'')`;
+
 const baseSql = `SELECT c.id,c.slug,c.name,c.description,s.id AS seller_id,
   s.display_name AS seller_name,s.created_at AS seller_member_since,
   m.category,m.short_description,m.tags,m.strengths,m.limitations,v.version_snapshot,
@@ -23,8 +36,7 @@ const baseSql = `SELECT c.id,c.slug,c.name,c.description,s.id AS seller_id,
   EXISTS(SELECT 1 FROM buyer_favorites f WHERE f.capability_id=c.id
     AND f.buyer_account_id=$1::uuid) AS favorite,
   CASE WHEN $2::text='' THEN 0 ELSE ts_rank(
-    to_tsvector('english',c.name||' '||c.description||' '||
-      coalesce(m.short_description,'')||' '||array_to_string(coalesce(m.tags,'{}'::text[]),' ')),
+    to_tsvector('english',${publicSearchText}),
     websearch_to_tsquery('english',$2)) END AS relevance
   FROM capabilities c
   JOIN seller_profiles s ON s.id=c.seller_profile_id
@@ -100,8 +112,7 @@ export class MarketplaceCatalog {
     if (buyerId) z.uuid().parse(buyerId);
     const rows=await this.pool.query<CatalogRow>(`${baseSql}
       WHERE c.visibility='PUBLIC' AND c.status='PUBLISHED' AND s.status='ACTIVE'
-        AND ($2::text='' OR to_tsvector('english',c.name||' '||c.description||' '||
-          coalesce(m.short_description,'')||' '||array_to_string(coalesce(m.tags,'{}'::text[]),' '))
+        AND ($2::text='' OR to_tsvector('english',${publicSearchText})
           @@ websearch_to_tsquery('english',$2))
       ORDER BY c.id`,[buyerId,input.query]);
     const candidates: { row:CatalogRow; priceMinor:number;ratingAverage:number|null;
@@ -230,7 +241,9 @@ export class MarketplaceCatalog {
     [detail.id]);
     if(current.rows[0]?.id!==detail.version.id)return null;
     return CapabilityDiscoveryDocumentSchema.parse({capabilityId:detail.id,
-      capabilityVersionId:detail.version.id,name:detail.name,
+      capabilityVersionId:detail.version.id,slug:detail.slug,sellerId:detail.sellerId,
+      name:detail.name,ioContract:detail.version.ioContract,
+      permissionManifest:detail.version.permissionManifest,
       description:detail.description,category:detail.category,tags:detail.tags,
       accepts:detail.version.ioContract.input.fields.map((field)=>({key:field.key,
         type:field.type,required:field.required})),

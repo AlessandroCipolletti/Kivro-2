@@ -39,13 +39,14 @@ function friendlyError(value:string):string{
     STRIPE_NOT_READY:'Payment provider status is not ready; your credits were not reserved.'};
   return messages[value]??value;
 }
-export function RunForm({detail,initialValues={},sourceLabel,changeWarning,termsAccepted}:{detail:CapabilityDetail;
-  initialValues?:Values;sourceLabel?:string;changeWarning?:string;termsAccepted:boolean}){
+export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,changeWarning,termsAccepted}:{detail:CapabilityDetail;
+  initialValues?:Values;initialAssets?:Assets;sourceLabel?:string;changeWarning?:string;termsAccepted:boolean}){
   const [values,setValues]=useState<Values>(()=>initial(detail,initialValues));
   const [rawJson,setRawJson]=useState<Record<string,string>>(()=>Object.fromEntries(
     detail.version.ioContract.input.fields.filter((field)=>field.type==='JSON').map((field)=>[
       field.key,initialValues[field.key]===undefined?'':JSON.stringify(initialValues[field.key],null,2)])));
   const [files,setFiles]=useState<Record<string,File[]>>({});
+  const [ownedAssets,setOwnedAssets]=useState<Assets>(initialAssets);
   const [mode,setMode]=useState<'IMMEDIATE_ONLY'|'EARLIEST_AVAILABLE'>(
     detail.availability.status==='SCHEDULED_OFFLINE'&&detail.availability.canSchedule?
       'EARLIEST_AVAILABLE':'IMMEDIATE_ONLY');
@@ -72,7 +73,7 @@ export function RunForm({detail,initialValues={},sourceLabel,changeWarning,terms
       for(const field of current){if(field.type==='JSON'&&rawJson[field.key]?.trim()){
         try{JSON.parse(rawJson[field.key]!);}catch{throw new Error(`${field.label}: enter valid JSON`);}
       }}
-      const assets:Assets={};
+      const assets:Assets={...ownedAssets};
       for(const field of current){
         if(field.type!=='FILE'&&field.type!=='FILES')continue;
         const selected=files[field.key]??[];
@@ -155,8 +156,8 @@ export function RunForm({detail,initialValues={},sourceLabel,changeWarning,terms
       {field.type==='BOOLEAN'?<input type="checkbox" checked={values[field.key]===true} onChange={(e)=>update(field.key,e.target.checked)}/>:
       field.type==='SELECT'?<select value={String(values[field.key]??'')} onChange={(e)=>update(field.key,e.target.value)} required={field.required}><option value="">Select an option</option>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
       field.type==='MULTI_SELECT'?<select multiple value={Array.isArray(values[field.key])?values[field.key] as string[]:[]} onChange={(e)=>update(field.key,Array.from(e.target.selectedOptions).map((o)=>o.value))}>{field.constraints.allowedValues.map((item)=><option key={item}>{item}</option>)}</select>:
-      field.type==='FILE'||field.type==='FILES'?<input type="file" multiple={field.type==='FILES'} accept={field.constraints.allowedExtensions.join(',')} onChange={(e)=>{setFiles((old)=>({...old,[field.key]:Array.from(e.target.files??[])}));setQuote(null);}}/>:
-      field.type==='LONG_TEXT'||field.type==='JSON'?<textarea rows={field.type==='JSON'?6:4} value={field.type==='JSON'?rawJson[field.key]??'':String(values[field.key]??'')} onChange={(e)=>{if(field.type==='JSON'){
+      field.type==='FILE'||field.type==='FILES'?<><input type="file" multiple={field.type==='FILES'} accept={field.constraints.allowedExtensions.join(',')} onChange={(e)=>{setFiles((old)=>({...old,[field.key]:Array.from(e.target.files??[])}));setOwnedAssets((old)=>({...old,[field.key]:[]}));setQuote(null);}}/>{(ownedAssets[field.key]?.length??0)>0&&<small>{ownedAssets[field.key]!.length} private buyer file(s) selected by Marketplace Agent. Choosing a new file replaces this selection.</small>}</>:
+      field.type==='LONG_TEXT'||field.type==='MARKDOWN'||field.type==='JSON'?<textarea rows={field.type==='JSON'?6:4} value={field.type==='JSON'?rawJson[field.key]??'':String(values[field.key]??'')} onChange={(e)=>{if(field.type==='JSON'){
         setRawJson((old)=>({...old,[field.key]:e.target.value}));setQuote(null);
         try{update(field.key,JSON.parse(e.target.value) as unknown);setError('');}
         catch{update(field.key,undefined);}
