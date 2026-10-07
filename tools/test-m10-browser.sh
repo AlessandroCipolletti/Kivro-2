@@ -49,4 +49,4 @@ const client=new S3Client({region:process.env.OBJECT_STORAGE_REGION,
     secretAccessKey:process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY}});
 await client.send(new CreateBucketCommand({Bucket:process.env.OBJECT_STORAGE_BUCKET}));client.destroy();'
 node --test "$repo_root/tests/m10-postgres-integration.mjs"
-pnpm exec playwright test -c playwright.m10.config.mts
+pnpm exec playwright test -c playwright.m10.config.mts "$@"

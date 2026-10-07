@@ -28,3 +28,7 @@ M14 defines one restrained visual language for buyer and seller work. The source
 Discover: search and filters → current capabilities → price/availability/trust. Detail: service identity → price/availability/CTA → inputs/outputs → examples/reviews/permissions. Buyer: active work and credits → history → result actions. Agent: intent → grounded shortlist → plan/total authorization → job states. Seller: Worker and global controls → readiness and queued/running work → capability settings → earnings/diagnostics. Account: identity → buyer integrations, with secrets shown only once.
 
 Visual review evidence and viewport checks belong in `docs/milestones/M14.md` and browser tests. M14 does not treat a screenshot as evidence of backend publication, financial authorization or runtime safety.
+
+## Visual regression
+
+`tests/browser-m10/design-system.spec.ts` compares desktop and mobile home and Discover screens with checked-in Playwright image baselines. Run `pnpm test:browser:m10` to check them. After an intentional design change, inspect the rendered result first, then run `pnpm test:browser:m10 --update-snapshots` and review the resulting image diff. Browser suites also capture capability detail, checkout and scheduling, Marketplace Agent, seller operations and Worker health, publication review, and account/API states for manual inspection. The publication review fixture is a faithful Core-state visual fixture; it is not evidence that an installed Worker completed seller publication or a paid job.

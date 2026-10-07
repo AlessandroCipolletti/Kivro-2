@@ -7,10 +7,14 @@ test('M14 navigation, responsive content, focus and honest marketplace states',a
   await page.goto('/');
   await page.screenshot({path:'test-results/m14-home-desktop.png',fullPage:true,
     animations:'disabled'});
+  await expect(page).toHaveScreenshot('m14-home-desktop.png',{
+    fullPage:true,animations:'disabled',maxDiffPixelRatio:0.002});
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>new Promise<void>((resolve)=>requestAnimationFrame(()=>resolve())));
   await page.screenshot({path:'test-results/m14-home-mobile.png',fullPage:true,
     animations:'disabled'});
+  await expect(page).toHaveScreenshot('m14-home-mobile.png',{
+    fullPage:true,animations:'disabled',maxDiffPixelRatio:0.002});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth)).toBe(false);
   await page.goto('/sign-in');
   await expect(page.getByRole('tablist',{name:'Account access'})).toBeVisible();
@@ -44,11 +48,17 @@ test('M14 navigation, responsive content, focus and honest marketplace states',a
     }
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth);
     expect(overflow,`Discover overflows at ${viewport.width}px`).toBe(false);
-    if(viewport.width===1280)await page.screenshot({path:'test-results/m14-discover-desktop.png',
-      fullPage:true,animations:'disabled'});
+    if(viewport.width===1280){
+      await page.screenshot({path:'test-results/m14-discover-desktop.png',
+        fullPage:true,animations:'disabled'});
+      await expect(page).toHaveScreenshot('m14-discover-desktop.png',{
+        fullPage:true,animations:'disabled',maxDiffPixelRatio:0.002});
+    }
     if(viewport.width===390){
       await page.screenshot({path:'test-results/m14-discover-mobile.png',fullPage:true,
         animations:'disabled'});
+      await expect(page).toHaveScreenshot('m14-discover-mobile.png',{
+        fullPage:true,animations:'disabled',maxDiffPixelRatio:0.002});
       const menu=page.locator('.mobile-nav summary');
       await expect(menu).toBeVisible();
       await menu.focus();
