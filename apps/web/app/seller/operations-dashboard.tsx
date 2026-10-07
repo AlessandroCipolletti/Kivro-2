@@ -11,6 +11,13 @@ const policySchema=z.object({schedule:scheduleSchema.nullable(),concurrencyLimit
   maxWaitSeconds:z.number()});
 const availabilitySchema=z.object({status:z.string(),reason:z.string(),nextAvailableAt:z.string().nullable(),
   acceptingImmediate:z.boolean(),canSchedule:z.boolean()});
+const availabilityMetricsSchema=z.object({periodDays:z.number(),observedMinutes:z.number(),
+  unobservedMinutes:z.number(),onlineMinutesObserved:z.number(),busyMinutesObserved:z.number(),
+  offlineMinutesObserved:z.number(),scheduledOfflineMinutesObserved:z.number(),
+  pausedMinutesObserved:z.number(),readinessBlockedMinutesObserved:z.number(),
+  unavailableMinutesObserved:z.number(),jobsAccepted:z.number(),queueFullRejects:z.number(),
+  medianQueueWaitSeconds:z.number().nullable(),medianExecutionSeconds:z.number().nullable(),
+  disconnectFailures:z.number(),source:z.literal('MINUTE_OBSERVATIONS')});
 const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status:z.string(),
   payout_status:z.string()}),workers:z.array(z.object({id:z.string(),name:z.string(),platform:z.string(),
   worker_version:z.string(),openclaw_version:z.string().nullable(),status:z.string(),
@@ -36,7 +43,8 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
   lastFailureAt:z.string().nullable(),
   readinessFresh:z.boolean(),sandbox_verified:z.boolean().nullable(),
   required_secrets_ready:z.boolean().nullable(),runtime_healthy:z.boolean().nullable(),
-  availability:availabilitySchema.nullable(),operations:z.object({
+  availability:availabilitySchema.nullable(),availabilityMetrics:availabilityMetricsSchema.nullable(),
+  operations:z.object({
     schedule:scheduleSchema,inheritedFromWorker:z.boolean(),policy:policySchema,
     sellerPaused:z.boolean(),workerPaused:z.boolean(),platformBlocked:z.boolean(),
     insideServiceHours:z.boolean(),
@@ -259,6 +267,28 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
             {capability.operations&&<small>{capability.operations.scheduledCount} scheduled ·
               {capability.operations.queuedCount} queued ·
               {capability.runningCount} running / {capability.operations.policy.concurrencyLimit} max</small>}
+            {capability.availabilityMetrics&&<div className="ops-metrics">
+              <strong>Availability observations</strong>
+              <small>Last {capability.availabilityMetrics.periodDays} days, observed minutes:</small>
+              <div className="ops-metrics-grid">
+                <span><b>{capability.availabilityMetrics.onlineMinutesObserved}</b>Online</span>
+                <span><b>{capability.availabilityMetrics.busyMinutesObserved}</b>Busy</span>
+                <span><b>{capability.availabilityMetrics.offlineMinutesObserved}</b>Offline</span>
+                <span><b>{capability.availabilityMetrics.unobservedMinutes}</b>Unobserved</span>
+              </div>
+              <small>{capability.availabilityMetrics.scheduledOfflineMinutesObserved} minutes
+                outside service hours · {capability.availabilityMetrics.pausedMinutesObserved} paused ·
+                {' '}{capability.availabilityMetrics.readinessBlockedMinutesObserved} readiness blocked.</small>
+              <small>{capability.availabilityMetrics.jobsAccepted} jobs accepted ·
+                {' '}{capability.availabilityMetrics.queueFullRejects} queue-full rejects ·
+                {' '}median queue wait {capability.availabilityMetrics.medianQueueWaitSeconds===null?
+                  'unknown':`${Math.round(capability.availabilityMetrics.medianQueueWaitSeconds)}s`} ·
+                {' '}median execution {capability.availabilityMetrics.medianExecutionSeconds===null?
+                  'unknown':`${Math.round(capability.availabilityMetrics.medianExecutionSeconds)}s`} ·
+                {' '}{capability.availabilityMetrics.disconnectFailures} disconnect failures.</small>
+              <small>Time is sampled once per minute; missing periods are unknown. These observations
+                do not affect marketplace ranking.</small>
+            </div>}
             <small>Last success {stamp(capability.lastSuccessAt)} · Last failure {
               stamp(capability.lastFailureAt)}</small>
           </div><div className="ops-row-actions"><button type="button" disabled={busy!==null||!capability.operations}

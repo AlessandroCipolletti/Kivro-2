@@ -20,3 +20,11 @@ export interface DurableTaskPort {
 export interface WorkerSignalPort {
   signalWorker(controlPlaneId: string, workerDeviceId: string): Promise<void>;
 }
+
+/** A webhook socket is created only to the already-vetted address, with the URL host
+ * retained for TLS name verification. Implementations must never follow redirects. */
+export interface PinnedWebhookPostPort {
+  post(input:{url:URL;pinnedAddress:string;body:Uint8Array;
+    headers:Readonly<Record<string,string>>;timeoutMs:number;maxResponseBytes:number}):
+    Promise<{status:number}>;
+}

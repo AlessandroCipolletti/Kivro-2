@@ -136,7 +136,7 @@ the conflicting instruction and decision must be documented explicitly.
 
   `PRD-0023`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/capability-io.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0023 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `PRD-0024`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0024
+  `PRD-0024`    P2         §8      `VERIFIED`   packages/contracts/src/contract-values.ts,apps/web/src/buyer-api/handler.ts,apps/web/src/worker/control-handler.ts   tests/m13-postgres-integration.mjs   Undeclared buyer input is rejected before booking; signed accepted Worker input contains only declared fields.
 
   `PRD-0025`    P2         §8       `DEFERRED_VERIFICATION`   packages/contracts/src/contract-values.ts tests/capability-io.test.mjs baseline only;  backlog:PRD-0025 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
@@ -752,7 +752,7 @@ the conflicting instruction and decision must be documented explicitly.
 
   `WRK-0082`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0082 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
-  `WRK-0083`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0083 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `WRK-0083`    P1         §66      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   Cross-buyer job and output-asset reads are denied by server-derived buyer identity.
 
   `WRK-0084`    P1         §66      `DEFERRED_VERIFICATION`   ---              ---        --- backlog:WRK-0084 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -1692,9 +1692,9 @@ the conflicting instruction and decision must be documented explicitly.
 
   `IO-0118`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0118 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
 
-  `IO-0119`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0119 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
+  `IO-0119`    P1         §225      `VERIFIED`   packages/persistence/src/marketplace-assets.ts,packages/persistence/src/marketplace-buyer.ts,apps/web/src/buyer-api/handler.ts   tests/m13-postgres-integration.mjs   Buyer-owned input/output access and signed Worker input grants enforce owner and job scope.
 
-  `IO-0120`    P1         §225     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0120 M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
+  `IO-0120`    P1         §225      `VERIFIED`   packages/persistence/src/marketplace-assets.ts,packages/persistence/src/marketplace-buyer.ts,apps/web/src/buyer-api/handler.ts   tests/m13-postgres-integration.mjs   Other buyer guessed input/output asset IDs return 404; private bytes stay inaccessible.
 
   `IO-0121`    P1         §226     `DEFERRED_VERIFICATION`   packages/contracts/src/assets.ts,packages/domain/src/assets.ts,packages/persistence/migrations/0010_private_assets.sql tests/assets.test.mjs,tests/sql/m05_assets.sql baseline only; full asset flow OPEN backlog:IO-0121
 
@@ -2176,81 +2176,81 @@ the conflicting instruction and decision must be documented explicitly.
 
   `PRD-0322`    P2         §318     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0322 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 component: apps/web/src/marketplace,apps/web/app/discover,apps/web/app/buyer; tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts; full gate OPEN.
 
-  `API-0008`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0008
+  `API-0008`    P1         §319      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0009`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0009
+  `API-0009`    P1         §319      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0010`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0010
+  `API-0010`    P1         §319      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0011`    P1         §319     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0011
+  `API-0011`    P1         §319      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0012`    P1         §320     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0012
+  `API-0012`    P1         §320      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0013`    P1         §320     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0013
+  `API-0013`    P1         §320      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0014`    P1         §320     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0014
+  `API-0014`    P1         §320      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0015`    P1         §321     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0015
+  `API-0015`    P1         §321      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0016`    P1         §321     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0016
+  `API-0016`    P1         §321      `VERIFIED`   packages/persistence/src/buyer-api-keys.ts,apps/web/app/account/buyer-integrations.tsx   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `IO-0136`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0136 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
+  `IO-0136`    P1         §322      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `IO-0137`    P1         §322     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:IO-0137 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open. M10 buyer source: apps/web/app/capabilities,apps/web/app/buyer; full cross-system closing test remains OPEN.
+  `IO-0137`    P1         §322      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `CAP-0087`    P1         §323     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0087 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `CAP-0087`    P1         §323      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PAY-0102`    P1         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0102 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0102
+  `PAY-0102`    P1         §324      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PAY-0103`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0103 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0103
+  `PAY-0103`    P0         §324      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PAY-0104`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0104 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0104
+  `PAY-0104`    P0         §324      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PAY-0105`    P0         §324     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PAY-0105 M08 component evidence: packages/persistence/src/finance.ts,tests/m08-finance-postgres-integration.mjs; backlog:PAY-0105
+  `PAY-0105`    P0         §324      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0017`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0017 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `API-0017`    P1         §325      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0018`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0018 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `API-0018`    P1         §325      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0019`    P1         §325     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0019 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `API-0019`    P1         §325      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0020`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0020 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `API-0020`    P1         §326      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0021`    P1         §326     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0021 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `API-0021`    P1         §326      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/buyer-api-keys.ts,packages/persistence/src/marketplace-buyer.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0323`    P1         §327     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0323
+  `PRD-0323`    P1         §327      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `JOB-0068`    P1         §328     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0068
+  `JOB-0068`    P1         §328      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `JOB-0069`    P1         §328     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0069
+  `JOB-0069`    P1         §328      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0022`    P1         §329     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0022
+  `API-0022`    P1         §329      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `JOB-0070`    P1         §330     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0070
+  `JOB-0070`    P1         §330      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `JOB-0071`    P1         §330     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0071
+  `JOB-0071`    P1         §330      `VERIFIED`   packages/persistence/src/buyer-webhooks.ts,packages/persistence/migrations/0023_buyer_api_webhooks.sql   tests/m13-postgres-integration.mjs,tests/browser-m13/buyer-integrations.spec.ts   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0324`    P1         §331     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0324
+  `PRD-0324`    P1         §331      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0325`    P2         §331     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0325
+  `PRD-0325`    P2         §331      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0326`    P1         §332     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0326
+  `PRD-0326`    P1         §332      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0327`    P2         §332     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0327
+  `PRD-0327`    P2         §332      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0328`    P2         §332     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:PRD-0328
+  `PRD-0328`    P2         §332      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `AVL-0003`    P1         §333     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0003
+  `AVL-0003`    P1         §333      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0023`    P1         §334     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0023
+  `API-0023`    P1         §334      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/infrastructure/http/src/pinned-webhook-post.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0024`    P1         §334     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0024
+  `API-0024`    P1         §334      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/infrastructure/http/src/pinned-webhook-post.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0025`    P1         §334     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0025
+  `API-0025`    P1         §334      `VERIFIED`   packages/application/src/webhook-policy.ts,packages/infrastructure/http/src/pinned-webhook-post.ts,packages/persistence/src/buyer-webhooks.ts   tests/m13-webhook-policy.test.mjs,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0026`    P1         §335     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0026
+  `API-0026`    P1         §335      `VERIFIED`   apps/web/app/account/buyer-integrations.tsx,packages/persistence/src/buyer-webhooks.ts   tests/browser-m13/buyer-integrations.spec.ts,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `API-0027`    P1         §335     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:API-0027
+  `API-0027`    P1         §335      `VERIFIED`   apps/web/app/account/buyer-integrations.tsx,packages/persistence/src/buyer-webhooks.ts   tests/browser-m13/buyer-integrations.spec.ts,tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
   `JOB-0072`    P1         §336     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0072 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -2326,9 +2326,9 @@ the conflicting instruction and decision must be documented explicitly.
 
   `AVL-0018`    P1    §350    `VERIFIED`   packages/application/src/marketplace-agent-discovery.ts,packages/application/src/marketplace-agent.ts,packages/application/src/marketplace-agent-planner.ts,packages/domain/src/agent-plan.ts   tests/m11-agent.test.mjs,tests/m11-postgres-integration.mjs   M11 closes prior deferred gate with current published supply, deterministic constraints and test evidence; docs/milestones/M11.md.
 
-  `CAP-0088`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0088 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `CAP-0088`    P1         §351      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `CAP-0089`    P1         §351     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0089 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
+  `CAP-0089`    P1         §351      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
   `JOB-0085`    P1         §352     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:JOB-0085 M08 component: packages/persistence/src/finance.ts; tests/m08-finance-postgres-integration.mjs; full gate open.
 
@@ -2340,9 +2340,9 @@ the conflicting instruction and decision must be documented explicitly.
 
   `JOB-0089`    P1         §353      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts,packages/persistence/src/job-execution.ts   tests/m09-postgres-integration.mjs   M09 real PostgreSQL two-buyer slot race, heartbeat TTL, deterministic order or release; docs/milestones/M09.md
 
-  `AVL-0019`    P1         §354     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0019
+  `AVL-0019`    P1         §354      `VERIFIED`   packages/persistence/src/availability-metrics.ts,packages/persistence/migrations/0024_availability_metrics.sql,tools/kivro-scheduler.mjs,apps/web/app/seller/operations-dashboard.tsx   tests/m13-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M13 minute observations retain unknown gaps; seller-only metrics cover online/offline/busy time, accepted jobs, queue-full rejects, median waits/runtime and disconnect failures.
 
-  `AVL-0020`    P1         §354     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:AVL-0020
+  `AVL-0020`    P1         §354      `VERIFIED`   packages/persistence/src/availability-metrics.ts,packages/persistence/src/marketplace-catalog.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m13-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M13 observations are seller-private and explicitly approximate; marketplace ranking does not use uptime or penalize laptop-based sellers.
 
   `CAP-0090`    P1         §355     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0090
 
@@ -2354,9 +2354,9 @@ the conflicting instruction and decision must be documented explicitly.
 
   `CAP-0094`    P1         §355     `DEFERRED_VERIFICATION`   ---              ---        --- baseline/open; backlog:CAP-0094
 
-  `PRD-0331`    P1         §356      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent, M13 REST/MCP consumers and M19 provider parity; M10 public catalog primitive available where applicable
+  `PRD-0331`    P1         §356      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,apps/web/src/buyer-api/handler.ts   tests/m10-postgres-integration.mjs,tests/m11-postgres-integration.mjs,tests/m13-postgres-integration.mjs   M13 web, Agent and REST share Core contracts; full isolated paid Worker and both-provider proof remain OPEN. backlog:PRD-0331
 
-  `PRD-0332`    P2         §356      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M11 Agent, M13 REST/MCP consumers and M19 provider parity; M10 public catalog primitive available where applicable
+  `PRD-0332`    P2         §356      `DEFERRED_VERIFICATION`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,apps/web/src/buyer-api/handler.ts   tests/m10-postgres-integration.mjs,tests/m11-postgres-integration.mjs,tests/m13-postgres-integration.mjs   M13 web, Agent and REST share Core contracts; full isolated paid Worker and both-provider proof remain OPEN. backlog:PRD-0332
 
   `CAP-0095`    P1         §357      `TODO`   packages/contracts/src/marketplace.ts,packages/persistence/src/marketplace-catalog.ts,packages/persistence/src/marketplace-social.ts,packages/persistence/src/marketplace-buyer.ts,packages/persistence/src/marketplace-assets.ts,apps/web/app/discover,apps/web/app/buyer,apps/web/app/capabilities   tests/m10-postgres-integration.mjs,tests/browser-m10/marketplace.spec.ts   OPEN later-owned implementation: M14 seller example authoring UI; M10 public catalog primitive available where applicable
 
@@ -2592,9 +2592,9 @@ the conflicting instruction and decision must be documented explicitly.
 
   `AVL-0036`    P1    §405    `VERIFIED`   packages/application/src/marketplace-agent-discovery.ts,packages/application/src/marketplace-agent.ts,packages/application/src/marketplace-agent-planner.ts,packages/domain/src/agent-plan.ts   tests/m11-agent.test.mjs,tests/m11-postgres-integration.mjs   M11 closes prior deferred gate with current published supply, deterministic constraints and test evidence; docs/milestones/M11.md.
 
-  `AVL-0037`    P1         §406      `TODO`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   OPEN later-owned implementation: M13 REST API; M09 Core evidence in docs/milestones/M09.md
+  `AVL-0037`    P1         §406      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `AVL-0038`    P1         §406      `DEFERRED_VERIFICATION`   packages/persistence/src/availability.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m09-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M12 component evidence exists; complete cross-system acceptance remains OPEN with the exact dependency in backlog. backlog:AVL-0038
+  `AVL-0038`    P1         §406      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
   `JOB-0118`    P1         §407      `VERIFIED`   packages/contracts/src/availability.ts,packages/persistence/src/availability.ts   tests/m09-postgres-integration.mjs   M09 Core verified; docs/milestones/M09.md
 
@@ -2666,11 +2666,11 @@ the conflicting instruction and decision must be documented explicitly.
 
   `PRD-0358`    P2         §419      `VERIFIED`   apps/web/app/capabilities/[slug]/local-availability-time.tsx,apps/web/app/capabilities/[slug]/page.tsx,packages/persistence/src/availability.ts   tests/browser-m10/marketplace.spec.ts,tests/availability-schedule.test.mjs   M12 correction renders an absolute server instant then buyer-local time after hydration; M10 browser asserts the real scheduled-offline detail time.
 
-  `AVL-0051`    P1         §420      `DEFERRED_VERIFICATION`   packages/persistence/src/availability.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m09-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M12 component evidence exists; complete cross-system acceptance remains OPEN with the exact dependency in backlog. backlog:AVL-0051
+  `AVL-0051`    P1         §420      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `AVL-0052`    P1         §420      `DEFERRED_VERIFICATION`   packages/persistence/src/availability.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m09-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M12 component evidence exists; complete cross-system acceptance remains OPEN with the exact dependency in backlog. backlog:AVL-0052
+  `AVL-0052`    P1         §420      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
-  `PRD-0359`    P1         §421      `DEFERRED_VERIFICATION`   packages/persistence/src/availability.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m09-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M12 component evidence exists; complete cross-system acceptance remains OPEN with the exact dependency in backlog. backlog:PRD-0359
+  `PRD-0359`    P1         §421      `VERIFIED`   apps/web/src/buyer-api/handler.ts,packages/persistence/src/availability.ts   tests/m13-postgres-integration.mjs   M13 real bearer REST, Core, PostgreSQL and browser evidence.
 
   `JOB-0133`    P1         §422      `DEFERRED_VERIFICATION`   packages/persistence/src/availability.ts,apps/web/app/seller/operations-dashboard.tsx   tests/m09-postgres-integration.mjs,tests/browser-m12/seller-operations.spec.ts   M12 component evidence exists; complete cross-system acceptance remains OPEN with the exact dependency in backlog. backlog:JOB-0133
 

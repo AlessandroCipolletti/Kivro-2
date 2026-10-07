@@ -93,6 +93,15 @@ function rating(row: CatalogRow) {
 export class MarketplaceCatalog {
   constructor(private readonly pool: Pool, private readonly availability: PostgresAvailabilityRepository) {}
 
+  async detailByIdentifier(identifier:string,buyerId:string|null=null):Promise<CapabilityDetail|null>{
+    if(z.uuid().safeParse(identifier).success){
+      const row=await this.pool.query<{slug:string}>('SELECT slug FROM capabilities WHERE id=$1',
+        [identifier]);
+      return row.rows[0]?this.detail(row.rows[0].slug,buyerId):null;
+    }
+    return this.detail(identifier,buyerId);
+  }
+
   private async card(row: CatalogRow, buyerId: string | null): Promise<CapabilityCard> {
     const version=PublishedCapabilityVersionSchema.parse(row.version_snapshot);
     const status=await this.availability.publicStatus(row.id,buyerId);

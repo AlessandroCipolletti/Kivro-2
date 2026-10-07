@@ -4,6 +4,7 @@ import { PublishedCapabilityVersionSchema, JobContractSnapshotSchema } from
   '../../contracts/src/capability-version.js';
 import { createJobContractSnapshot } from '../../domain/src/capability-version.js';
 import { validateInputPayload } from '../../contracts/src/contract-values.js';
+import { canonicalJson } from '../../contracts/src/canonical-json.js';
 import type { PostgresAvailabilityRepository } from './availability.js';
 import type { PostgresFinanceRepository } from './finance.js';
 import type { PostgresJobExecutionRepository } from './job-execution.js';
@@ -138,7 +139,22 @@ export class MarketplaceBuyerRepository {
       FROM capability_versions v WHERE v.id=$1 AND v.publication_state='PUBLISHED'`,
     [q.capability_version_id]);
     const version=PublishedCapabilityVersionSchema.parse(found.rows[0]?.version_snapshot);
-    validateInputPayload(version.ioContract.input,input.payload);
+    const validated=validateInputPayload(version.ioContract.input,input.payload);
+    if(q.accepted_job_id===input.jobId){
+      const prior=await this.pool.query<{buyer_account_id:string;capability_version_id:string;
+        payment_reservation_id:string|null;status:string;manifest_id:string;
+        payload:unknown}>(`SELECT j.buyer_account_id,j.capability_version_id,
+        j.payment_reservation_id,j.status,m.id AS manifest_id,m.payload
+        FROM jobs j JOIN job_input_manifests m ON m.job_id=j.id
+        WHERE j.id=$1`,[input.jobId]);
+      const row=prior.rows[0];
+      if(!row||row.buyer_account_id!==input.buyerId||
+        row.capability_version_id!==q.capability_version_id||
+        row.payment_reservation_id!==input.reservationId||row.manifest_id!==input.manifestId||
+        canonicalJson(row.payload)!==canonicalJson(validated))
+        throw new BuyerMarketplaceError('CONFLICT');
+      return {jobId:input.jobId,status:row.status};
+    }
     const existing=await this.pool.query<{buyer_account_id:string;contract_snapshot:unknown}>(
       'SELECT buyer_account_id,contract_snapshot FROM jobs WHERE id=$1',[input.jobId]);
     if(!existing.rows[0]){

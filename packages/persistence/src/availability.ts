@@ -129,6 +129,9 @@ export class PostgresAvailabilityRepository {
     buyerAccountId: string | null): Promise<boolean> {
     if (capability.visibility==='PUBLIC'||capability.visibility==='UNLISTED') return true;
     if (capability.visibility!=='PRIVATE'||!buyerAccountId) return false;
+    const seller=await client.query<{ id:string }>(`SELECT id FROM seller_profiles
+      WHERE id=$1 AND account_id=$2`,[capability.seller_profile_id,uuid.parse(buyerAccountId)]);
+    if(seller.rows[0])return true;
     const grant=await client.query<{ id: string }>(`SELECT id FROM capability_private_grants
       WHERE capability_id=$1 AND buyer_account_id=$2 AND revoked_at IS NULL FOR SHARE`,
     [capability.id,uuid.parse(buyerAccountId)]);
@@ -485,7 +488,7 @@ export class PostgresAvailabilityRepository {
     uuid.parse(input.id);uuid.parse(input.buyerAccountId);uuid.parse(input.capabilityId);
     ExecutionPreferenceSchema.parse(input.executionMode);
     if (input.latestAcceptableStartAt) z.iso.datetime().parse(input.latestAcceptableStartAt);
-    return this.tx(async (client) => {
+    try { return await this.tx(async (client) => {
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',[input.id]);
       const prior = await client.query<{ buyer_account_id: string; capability_id: string;
         capability_version_id: string; execution_mode: string; price_snapshot: unknown;
@@ -567,7 +570,14 @@ export class PostgresAvailabilityRepository {
         latestStartAt:iso(latest),quoteExpiresAt:iso(expires),
         capabilityScheduleRevision:p.revision,workerScheduleRevision:w.revision,
         estimatedStartAt:null,estimatedDeliveryAt:null });
-    });
+    }); }
+    catch(error){
+      if(error instanceof AvailabilityError&&error.code==='QUEUE_FULL'){
+        await this.pool.query(`INSERT INTO capability_queue_full_rejections(quote_id,capability_id)
+          VALUES($1,$2) ON CONFLICT(quote_id) DO NOTHING`,[input.id,input.capabilityId]);
+      }
+      throw error;
+    }
   }
 
   private async event(client: PoolClient, jobId: string, kind: string, effectKey: string,

@@ -2,6 +2,7 @@ import process from 'node:process';
 import pg from 'pg';
 import { PostgresFinanceRepository } from '../dist/packages/persistence/src/finance.js';
 import { PostgresAvailabilityRepository } from '../dist/packages/persistence/src/availability.js';
+import { PostgresAvailabilityMetrics } from '../dist/packages/persistence/src/availability-metrics.js';
 import { PostgresJobExecutionRepository } from '../dist/packages/persistence/src/job-execution.js';
 import { PostgresWorkerHeartbeatRepository } from '../dist/packages/persistence/src/worker-heartbeat.js';
 import { PostgresSellerOperations } from '../dist/packages/persistence/src/seller-operations.js';
@@ -20,16 +21,18 @@ if (!url || (mode!=='test'&&mode!=='live') || !Number.isSafeInteger(interval) ||
 const database=new pg.Pool({connectionString:url,max:4});
 const finance=new PostgresFinanceRepository(database,mode);
 const repository=new PostgresAvailabilityRepository(database,finance);
+const metrics=new PostgresAvailabilityMetrics(database,repository);
 const jobs=new PostgresJobExecutionRepository(database,finance,
   leaseTokenIssuerFromEnvironment(process.env),repository);
 const health=new PostgresWorkerHeartbeatRepository(database);
 const sellerOperations=new PostgresSellerOperations(database,repository,finance);
 const maintenance=async(limit)=>{
+  const availabilitySamples=await metrics.sample(limit);
   const maintenanceResumed=await sellerOperations.expireMaintenance(limit);
   const timedOut=await jobs.expireOverduePausedJobs(maxPauseSeconds,limit);
   const staleWorkers=await health.recordStaleWorkers(limit);
   const financeResult=await finance.reconcileTerminalJobs(limit);
-  return {maintenanceResumed,timedOut,staleWorkers,...financeResult};
+  return {availabilitySamples,maintenanceResumed,timedOut,staleWorkers,...financeResult};
 };
 const abort=new globalThis.AbortController();
 process.once('SIGINT',()=>abort.abort());

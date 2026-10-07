@@ -222,6 +222,17 @@ export class PostgresJobExecutionRepository {
         'WAITING_FOR_WORKER'].includes(job.status)) throw new JobExecutionError('NOT_ELIGIBLE');
       const snapshot = JobContractSnapshotSchema.parse(job.contract_snapshot);
       const payload = validateInputPayload(snapshot.inputContractSnapshot, rawPayload);
+      const schemaHash = hashCanonicalJson(snapshot.inputContractSnapshot);
+      const existing = await client.query<{ id:string;schema_hash:string;manifest_hash:string;
+        total_bytes:string;file_count:number;payload:unknown }>(
+        'SELECT * FROM job_input_manifests WHERE job_id=$1',[jobId]);
+      if(existing.rows[0]){
+        const prior=existing.rows[0];
+        if(prior.id!==manifestId||prior.schema_hash!==schemaHash||
+          canonicalJson(prior.payload)!==canonicalJson(payload))throw new JobExecutionError('CONFLICT');
+        return {id:prior.id,schemaHash,manifestHash:prior.manifest_hash,
+          totalBytes:Number(prior.total_bytes),fileCount:prior.file_count};
+      }
       const ids = Object.values(payload.assets).flat();
       if (new Set(ids).size !== ids.length || ids.length > 50) throw new JobExecutionError('NOT_ELIGIBLE');
       const versionResult = await client.query<{ version_snapshot: unknown }>(
@@ -269,19 +280,8 @@ export class PostgresJobExecutionRepository {
         [randomUUID(), id, jobId, grantExpiresAt]);
       }
       if (totalBytes > version.resourceLimits.maxInputBytes) throw new JobExecutionError('NOT_ELIGIBLE');
-      const schemaHash = hashCanonicalJson(snapshot.inputContractSnapshot);
       const manifestHash = hashCanonicalJson({ jobId, payload, assets: assetEvidence.sort((a, b) =>
         a.id.localeCompare(b.id)) });
-      const existing = await client.query<{ id: string; schema_hash: string; manifest_hash: string;
-        total_bytes: string; file_count: number }>('SELECT * FROM job_input_manifests WHERE job_id=$1', [jobId]);
-      if (existing.rows[0]) {
-        const prior = existing.rows[0];
-        if (prior.id !== manifestId || prior.schema_hash !== schemaHash || prior.manifest_hash !== manifestHash) {
-          throw new JobExecutionError('CONFLICT');
-        }
-        return { id: prior.id, schemaHash, manifestHash,
-          totalBytes: Number(prior.total_bytes), fileCount: prior.file_count };
-      }
       await client.query(`INSERT INTO job_input_manifests(id,job_id,schema_hash,manifest_hash,payload,total_bytes,file_count)
         VALUES($1,$2,$3,$4,$5,$6,$7)`,
       [manifestId, jobId, schemaHash, manifestHash, payload, totalBytes, ids.length]);

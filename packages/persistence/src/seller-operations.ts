@@ -8,6 +8,7 @@ import type { PostgresFinanceRepository } from './finance.js';
 import { workerVersionStatus } from '../../domain/src/worker-version.js';
 import { isInsideSchedule, nextScheduleWindow } from '../../domain/src/availability-schedule.js';
 import { PostgresSellerEconomics } from './seller-economics.js';
+import { PostgresAvailabilityMetrics } from './availability-metrics.js';
 
 const uuid=z.uuid();
 const pauseReason=z.string().trim().max(200).nullable();
@@ -423,6 +424,7 @@ export class PostgresSellerOperations {
     const earnings=await this.finance.sellerEarnings(profile.id);
     const settledSales=await this.finance.sellerSettledSales(profile.id);
     const economics=new PostgresSellerEconomics(this.pool);
+    const availabilityMetrics=new PostgresAvailabilityMetrics(this.pool,this.availability);
     const jobViews=await Promise.all(jobs.rows.map(async(row)=>({...row,
       created_at:row.created_at.toISOString(),started_at:row.started_at?.toISOString()??null,
       completed_at:row.completed_at?.toISOString()??null,
@@ -444,7 +446,8 @@ export class PostgresSellerOperations {
         lastFailureAt:metrics?.last_failure_at?.toISOString()??null,
         readinessFresh:item.readiness_at!==null&&Date.now()-item.readiness_at.getTime()<=30_000,
         availability:item.current_version_id?
-        await this.availability.publicStatus(item.id):null,operations:scheduleView};
+        await this.availability.publicStatus(item.id):null,operations:scheduleView,
+        availabilityMetrics:await availabilityMetrics.sellerCapability(item.id,sellerId)};
     }));
     const history=await this.pool.query<{worker_device_id:string;capability_id:string|null;
       kind:string;code:string;created_at:Date}>(`SELECT worker_device_id,capability_id,kind,code,created_at

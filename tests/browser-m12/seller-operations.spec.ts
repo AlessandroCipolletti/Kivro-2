@@ -7,6 +7,8 @@ import { PublishedCapabilityVersionSchema } from
   '../../dist/packages/contracts/src/capability-version.js';
 import { PostgresPriceTierCatalog } from '../../dist/packages/persistence/src/price-tiers.js';
 import { PostgresAvailabilityRepository } from '../../dist/packages/persistence/src/availability.js';
+import { PostgresAvailabilityMetrics } from
+  '../../dist/packages/persistence/src/availability-metrics.js';
 import { PostgresFinanceRepository } from '../../dist/packages/persistence/src/finance.js';
 
 async function verificationLink(email:string):Promise<string>{
@@ -100,11 +102,16 @@ test('verified seller can stop new work from web while Worker is offline',async(
     policy:{schedule:null,concurrencyLimit:1,queueLimit:2,futureReservationLimit:2,
       estimatedRuntimeSeconds:60,maxWaitSeconds:604800},paused:false,
     source:'WEB',expectedRevision:null});
+  await new PostgresAvailabilityMetrics(pool,availability).sample();
   await page.goto('/seller');
   await expect(page.getByRole('heading',{name:'Your work, at a glance.'})).toBeVisible();
   await expect(page.getByRole('heading',{name:/Build a useful service/})).toHaveCount(0);
   await expect(page.getByText('Studio Worker')).toBeVisible();
   await expect(page.getByText('Research studio')).toBeVisible();
+  await expect(page.getByText(/Last 30 days, observed minutes:/)).toBeVisible();
+  await expect(page.getByText(/missing periods are unknown/)).toBeVisible();
+  await page.screenshot({path:'test-results/m13-seller-availability-metrics.png',
+    fullPage:true,animations:'disabled'});
   await expect(page.getByText('$9.99 / job · You earn $8.00 · Marketplace fee $1.99')).toBeVisible();
   await expect(page.getByText('Settled buyer sales')).toBeVisible();
   await expect(page.getByText('Seller revenue')).toHaveCount(0);

@@ -47,13 +47,17 @@
     "local:auth:setup": "node tools/setup-local-auth.mjs",
     "local:storage:prepare": "node tools/prepare-local-storage.mjs",
     "local:storage:bucket": "node --env-file=.env.local tools/create-local-storage-bucket.mjs",
-    "local:auth:up": "pnpm local:auth:setup && pnpm local:storage:prepare && docker compose --env-file .env.local -f compose.local.yaml up -d postgres mail storage && pnpm local:storage:bucket",
+    "local:auth:up": "pnpm local:auth:setup && pnpm local:webhooks:setup && pnpm local:storage:prepare && docker compose --env-file .env.local -f compose.local.yaml up -d postgres mail storage && pnpm local:storage:bucket",
     "local:auth:migrate": "node --env-file=.env.local tools/run-local-migrations.mjs",
     "test:postgres:m10": "pnpm build && sh tools/test-m10-postgres.sh",
     "test:browser:m10": "pnpm build && sh tools/test-m10-browser.sh",
     "test:postgres:m11": "pnpm build && sh tools/test-m11-postgres.sh",
     "test:postgres:m12": "pnpm build && sh tools/test-m12-postgres.sh",
-    "test:browser:m12": "pnpm build && sh tools/test-m12-browser.sh"
+    "test:browser:m12": "pnpm build && sh tools/test-m12-browser.sh",
+    "test:postgres:m13": "pnpm build && sh tools/test-m13-postgres.sh",
+    "test:browser:m13": "pnpm build && sh tools/test-m13-browser.sh",
+    "webhook:dispatch": "pnpm build && node tools/kivro-webhook-dispatch.mjs",
+    "local:webhooks:setup": "node tools/setup-local-webhooks.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1146.0",

@@ -12,10 +12,18 @@ import { getMarketplaceService } from '../marketplace/server.js';
 import { getSellerOperations } from '../seller/operations-server.js';
 import { JobExecutionError } from '../../../../packages/persistence/src/job-execution.js';
 import { SellerOperationsError } from '../../../../packages/persistence/src/seller-operations.js';
+import { JobStatusSchema } from '../../../../packages/contracts/src/job-lifecycle.js';
+import { FinanceError } from '../../../../packages/application/src/finance-policy.js';
 
 const signedBody=z.strictObject({envelope:z.unknown(),body:z.unknown()});
 function json(value:unknown,status=200):Response{return Response.json(value,{status,
   headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}
+function transportAllowed(request:Request):boolean{
+  if(process.env.NODE_ENV!=='production')return true;
+  try{return new URL(request.url).protocol==='https:'&&
+      new URL(process.env.APP_ORIGIN??'http://invalid').protocol==='https:';}
+  catch{return false;}
+}
 async function boundedJson(request:Request):Promise<unknown>{
   if(request.headers.get('content-type')?.split(';')[0]?.trim()!=='application/json')
     throw new TypeError('INVALID_CONTENT_TYPE');
@@ -38,6 +46,7 @@ function plane():{id:string;state:'ACTIVE'|'DRAINING'}{
 /** Provider-neutral, signed Worker polling. Seller pause sync precedes every offer. */
 export async function handleWorkerPoll(request:Request):Promise<Response>{
   if(request.method!=='POST')return json({code:'METHOD_NOT_ALLOWED'},405);
+  if(!transportAllowed(request))return json({code:'TLS_REQUIRED'},403);
   try{
     const input=signedBody.parse(await boundedJson(request));
     const hello=WorkerHelloSchema.parse(input.body);
@@ -65,6 +74,7 @@ export async function handleWorkerPoll(request:Request):Promise<Response>{
 /** Worker messages are authenticated and persisted before 204 acknowledgement. */
 export async function handleWorkerMessage(request:Request):Promise<Response>{
   if(request.method!=='POST')return json({code:'METHOD_NOT_ALLOWED'},405);
+  if(!transportAllowed(request))return json({code:'TLS_REQUIRED'},403);
   try{
     const input=signedBody.parse(await boundedJson(request));
     const configured=plane();
@@ -93,6 +103,78 @@ export async function handleWorkerMessage(request:Request):Promise<Response>{
     }
     return new Response(null,{status:204,headers:{'Cache-Control':'no-store'}});
   }catch(error){return workerError(error);}
+}
+
+const uuid=z.uuid();
+const binding=z.strictObject({jobId:uuid,executionId:uuid,attemptId:uuid,
+  workerDeviceId:uuid,controlPlaneId:z.string().min(1).max(160),
+  leaseToken:z.string().min(32).max(512)});
+const transition=z.strictObject({id:uuid,jobId:uuid,from:JobStatusSchema,to:JobStatusSchema,
+  actor:z.literal('WORKER'),reason:z.string().min(1).max(200),
+  attemptId:uuid,correlationId:uuid,paymentReservationId:z.null(),resultManifestId:z.null()});
+const resultAsset=z.strictObject({id:uuid,fieldKey:z.string().min(1).max(160),
+  objectKey:z.string().regex(/^private\/assets\/[a-f0-9-]{36}\/[a-f0-9-]{36}$/),
+  sizeBytes:z.number().int().nonnegative(),sha256:z.string().regex(/^sha256:[a-f0-9]{64}$/),
+  detectedMimeType:z.string().min(3).max(120)});
+export type WorkerJobRpcKind='ACCEPT'|'ACCEPTED_INPUT'|'TRANSITION'|'RENEW_LEASE'|'FINALIZE_RESULT';
+
+/** Fixed signed Worker RPCs call the same paid execution and ledger state machines as UI/API. */
+export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):Promise<Response>{
+  if(request.method!=='POST')return json({code:'METHOD_NOT_ALLOWED'},405);
+  if(!transportAllowed(request))return json({code:'TLS_REQUIRED'},403);
+  try{
+    const input=signedBody.parse(await boundedJson(request));
+    const configured=plane();
+    const schema=kind==='ACCEPT'?binding.extend({messageId:uuid}):
+      kind==='TRANSITION'?binding.extend({event:transition}):
+      kind==='RENEW_LEASE'?binding.extend({ttlSeconds:z.number().int().min(5).max(3600)}):
+      kind==='FINALIZE_RESULT'?binding.extend({resultManifestId:uuid,
+        retainUntil:z.iso.datetime({offset:true}),payload:z.unknown(),
+        assets:z.array(resultAsset).max(50)}):binding;
+    const body=schema.parse(input.body);
+    if(body.controlPlaneId!==configured.id)return json({code:'WRONG_CONTROL_PLANE'},403);
+    const app=getMarketplaceService();
+    const identity=await new PostgresWorkerMessageAuthenticator(app.pool)
+      .verify(input.envelope,body);
+    if(identity.workerDeviceId!==body.workerDeviceId)return json({code:'WRONG_WORKER'},403);
+    const jobs=app.getJobs();
+    if(kind==='ACCEPT'){
+      const data=binding.extend({messageId:uuid}).parse(body);
+      await jobs.accept(data.executionId,identity.workerDeviceId,identity.controlPlaneId,
+        data.leaseToken,data.messageId);
+      return json({ok:true});
+    }
+    if(kind==='ACCEPTED_INPUT')return json(await jobs.acceptedInputForWorker(body.executionId,
+      identity.workerDeviceId,identity.controlPlaneId,body.leaseToken,app.getStorage(),30*86_400));
+    if(kind==='TRANSITION'){
+      const data=binding.extend({event:transition}).parse(body);
+      if(data.event.jobId!==data.jobId||data.event.attemptId!==data.attemptId||
+        data.event.correlationId!==data.executionId)return json({code:'WRONG_WORKER'},403);
+      const state=await jobs.workerTransition(data.event,data.executionId,
+        identity.workerDeviceId,identity.controlPlaneId,data.leaseToken);
+      if(['FAILED_POLICY','FAILED_STARTUP','FAILED_EXECUTION','RESULT_REJECTED']
+        .includes(state.status))await app.finance.releaseFailedJob(data.jobId);
+      return json({ok:true});
+    }
+    if(kind==='RENEW_LEASE'){
+      const data=binding.extend({ttlSeconds:z.number().int().min(5).max(3600)}).parse(body);
+      return json({leaseExpiresAt:await jobs.renewLease(data.executionId,
+        identity.workerDeviceId,identity.controlPlaneId,data.leaseToken,data.ttlSeconds)});
+    }
+    const data=binding.extend({resultManifestId:uuid,retainUntil:z.iso.datetime({offset:true}),
+      payload:z.unknown(),assets:z.array(resultAsset).max(50)}).parse(body);
+    // Worker-provided retention is ignored. Cloud owns the buyer privacy deadline.
+    await jobs.finalizeResult({resultManifestId:data.resultManifestId,jobId:data.jobId,
+      executionId:data.executionId,attemptId:data.attemptId,leaseToken:data.leaseToken,
+      payload:data.payload,assets:data.assets,workerDeviceId:identity.workerDeviceId,
+      controlPlaneId:identity.controlPlaneId},app.getStorage(),
+    new Date(Date.now()+30*86_400_000).toISOString());
+    await app.finance.settleDeliveredJob(data.jobId);
+    return json({ok:true});
+  }catch(error){
+    if(error instanceof FinanceError)return json({code:error.code},409);
+    return workerError(error);
+  }
 }
 
 function workerError(error:unknown):Response{

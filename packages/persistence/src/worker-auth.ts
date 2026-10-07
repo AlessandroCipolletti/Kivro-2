@@ -30,7 +30,7 @@ export class PostgresWorkerMessageAuthenticator {
       if (!body || typeof body !== 'object' ||
         !('controlPlaneId' in body) || body.controlPlaneId !== checked.controlPlaneId ||
         !('workerDeviceId' in body) || body.workerDeviceId !== checked.workerDeviceId) {
-        throw new Error('WORKER_SCOPE_MISMATCH');
+        throw new WorkerAuthenticationError('INVALID_SIGNATURE');
       }
       const inserted = await client.query(`INSERT INTO worker_message_receipts(worker_device_id,message_id,body_hash)
         VALUES($1,$2,$3) ON CONFLICT DO NOTHING`,
