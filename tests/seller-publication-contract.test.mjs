@@ -131,8 +131,14 @@ test('real review builder binds observed provider cost and refuses unaccounted e
     providerUsage:{requests:1,estimatedMicroUsd:100,unsettled:0}};
   const review=buildWorkerCapabilityReview(tested,config,context);
   assert.equal(review.tests.testedPackageHash,hashCanonicalJson(pkg));
+  assert.deepEqual(review.candidate.externalProcessors,['synthetic']);
   assert.equal(review.providerCost.estimatedMicroUsd,100);
   assert.equal(review.providerCost.estimateSource,'SELLER_ENTERED');
+  assert.notEqual(workerReviewContentHash(review),workerReviewContentHash({...review,
+    candidate:{...review.candidate,externalProcessors:['other-processor']}}),
+  'a processor declaration change requires a new signed review');
+  assert.throws(()=>buildWorkerCapabilityReview(tested,
+    {...config,externalProcessors:['other-processor']},context),/REVIEW_NOT_READY/);
   assert.throws(()=>buildWorkerCapabilityReview(tested,config,{...context,
     providerUsage:{...context.providerUsage,unsettled:1}}),/REVIEW_NOT_READY/);
   assert.throws(()=>buildWorkerCapabilityReview(tested,{...config,

@@ -7,6 +7,8 @@ import { PlatformOperationsRepository } from
   '../dist/packages/persistence/src/platform-operations.js';
 import { PostgresAvailabilityRepository } from
   '../dist/packages/persistence/src/availability.js';
+import { PostgresSellerEconomics } from
+  '../dist/packages/persistence/src/seller-economics.js';
 import { handleOperatorRequest } from '../dist/apps/web/src/operator/handler.js';
 
 if(!process.env.M15_DATABASE_URL){test('M15 PostgreSQL requires disposable container',{skip:true},()=>{});}
@@ -64,7 +66,7 @@ else{
     assert.equal((await pool.query("SELECT count(*) AS count FROM platform_audit_events WHERE event_code='DENY_PATTERN_ADDED'"))
       .rows[0].count,'1');
   });
-  test('operator suspensions and seller/buyer reports are ownership scoped',async()=>{
+  test('operator suspensions, reports and seller cost evidence are ownership scoped',async()=>{
     await pool.query(`INSERT INTO seller_profiles(id,account_id,display_name,status,payout_status)
       VALUES($1,$2,'Seller','ACTIVE','NOT_STARTED')`,[seller,sellerAccount]);
     await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,worker_version,status)
@@ -76,6 +78,31 @@ else{
       VALUES($1,$2,1,'PUBLISHED','{}',$3,$3,now())`,[version,capability,`sha256:${'a'.repeat(64)}`]);
     await pool.query(`INSERT INTO jobs(id,buyer_account_id,capability_version_id,worker_device_id,
       status,contract_snapshot) VALUES($1,$2,$3,$4,'CREATED','{}')`,[job,buyer,version,worker]);
+    await pool.query(`INSERT INTO job_financial_snapshots(job_id,seller_profile_id,price_tier_id,
+      currency,buyer_price_minor,platform_fee_minor,seller_earning_minor,buyer_total_minor)
+      VALUES($1,$2,'USD_999','USD',999,199,800,999)`,[job,seller]);
+    await pool.query(`INSERT INTO seller_provider_calls(request_id,job_id,capability_version_id,
+      provider_id,model_id,reserved_micro_usd,accounted_micro_usd,measured_cost_micro_usd,
+      completed_at,status) VALUES
+      ($1,$3,$4,'synthetic','measured',4000,3000,3000,now(),'SUCCEEDED'),
+      ($2,$3,$4,'synthetic','estimated',3000,2000,NULL,now(),'SUCCEEDED')`,
+    [randomUUID(),randomUUID(),job,version]);
+    const costSummary=await new PostgresSellerEconomics(pool).summary(seller);
+    assert.equal(costSummary.jobsTotal,1);
+    assert.equal(costSummary.providerCosts.measuredMicroUsd,3000);
+    assert.equal(costSummary.providerCosts.estimatedMicroUsd,2000);
+    assert.equal(costSummary.providerCosts.measuredCalls,1);
+    assert.equal(costSummary.providerCosts.estimatedCalls,1);
+    const unknownCostJob=randomUUID();
+    await pool.query(`INSERT INTO jobs(id,buyer_account_id,capability_version_id,worker_device_id,
+      status,contract_snapshot) VALUES($1,$2,$3,$4,'CREATED',$5)`,
+    [unknownCostJob,buyer,version,worker,{permissionManifestSnapshot:{entries:[
+      {category:'AI_INFERENCE',state:'USED'}]}}]);
+    await pool.query(`INSERT INTO job_financial_snapshots(job_id,seller_profile_id,price_tier_id,
+      currency,buyer_price_minor,platform_fee_minor,seller_earning_minor,buyer_total_minor)
+      VALUES($1,$2,'USD_999','USD',999,199,800,999)`,[unknownCostJob,seller]);
+    assert.equal((await new PostgresSellerEconomics(pool).summary(seller)).providerCosts.unknownJobs,1,
+      'a capability with declared AI use and no cost observation cannot be shown as zero cost');
     const sensitive='buyer-private-prompt-and-api-key-sentinel';
     await pool.query(`INSERT INTO job_input_manifests(id,job_id,schema_hash,manifest_hash,payload,
       total_bytes,file_count) VALUES($1,$2,$3,$3,$4,0,0)`,[randomUUID(),job,

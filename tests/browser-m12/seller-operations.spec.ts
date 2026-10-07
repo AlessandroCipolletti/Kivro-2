@@ -181,7 +181,11 @@ test('verified seller can stop new work from web while Worker is offline',async(
     fullPage:true,animations:'disabled'});
   await page.getByText('View availability history').click();
   await expect(page.getByText('$9.99 / job · You earn $8.00 · Marketplace fee $1.99')).toBeVisible();
-  await expect(page.getByText('Settled buyer sales')).toBeVisible();
+  await expect(page.getByText('Gross settled sales')).toBeVisible();
+  await expect(page.getByText('Jobs today (UTC)')).toBeVisible();
+  await expect(page.getByText('Net marketplace earnings')).toBeVisible();
+  await expect(page.getByText('Provider costs',{exact:true})).toBeVisible();
+  await expect(page.getByText('Failure rate',{exact:true})).toBeVisible();
   await expect(page.getByText('Seller revenue')).toHaveCount(0);
   await expect(page.getByText(/Earnings can change after a refund or payment dispute/)).toBeVisible();
   expect(await page.getByRole('button',{name:'Refresh status'}).evaluate((element)=>

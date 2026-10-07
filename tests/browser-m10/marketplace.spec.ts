@@ -64,6 +64,11 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
     await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByRole('heading',{name:'Privacy & access'})).toBeVisible();
+    await expect(page.getByText(/Delivery record:/)).toBeVisible();
+    await page.locator('.detail-seller-card a').click();
+    await expect(page.getByRole('heading',{name:'Delivery record'})).toBeVisible();
+    await expect(page.getByText(/Ratings are separate buyer reviews/)).toBeVisible();
+    await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByRole('link',{name:'Ask Marketplace Agent'})).toHaveAttribute(
       'href',`/ai-request?capabilityId=${capability.id}`);
     await page.goto('/privacy');

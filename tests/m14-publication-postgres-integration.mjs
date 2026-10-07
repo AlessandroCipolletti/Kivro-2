@@ -122,6 +122,7 @@ if(!process.env.M14_DATABASE_URL){
     const version=(await pool.query('SELECT version_snapshot FROM capability_versions WHERE id=$1',
       [candidate.id])).rows[0].version_snapshot;
     assert.equal(version.price.buyerAmountMinor,999);
+    assert.deepEqual(version.externalProcessors,['Synthetic provider']);
     assert.equal(version.policyValidationHash,staged.policyValidationHash);
     assert.equal((await pool.query('SELECT seller_paused FROM capability_availability_policies WHERE capability_id=$1',
       [candidate.capabilityId])).rows[0].seller_paused,true,
@@ -146,6 +147,10 @@ if(!process.env.M14_DATABASE_URL){
       versionChangeAcknowledged:undefined}),{code:'CONSENT_MISSING'},
     'a new version requires a fresh explicit change review');
     await repository.publish(sellerAccount,approval2);
+    const historical=(await pool.query('SELECT version_snapshot FROM capability_versions WHERE id=$1',
+      [candidate.id])).rows[0].version_snapshot;
+    assert.deepEqual(historical.externalProcessors,['Synthetic provider'],
+      'later publication cannot rewrite the old buyer processor declaration');
     const rollbackId=randomUUID();
     await assert.rejects(repository.rollback(sellerAccount,candidate.capabilityId,
       candidate.id,review2.candidate.id,rollbackId),{code:'ROLLBACK_NOT_READY'});

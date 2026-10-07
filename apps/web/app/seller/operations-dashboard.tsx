@@ -73,6 +73,11 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
     paidOutMinor:z.number(),currency:z.literal('USD')}),
   settledSales:z.object({buyerSalesMinor:z.number(),marketplaceFeesMinor:z.number(),
     currency:z.literal('USD')}),
+  economicsSummary:z.object({jobsToday:z.number(),jobsTotal:z.number(),
+    completedJobs:z.number(),failedJobs:z.number(),failureRate:z.number().nullable(),
+    averageRuntimeSeconds:z.number().nullable(),providerCosts:z.object({
+      measuredMicroUsd:z.number(),estimatedMicroUsd:z.number(),measuredCalls:z.number(),
+      estimatedCalls:z.number(),unknownJobs:z.number(),currency:z.literal('USD')})}),
   history:z.array(z.object({worker_device_id:z.string(),capability_id:z.string().nullable(),
     kind:z.string(),code:z.string(),created_at:z.string()}))});
 type Dashboard=z.infer<typeof dashboardSchema>;
@@ -316,12 +321,24 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
               Schedule maintenance</button></div>
           <ScheduleEditor capability={capability} onSaved={()=>void load()}/></article>):
           <p className="ops-empty">No capabilities yet. Nothing is listed for buyers.</p>}</section></div>
-      <div className="ops-summary"><div><span>Settled buyer sales</span><strong>{money(data.settledSales.buyerSalesMinor)}</strong></div>
+      <div className="ops-summary"><div><span>Jobs today (UTC)</span><strong>{data.economicsSummary.jobsToday}</strong></div>
+        <div><span>Jobs total</span><strong>{data.economicsSummary.jobsTotal}</strong></div>
+        <div><span>Gross settled sales</span><strong>{money(data.settledSales.buyerSalesMinor)}</strong></div>
         <div><span>Marketplace fees</span><strong>{money(data.settledSales.marketplaceFeesMinor)}</strong></div>
+        <div><span>Net marketplace earnings</span><strong>{money(data.settledSales.buyerSalesMinor-data.settledSales.marketplaceFeesMinor)}</strong></div>
+        <div><span>Provider costs</span><strong>{money((data.economicsSummary.providerCosts.measuredMicroUsd+
+          data.economicsSummary.providerCosts.estimatedMicroUsd)/10_000)}</strong>
+          <small>{data.economicsSummary.providerCosts.measuredCalls} measured calls · {
+            data.economicsSummary.providerCosts.estimatedCalls} estimated calls · {
+            data.economicsSummary.providerCosts.unknownJobs} jobs with unknown cost</small></div>
         <div><span>Pending earnings</span><strong>{money(data.earnings.pendingMinor)}</strong></div>
         <div><span>Available</span><strong>{money(data.earnings.availableMinor)}</strong></div>
         <div><span>Transferred</span><strong>{money(data.earnings.transferredMinor)}</strong></div>
-        <div><span>Paid out</span><strong>{money(data.earnings.paidOutMinor)}</strong></div></div>
+        <div><span>Paid out</span><strong>{money(data.earnings.paidOutMinor)}</strong></div>
+        <div><span>Failure rate</span><strong>{data.economicsSummary.failureRate===null?'No completed attempts':
+          `${(data.economicsSummary.failureRate*100).toFixed(1)}%`}</strong></div>
+        <div><span>Average runtime</span><strong>{data.economicsSummary.averageRuntimeSeconds===null?
+          'No completed attempts':`${Math.round(data.economicsSummary.averageRuntimeSeconds)}s`}</strong></div></div>
       <p className="ops-finance-note">Settled sales exclude refunded jobs. Earnings can change after a refund or payment dispute.</p>
       <section className="ops-panel ops-jobs"><div className="ops-panel-head"><h3>Jobs</h3>
         <small>Active work first, then recent history</small></div>

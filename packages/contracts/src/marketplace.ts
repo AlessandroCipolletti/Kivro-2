@@ -32,6 +32,15 @@ export const RatingSummarySchema = z.strictObject({
     z.number().int().nonnegative(), z.number().int().nonnegative(), z.number().int().nonnegative()]),
 });
 
+/** Operational reputation is distinct from buyer ratings and never seller reported. */
+export const ReliabilitySummarySchema=z.strictObject({
+  completedJobs:z.number().int().nonnegative(),terminalJobs:z.number().int().nonnegative(),
+  refundedJobs:z.number().int().nonnegative(),financiallyFinalJobs:z.number().int().nonnegative(),
+  successRate:z.number().min(0).max(1).nullable(),
+  refundRate:z.number().min(0).max(1).nullable(),
+  medianRuntimeSeconds:z.number().nonnegative().nullable(),
+});
+
 export const CapabilityCardSchema = z.strictObject({
   id: z.uuid(), slug: z.string(), name: z.string(), shortDescription: z.string(),
   category: MarketplaceCategorySchema, tags: z.array(z.string()), sellerId: z.uuid(),
@@ -46,6 +55,7 @@ export type CapabilityCard = z.infer<typeof CapabilityCardSchema>;
 
 export const CapabilityDetailSchema = CapabilityCardSchema.extend({
   description: z.string(), strengths: z.array(z.string()), limitations: z.array(z.string()),
+  reliability:ReliabilitySummarySchema,
   version: z.strictObject({ id: z.uuid(), number: z.number().int().positive(),
     ioContract: CapabilityIOContractSchema,
     permissionManifest: PublicPermissionManifestSchema,

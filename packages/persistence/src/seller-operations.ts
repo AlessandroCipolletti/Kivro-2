@@ -425,6 +425,7 @@ export class PostgresSellerOperations {
     const earnings=await this.finance.sellerEarnings(profile.id);
     const settledSales=await this.finance.sellerSettledSales(profile.id);
     const economics=new PostgresSellerEconomics(this.pool);
+    const economicsSummary=await economics.summary(profile.id);
     const availabilityMetrics=new PostgresAvailabilityMetrics(this.pool,this.availability);
     const audit=await this.pool.query<{job_id:string;at:Date;kind:string;code:string;
       correlation_id:string|null}>(`SELECT job_id,at,'JOB' AS kind,to_status AS code,correlation_id
@@ -517,7 +518,7 @@ export class PostgresSellerOperations {
         versionStatus,cloudSyncPending,warnings};
     }),capabilities:capabilityViews,
       jobs:jobViews,
-      earnings,settledSales,
+      earnings,settledSales,economicsSummary,
       history:history.rows.map((row)=>({...row,created_at:row.created_at.toISOString()}))};
   }
 }

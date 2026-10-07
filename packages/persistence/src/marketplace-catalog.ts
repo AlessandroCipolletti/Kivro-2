@@ -93,6 +93,32 @@ function rating(row: CatalogRow) {
 export class MarketplaceCatalog {
   constructor(private readonly pool: Pool, private readonly availability: PostgresAvailabilityRepository) {}
 
+  private async reliability(scope:'CAPABILITY'|'PUBLIC_SELLER',id:string){
+    const rows=await this.pool.query<{completed:number;terminal:number;refunded:number;
+      financially_final:number;median_runtime:string|null}>(`
+      SELECT count(*) FILTER (WHERE j.status='COMPLETED')::int AS completed,
+        count(*) FILTER (WHERE j.status IN ('COMPLETED','FAILED_STARTUP','FAILED_POLICY',
+          'FAILED_EXECUTION','TIMED_OUT','WORKER_OFFLINE','RESULT_REJECTED'))::int AS terminal,
+        count(*) FILTER (WHERE p.state='REFUNDED')::int AS refunded,
+        count(*) FILTER (WHERE p.state IN ('SETTLED','REFUNDED'))::int AS financially_final,
+        percentile_cont(0.5) WITHIN GROUP (ORDER BY
+          extract(epoch FROM j.completed_at-j.started_at)) FILTER (
+          WHERE j.status='COMPLETED' AND j.started_at IS NOT NULL
+            AND j.completed_at IS NOT NULL)::text AS median_runtime
+      FROM jobs j JOIN capability_versions v ON v.id=j.capability_version_id
+      JOIN capabilities c ON c.id=v.capability_id
+      LEFT JOIN job_payment_states p ON p.job_id=j.id
+      WHERE ($1='CAPABILITY' AND c.id=$2::uuid) OR
+        ($1='PUBLIC_SELLER' AND c.seller_profile_id=$2::uuid
+          AND c.visibility='PUBLIC' AND c.status='PUBLISHED')`,[scope,id]);
+    const row=rows.rows[0]!;
+    return {completedJobs:row.completed,terminalJobs:row.terminal,
+      refundedJobs:row.refunded,financiallyFinalJobs:row.financially_final,
+      successRate:row.terminal?row.completed/row.terminal:null,
+      refundRate:row.financially_final?row.refunded/row.financially_final:null,
+      medianRuntimeSeconds:row.median_runtime===null?null:Number(row.median_runtime)};
+  }
+
   async detailByIdentifier(identifier:string,buyerId:string|null=null):Promise<CapabilityDetail|null>{
     if(z.uuid().safeParse(identifier).success){
       const row=await this.pool.query<{slug:string}>('SELECT slug FROM capabilities WHERE id=$1',
@@ -203,6 +229,7 @@ export class MarketplaceCatalog {
         inputAssets:projected('INPUT'),outputAssets:projected('OUTPUT')});
     }
     return CapabilityDetailSchema.parse({...card,description:row.description,
+      reliability:await this.reliability('CAPABILITY',row.id),
       strengths:row.strengths??[],limitations:row.limitations??[],
       version:{id:version.id,number:version.versionNumber,ioContract:version.ioContract,
         permissionManifest:version.publicPermissionManifest,
@@ -268,7 +295,9 @@ export class MarketplaceCatalog {
   }
 
   async sellerPublicProfile(sellerId: string): Promise<{id:string;name:string;memberSince:string;
-    rating:{average:number|null;count:number};completedJobs:number;capabilities:readonly CapabilityCard[]}|null> {
+    rating:{average:number|null;count:number};completedJobs:number;
+    reliability:Awaited<ReturnType<MarketplaceCatalog['reliability']>>;
+    capabilities:readonly CapabilityCard[]}|null> {
     z.uuid().parse(sellerId);
     const seller=await this.pool.query<{id:string;display_name:string;created_at:Date}>(
       `SELECT id,display_name,created_at FROM seller_profiles WHERE id=$1 AND status='ACTIVE'`,[sellerId]);
@@ -290,6 +319,7 @@ export class MarketplaceCatalog {
         AND j.status='COMPLETED') AS completed`,[sellerId]);
     return {id:sellerId,name:seller.rows[0].display_name,
       memberSince:seller.rows[0].created_at.toISOString(),
+      reliability:await this.reliability('PUBLIC_SELLER',sellerId),
       rating:{average:summary.rows[0]?.average?Number(Number(summary.rows[0].average).toFixed(1)):null,
         count:summary.rows[0]?.count??0},completedJobs:summary.rows[0]?.completed??0,
       capabilities:cards};

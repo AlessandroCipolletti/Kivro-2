@@ -13,6 +13,7 @@ import { PostgresJobExecutionRepository } from '../dist/packages/persistence/src
 import { PostgresPriceTierCatalog } from '../dist/packages/persistence/src/price-tiers.js';
 import { PostgresWorkerHeartbeatRepository } from '../dist/packages/persistence/src/worker-heartbeat.js';
 import { MarketplaceCatalog } from '../dist/packages/persistence/src/marketplace-catalog.js';
+import { PostgresSellerEconomics } from '../dist/packages/persistence/src/seller-economics.js';
 import { MarketplaceSocialRepository } from '../dist/packages/persistence/src/marketplace-social.js';
 import { MarketplaceBuyerRepository } from '../dist/packages/persistence/src/marketplace-buyer.js';
 import { MarketplaceAssetRepository } from '../dist/packages/persistence/src/marketplace-assets.js';
@@ -349,6 +350,18 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         async readPrivateObject(){throw new Error('No files');}},
       new Date(Date.now()+86_400_000).toISOString());
       await finance.settleDeliveredJob(completedJob);
+      const reliability=(await catalog.detail(slug,buyer)).reliability;
+      assert.equal(reliability.completedJobs,1);
+      assert.equal(reliability.successRate,1);
+      assert.equal(reliability.refundRate,0);
+      assert.ok(reliability.medianRuntimeSeconds>=0);
+      const publicSeller=await catalog.sellerPublicProfile(seller);
+      assert.equal(publicSeller.reliability.completedJobs,1);
+      assert.equal(publicSeller.reliability.financiallyFinalJobs,1);
+      const sellerSummary=await new PostgresSellerEconomics(pool).summary(seller);
+      assert.equal(sellerSummary.completedJobs,1);
+      assert.equal(sellerSummary.failureRate,0);
+      assert.equal(sellerSummary.providerCosts.estimatedMicroUsd,0);
       assert.equal((await buyerRepo.job(buyer,completedJob)).result.values.answer,'Durable answer');
       await assert.rejects(social.submitReview({id:randomUUID(),jobId:completedJob,
         buyerId:other,rating:5,text:'Forged'}),{code:'NOT_FOUND'});
@@ -370,6 +383,14 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       await buyerRepo.reportProblem({id:randomUUID(),buyerId:buyer,jobId:completedJob,
         category:'QUALITY',description:'The report should be reviewed'});
       assert.equal((await buyerRepo.job(buyer,completedJob)).problemReports.length,1);
+      await finance.refundSettledJob(completedJob);
+      assert.equal((await catalog.detail(slug,buyer)).reliability.refundRate,1,
+        'a later refund changes financial reputation without rewriting completion history');
+      assert.equal((await catalog.sellerPublicProfile(seller)).reliability.refundedJobs,1);
+      await pool.query("UPDATE capabilities SET visibility='PRIVATE' WHERE id=$1",[capability]);
+      assert.equal((await catalog.sellerPublicProfile(seller)).reliability.terminalJobs,0,
+        'public seller reputation cannot reveal private capability history');
+      await pool.query("UPDATE capabilities SET visibility='PUBLIC' WHERE id=$1",[capability]);
       const newVersionId=randomUUID();
       const newPackage={...localPackage,capabilityVersionId:newVersionId,
         workerManifest:{...localPackage.workerManifest,capabilityVersionId:newVersionId},
