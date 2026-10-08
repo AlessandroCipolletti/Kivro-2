@@ -1,4 +1,5 @@
 import { expect,test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { randomUUID,createHash } from 'node:crypto';
 import { getAuthService } from '../../dist/apps/web/src/auth/server.js';
 import { createSmtpAuthTransport } from '../../dist/apps/web/src/auth/smtp-transport.js';
@@ -72,6 +73,13 @@ test('buyer account manages one-time API secrets and signed webhook endpoints',a
     .fill('https://127.0.0.1/hook');
   await page.getByRole('button',{name:'Add endpoint'}).click();
   await expect(page.locator('.integrations .notice.error')).toContainText('INVALID_DESTINATION');
+  await expect(page.locator('.integrations').getByRole('alert'))
+    .toContainText('INVALID_DESTINATION');
+  const invalidEndpointAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(invalidEndpointAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'account webhook validation error at 1280px').toEqual([]);
   await page.getByPlaceholder('https://example.com/kivro/events')
     .fill('https://1.1.1.1/kivro/events');
   await page.getByRole('button',{name:'Add endpoint'}).click();
@@ -92,6 +100,11 @@ test('buyer account manages one-time API secrets and signed webhook endpoints',a
   expect(subscriptions).toEqual(['job.completed']);
   await page.screenshot({path:'test-results/m13-buyer-integrations-desktop.png',
     fullPage:true,animations:'disabled'});
+  const desktopAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(desktopAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'buyer API/webhook account at 1280px').toEqual([]);
   await page.setViewportSize({width:768,height:900});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(768);
   await page.screenshot({path:'test-results/m14-account-tablet.png',
@@ -100,6 +113,11 @@ test('buyer account manages one-time API secrets and signed webhook endpoints',a
   await page.evaluate(()=>new Promise<void>((resolve)=>requestAnimationFrame(()=>resolve())));
   await page.screenshot({path:'test-results/m13-buyer-integrations-mobile.png',
     fullPage:true,animations:'disabled'});
+  const mobileAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(mobileAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'buyer API/webhook account at 390px').toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
   await page.getByRole('button',{name:'Remove'}).click();
   await expect(page.getByText('No endpoints yet.')).toBeVisible();

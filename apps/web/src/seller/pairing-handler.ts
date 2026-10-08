@@ -75,3 +75,28 @@ export async function handleSellerPairingRequest(request: Request, action: strin
     throw error;
   }
 }
+
+/** Revocation is seller-owned and takes effect in Worker signature validation
+ * before another offer or RPC can be accepted. It remains available even if
+ * the seller's setup acknowledgement is no longer current. */
+export async function handleSellerWorkerRevokeRequest(request: Request,
+  deviceId: string, auth: AuthService): Promise<Response> {
+  if (request.method !== 'POST') return json({ code: 'METHOD_NOT_ALLOWED' }, 405);
+  const origin=process.env.APP_ORIGIN;
+  if(!origin||request.headers.get('origin')!==new URL(origin).origin)
+    return json({code:'ORIGIN_DENIED'},403);
+  const session=await auth.auth.api.getSession({headers:request.headers});
+  if(!session)return json({code:'UNAUTHENTICATED'},401);
+  try{
+    z.uuid().parse(deviceId);
+    z.strictObject({}).parse(await readJson(request));
+    await new PostgresWorkerPairingRepository(auth.database)
+      .revoke(session.user.id,deviceId);
+    return json({deviceId,revoked:true},200);
+  }catch(error){
+    if(error instanceof WorkerPairingError)return json({code:error.code},403);
+    if(error instanceof z.ZodError||error instanceof TypeError||
+      error instanceof SyntaxError)return json({code:'INVALID_INPUT'},400);
+    throw error;
+  }
+}

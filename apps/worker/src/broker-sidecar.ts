@@ -5,7 +5,7 @@ import { DockerJobControlAdapter } from '../../../packages/sandbox-adapter/src/d
 const requestSchema = z.strictObject({
   type: z.literal('REQUEST'), id: z.uuid(),
   kind: z.enum(['INFERENCE', 'RESEARCH_SEARCH', 'RESEARCH_FETCH', 'RESEARCH_DOWNLOAD',
-    'RESOURCE_READ', 'DECLARED_API']),
+    'RESOURCE_READ', 'DECLARED_API', 'SELECTED_FILE_READ']),
   payload: z.unknown(),
 });
 export type BrokerRequest = z.infer<typeof requestSchema>;
@@ -29,7 +29,9 @@ export class BrokerSidecar {
     private readonly jobId: string, private readonly attemptId: string,
     private readonly authorize: () => Promise<void>,
     private readonly dispatch: (request: BrokerRequest, signal: AbortSignal) => Promise<unknown>,
-    private readonly activity?: { begin(requestId: string): void; end(requestId: string): void }) {
+    private readonly activity?: { begin(requestId: string): void; end(requestId: string): void },
+    private readonly pauseLifecycle?: { deferNewRequest(): boolean;
+      authorizeInFlightCompletion(): Promise<void> }) {
     if (!dockerExecutable.startsWith('/')) throw new TypeError('Docker path must be absolute');
     z.uuid().parse(jobId); z.uuid().parse(attemptId);
   }
@@ -103,18 +105,48 @@ export class BrokerSidecar {
     let response: unknown;
     let admitted = false;
     try {
-      await this.authorize();
-      this.activity?.begin(request.id);
-      admitted = true;
-      response = await this.dispatch(request, controller.signal);
-      await this.authorize();
+      // A request arriving after PAUSE_REQUESTED waits without opening a host
+      // broker operation. Docker may then freeze safely; resume admits it.
+      for (;;) {
+        for (;;) {
+          while (this.pauseLifecycle?.deferNewRequest()) {
+            if (controller.signal.aborted || this.stopped) throw new BrokerSidecarError('DENIED');
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          if (controller.signal.aborted || this.stopped) throw new BrokerSidecarError('DENIED');
+          try {
+            await this.authorize();
+            this.activity?.begin(request.id);
+            admitted = true;
+            break;
+          } catch (error) {
+            if (!this.pauseLifecycle?.deferNewRequest()) throw error;
+          }
+        }
+        try { response = await this.dispatch(request, controller.signal); break; }
+        catch (error) {
+          if (!this.pauseLifecycle || !(error instanceof Error && 'code' in error &&
+            error.code === 'PAUSE_PENDING')) throw error;
+          // Cloud can request pause before the command reaches this Worker.
+          // A rejected broker RPC has had no effect. Release the local activity
+          // barrier, then retry the same request only after Core permits it.
+          this.activity?.end(request.id);
+          admitted = false;
+          if (controller.signal.aborted || this.stopped) throw new BrokerSidecarError('DENIED');
+          await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+      }
+      if (this.pauseLifecycle) await this.pauseLifecycle.authorizeInFlightCompletion();
+      else await this.authorize();
       if (controller.signal.aborted) throw new BrokerSidecarError('DENIED');
       const encoded = JSON.stringify({ id: request.id, ok: true, result: response });
       if (Buffer.byteLength(encoded) > 2_097_152) throw new BrokerSidecarError('DENIED');
       if (!this.stopped && this.child?.stdin.writable) this.child.stdin.write(`${encoded}\n`);
-    } catch {
+    } catch (error) {
       if (!this.stopped && this.child?.stdin.writable) {
-        this.child.stdin.write(`${JSON.stringify({ id: request.id, ok: false })}\n`);
+        const code = error && typeof error === 'object' && 'code' in error &&
+          error.code === 'SOURCE_UNAVAILABLE' ? 'SOURCE_UNAVAILABLE' : 'BROKER_DENIED';
+        this.child.stdin.write(`${JSON.stringify({ id: request.id, ok: false, code })}\n`);
       }
     } finally {
       if (admitted) {

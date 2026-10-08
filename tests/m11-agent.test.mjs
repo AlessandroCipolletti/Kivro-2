@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { URL } from 'node:url';
 import { PermissionCategorySchema } from '../dist/packages/contracts/src/permission-policy.js';
+import { BuyerAgentConstraintsSchema } from '../dist/packages/contracts/src/marketplace-agent.js';
 import { rankAgentCandidates } from '../dist/packages/application/src/marketplace-agent-discovery.js';
 import { validateAgentPlan } from '../dist/packages/domain/src/agent-plan.js';
 import { assessFieldMapping } from '../dist/packages/domain/src/io-compatibility.js';
@@ -54,6 +57,14 @@ const profile={provider:'openai',model:'configured-test-model',supportsStructure
 const profiles=Object.fromEntries(['INTENT_EXTRACTION','DISCOVERY_RERANK','RECOMMENDATION',
   'ORCHESTRATION_PLANNING','INPUT_PREPARATION','RESULT_SYNTHESIS'].map((task)=>[task,profile]));
 
+test('buyer and Marketplace Agent constraints cannot authorize seller capacity changes',()=>{
+  const baseline=constraints({maxTotalSpendMinor:999});
+  assert.equal(BuyerAgentConstraintsSchema.safeParse(baseline).success,true);
+  for(const control of ['concurrencyLimit','queueLimit','pause','schedule'])
+    assert.equal(BuyerAgentConstraintsSchema.safeParse({...baseline,[control]:999}).success,
+      false,`${control} must remain seller-owned control-plane state`);
+});
+
 test('hard marketplace filters exclude fictional, over-budget, unrated, incompatible and offline supply',()=>{
   const valid=doc();const costly=doc({priceMinor:1499});
   const unrated=doc({rating:{average:null,count:0,distribution:[0,0,0,0,0]}});
@@ -80,6 +91,28 @@ test('structured file contract excludes a text-only Blender keyword match',()=>{
   const found=rankAgentCandidates([textOnly,compatible],constraints({
     requiredInputTypes:['.blend'],outputTypes:['.blend']}),'EXECUTE','Blender',8);
   assert.deepEqual(found.map((item)=>item.document.capabilityId),[compatible.capabilityId]);
+});
+
+test('Marketplace Agent and planner consume the exact published Blender example contract',()=>{
+  const ioContract=JSON.parse(readFileSync(new URL('./fixtures/m16-blender-contract.json',
+    import.meta.url),'utf8'));
+  const renderer=doc({name:'Blender Product Renderer',description:'Render Blender scenes',
+    ioContract});
+  const textOnly=doc({name:'Blender advice',description:'Blender render tips'});
+  const ranked=rankAgentCandidates([textOnly,renderer],constraints({
+    requiredInputTypes:['.blend'],outputTypes:['.png']}),'EXECUTE',
+  'Render this Blender scene',8);
+  assert.deepEqual(ranked.map((item)=>item.document.capabilityId),
+    [renderer.capabilityId]);
+  const source=ioContract.output.fields.find((field)=>field.key==='renderedImages');
+  const target={key:'referenceImages',label:'Visual references',order:2,
+    required:false,type:'FILES',constraints:ioContract.input.fields.find(
+      (field)=>field.key==='referenceImages').constraints};
+  assert.deepEqual(assessFieldMapping(source,target),{status:'INCOMPATIBLE',
+    code:'CARDINALITY_OR_SIZE'},
+  'the exact output permits 100 MB images, while the reference input permits only 10 MB');
+  assert.equal(assessFieldMapping(source,ioContract.input.fields.find(
+    (field)=>field.key==='scene')).status,'INCOMPATIBLE');
 });
 
 test('availability-aware procurement keeps advice separate from immediate execution',()=>{

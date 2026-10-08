@@ -1,3 +1,4 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID,createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -95,7 +96,7 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         policy:{schedule:null,concurrencyLimit:1,queueLimit:2,futureReservationLimit:2,
           estimatedRuntimeSeconds:60,maxWaitSeconds:604800},paused:false,source:'WEB',
         expectedRevision:null});
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
@@ -165,7 +166,12 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       async presignPrivateUpload(key){return {url:`https://storage.invalid/${key}`,headers:{}};},
       async copyPrivateObject(source,destination){objects.set(destination,Buffer.from(objects.get(source)));},
       async deletePrivateObject(key){objects.delete(key);}};
-      const assetRepo=new MarketplaceAssetRepository(pool,storage);
+      let scannerUnavailable=false;
+      const scanner={async scan(stream){if(scannerUnavailable)throw new Error('SCANNER_UNAVAILABLE');
+        for await(const chunk of stream){
+        if(Buffer.from(chunk).includes(Buffer.from('EICAR')))throw new Error('INFECTED');
+      }return 'CLEAN';}};
+      const assetRepo=new MarketplaceAssetRepository(pool,storage,scanner);
       const bytes=Buffer.from('supporting text\n');
       const sha256=`sha256:${createHash('sha256').update(bytes).digest('hex')}`;
       const upload=await assetRepo.begin({buyerId:buyer,capabilityId:capability,
@@ -191,6 +197,34 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       await assert.rejects(assetRepo.finalizeDirect({buyerId:other,assetId:direct.id,
         capabilityId:capability,fieldKey:'supportingFile'}),{code:'NOT_FOUND'});
       await assetRepo.finalizeDirect({buyerId:buyer,assetId:direct.id,
+        capabilityId:capability,fieldKey:'supportingFile'});
+      const infectedBytes=Buffer.from('EICAR input fixture');
+      const infectedHash=`sha256:${createHash('sha256').update(infectedBytes).digest('hex')}`;
+      const infected=await assetRepo.beginDirect({buyerId:buyer,capabilityId:capability,
+        fieldKey:'supportingFile',fileName:'infected.txt',sizeBytes:infectedBytes.length,
+        sha256:infectedHash,contentType:'text/plain'});
+      const infectedKey=(await pool.query(`SELECT staging_key FROM buyer_direct_uploads
+        WHERE asset_id=$1`,[infected.id])).rows[0].staging_key;
+      objects.set(infectedKey,infectedBytes);
+      await assert.rejects(assetRepo.finalizeDirect({buyerId:buyer,assetId:infected.id,
+        capabilityId:capability,fieldKey:'supportingFile'}),/INFECTED/);
+      assert.equal((await pool.query('SELECT state FROM assets WHERE id=$1',
+        [infected.id])).rows[0].state,'PENDING_UPLOAD',
+      'infected buyer bytes must never become attachable');
+      const outage=await assetRepo.beginDirect({buyerId:buyer,capabilityId:capability,
+        fieldKey:'supportingFile',fileName:'source.txt',sizeBytes:bytes.length,sha256,
+        contentType:'text/plain'});
+      const outageKey=(await pool.query(`SELECT staging_key FROM buyer_direct_uploads
+        WHERE asset_id=$1`,[outage.id])).rows[0].staging_key;
+      objects.set(outageKey,bytes);
+      scannerUnavailable=true;
+      await assert.rejects(assetRepo.finalizeDirect({buyerId:buyer,assetId:outage.id,
+        capabilityId:capability,fieldKey:'supportingFile'}),/SCANNER_UNAVAILABLE/);
+      assert.equal((await pool.query('SELECT state FROM assets WHERE id=$1',
+        [outage.id])).rows[0].state,'PENDING_UPLOAD',
+      'scanner outage must fail closed');
+      scannerUnavailable=false;
+      await assetRepo.finalizeDirect({buyerId:buyer,assetId:outage.id,
         capabilityId:capability,fieldKey:'supportingFile'});
       const badDirect=await assetRepo.beginDirect({buyerId:buyer,capabilityId:capability,
         fieldKey:'supportingFile',fileName:'support.txt',sizeBytes:bytes.length,sha256,
@@ -260,6 +294,12 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         mode:'IMMEDIATE_ONLY',quoteId:randomUUID(),expectedVersionId:versionId,
         payload:{values:{question:'Work'},assets:{}}}),{code:'NOT_ELIGIBLE'});
       await finance.recordTestCreditPurchase(buyer,5000,`test-only:${randomUUID()}`);
+      for(const blockedAssetId of [infected.id]){
+        await assert.rejects(buyerRepo.preflight({buyerId:buyer,capabilityId:capability,
+          mode:'EARLIEST_AVAILABLE',quoteId:randomUUID(),expectedVersionId:versionId,
+          payload:{values:{question:'Blocked input'},assets:{supportingFile:[blockedAssetId]}}}),
+        {code:'INVALID_INPUT'},'a malware-rejected input cannot receive a paid job quote');
+      }
       const filePayload={values:{question:'Work with file'},assets:{supportingFile:[upload.id]}};
       const fileQuote=await buyerRepo.preflight({buyerId:buyer,capabilityId:capability,
         mode:'EARLIEST_AVAILABLE',quoteId:randomUUID(),expectedVersionId:versionId,
@@ -341,6 +381,9 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       offer.leaseToken);
       await transition('ACCEPTED','STARTING');
       await transition('STARTING','RUNNING');
+      await pool.query("UPDATE capabilities SET visibility='PRIVATE' WHERE id=$1",[capability]);
+      assert.equal(await catalog.detail(slug,other),null,
+        'visibility changes must stop new access without cancelling an owned job');
       await transition('RUNNING','UPLOADING_RESULT');
       await execution.finalizeResult({resultManifestId:randomUUID(),jobId:completedJob,
         executionId:offer.executionId,attemptId:offer.attemptId,workerDeviceId:worker,
@@ -350,6 +393,9 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         async readPrivateObject(){throw new Error('No files');}},
       new Date(Date.now()+86_400_000).toISOString());
       await finance.settleDeliveredJob(completedJob);
+      assert.equal((await buyerRepo.job(buyer,completedJob)).result.values.answer,
+        'Durable answer','the purchased job must finish across a visibility change');
+      await pool.query("UPDATE capabilities SET visibility='PUBLIC' WHERE id=$1",[capability]);
       const reliability=(await catalog.detail(slug,buyer)).reliability;
       assert.equal(reliability.completedJobs,1);
       assert.equal(reliability.successRate,1);
@@ -388,9 +434,17 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
         'a later refund changes financial reputation without rewriting completion history');
       assert.equal((await catalog.sellerPublicProfile(seller)).reliability.refundedJobs,1);
       await pool.query("UPDATE capabilities SET visibility='PRIVATE' WHERE id=$1",[capability]);
+      assert.equal((await buyerRepo.job(buyer,completedJob)).result.values.answer,
+        'Durable answer','visibility must not delete historical buyer results');
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM capability_reviews
+        WHERE job_id=$1`,[completedJob])).rows[0].n,1,
+        'visibility must not delete historical verified reviews');
       assert.equal((await catalog.sellerPublicProfile(seller)).reliability.terminalJobs,0,
         'public seller reputation cannot reveal private capability history');
       await pool.query("UPDATE capabilities SET visibility='PUBLIC' WHERE id=$1",[capability]);
+      const staleVersionQuote=await buyerRepo.preflight({buyerId:buyer,
+        capabilityId:capability,mode:'IMMEDIATE_ONLY',quoteId:randomUUID(),
+        expectedVersionId:versionId,payload});
       const newVersionId=randomUUID();
       const newPackage={...localPackage,capabilityVersionId:newVersionId,
         workerManifest:{...localPackage.workerManifest,capabilityVersionId:newVersionId},
@@ -411,6 +465,13 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       [newVersionId,capability,nextPublished,nextPublished.workerManifestHash,hash]);
       await pool.query(`UPDATE capabilities SET current_version_id=$2 WHERE id=$1`,
         [capability,newVersionId]);
+      const staleVersionJob=randomUUID();
+      await assert.rejects(buyerRepo.purchase({buyerId:buyer,
+        quoteId:staleVersionQuote.quote.id,jobId:staleVersionJob,
+        reservationId:randomUUID(),manifestId:randomUUID(),payload}),
+      {code:'STALE_QUOTE'},'a published version change requires fresh buyer confirmation');
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM payment_reservations
+        WHERE job_id=$1`,[staleVersionJob])).rows[0].n,0);
       assert.equal((await catalog.detail(slug,buyer)).price.buyerAmountMinor,1499);
       assert.equal((await catalog.detail(slug,buyer)).examples.length,0,
         'old version examples cannot advertise a new published contract');
@@ -424,7 +485,7 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       assert.equal((await buyerRepo.job(buyer,completedJob)).summary.versionId,versionId);
       const latestHeartbeat=(await pool.query(`SELECT latest_heartbeat_reported_at AS at
         FROM worker_devices WHERE id=$1`,[worker])).rows[0].at;
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker,workerRelease:'test',
         sentAt:new Date(Math.max(Date.now(),latestHeartbeat.getTime()+1000)).toISOString(),
@@ -441,6 +502,30 @@ if(!process.env.M10_DATABASE_URL){test('M10 requires disposable PostgreSQL',{ski
       assert.equal((await buyerRepo.job(buyer,rerunJob)).summary.priceMinor,1499);
       assert.equal((await buyerRepo.job(buyer,completedJob)).summary.priceMinor,999);
       await buyerRepo.cancel(buyer,rerunJob,randomUUID());
+      const revokedPayload={values:{question:'Read a revoked file'},
+        assets:{supportingFile:[upload.id]}};
+      const revokedQuote=await buyerRepo.preflight({buyerId:buyer,
+        capabilityId:capability,mode:'IMMEDIATE_ONLY',quoteId:randomUUID(),
+        expectedVersionId:newVersionId,payload:revokedPayload});
+      const revokedJob=randomUUID();
+      await buyerRepo.purchase({buyerId:buyer,quoteId:revokedQuote.quote.id,
+        jobId:revokedJob,reservationId:randomUUID(),manifestId:randomUUID(),
+        payload:revokedPayload});
+      await pool.query(`UPDATE asset_read_grants SET revoked_at=now()
+        WHERE asset_id=$1 AND target_job_id=$2`,[upload.id,revokedJob]);
+      const revokedOffer=await execution.offer(revokedJob,worker,plane,120);
+      await execution.accept(revokedOffer.executionId,worker,plane,
+        revokedOffer.leaseToken,randomUUID());
+      await assert.rejects(execution.acceptedInputForWorker(revokedOffer.executionId,
+        worker,plane,revokedOffer.leaseToken,storage,86_400),
+      {code:'NOT_ELIGIBLE'},'a revoked cross-job read grant cannot mint a Worker download');
+      await execution.workerTransition({id:randomUUID(),jobId:revokedJob,
+        from:'ACCEPTED',to:'FAILED_POLICY',at:new Date().toISOString(),
+        actor:'WORKER',reason:'REVOKED_INPUT_GRANT',attemptId:revokedOffer.attemptId,
+        correlationId:revokedOffer.executionId,paymentReservationId:null,
+        resultManifestId:null},revokedOffer.executionId,worker,plane,
+      revokedOffer.leaseToken);
+      await finance.releaseFailedJob(revokedJob);
       const consumed=Number((await pool.query(`SELECT count(*) AS count FROM payment_reservations
         WHERE buyer_account_id=$1 AND created_at>=now()-interval '1 hour'`,[buyer])).rows[0].count);
       await pool.query(`UPDATE platform_buyer_limits SET max_jobs_per_hour=$1 WHERE singleton=true`,

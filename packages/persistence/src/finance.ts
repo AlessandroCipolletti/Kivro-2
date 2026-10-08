@@ -571,7 +571,7 @@ export class PostgresFinanceRepository implements PaymentReservationVerifier {
     const purchases = await this.pool.query<{ id: string; stripe_payment_intent_id: string }>(`
       SELECT id,stripe_payment_intent_id FROM credit_purchases
       WHERE stripe_mode=$1 AND stripe_payment_intent_id IS NOT NULL
-        AND state IN ('SUCCEEDED','DISPUTED','PARTIALLY_REFUNDED','REFUNDED')
+        AND state IN ('PROCESSING','SUCCEEDED','DISPUTED','PARTIALLY_REFUNDED','REFUNDED')
       ORDER BY last_reconciled_at NULLS FIRST,created_at LIMIT $2`, [this.stripeMode,limit]);
     let purchaseCount = 0;
     for (const row of purchases.rows) {

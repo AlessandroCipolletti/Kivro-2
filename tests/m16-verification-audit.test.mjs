@@ -16,6 +16,8 @@ test('all real deferred gates are audited individually and the public release st
   assert.equal(result.totalCoverage, 1954,
     'compound-prefix curated requirements must be counted in the release audit');
   assert.ok(result.deferred > 0);
+  assert.ok(result.testedNotVerified > 0,
+    'tested requirements without full proof remain visible in the backlog');
   assert.equal(result.rows.length, new Set(result.rows.map((row) => row.id)).size);
   assert.equal(Object.values(result.counts).reduce((sum, count) => sum + count, 0),
     result.openRows);
@@ -44,7 +46,12 @@ test('gate fails closed for missing, duplicated, stale or unsupported evidence',
   assert.throws(() => auditVerification(base.replace('DEFERRED_VERIFICATION', 'VERIFIED'), row),
     /BACKLOG_COVERAGE_MISMATCH/);
   assert.throws(() => auditVerification(base + base, row), /DUPLICATE_COVERAGE/);
-  assert.equal(releaseDecision(base.replace('DEFERRED_VERIFICATION', 'TESTED'), '').ready, false);
+  assert.throws(() => auditVerification(base.replace('DEFERRED_VERIFICATION', 'TESTED'), ''),
+    /BACKLOG_ROW_MISSING/);
+  assert.equal(auditVerification(base.replace('DEFERRED_VERIFICATION', 'TESTED'), row)
+    .testedNotVerified,1);
+  assert.equal(releaseDecision(base.replace('DEFERRED_VERIFICATION', 'TESTED'), row).ready,
+    false);
   assert.equal(releaseDecision(base.replace('DEFERRED_VERIFICATION', 'OPEN_IMPLEMENTATION'), row).ready,
     false);
   assert.equal(releaseDecision(base.replace('DEFERRED_VERIFICATION', 'VERIFIED'), '').ready,

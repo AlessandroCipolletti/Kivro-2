@@ -1,10 +1,10 @@
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { z } from 'zod';
-import { hashCanonicalJson } from '../../../packages/contracts/src/canonical-json.js';
+import { canonicalJson,hashCanonicalJson } from '../../../packages/contracts/src/canonical-json.js';
 import { LocalCapabilityPackageSchema, type LocalCapabilityPackage } from
   '../../../packages/contracts/src/capability-package.js';
 import { OfflineSandboxPlanSchema } from '../../../packages/contracts/src/sandbox.js';
@@ -20,7 +20,7 @@ import { isPinnedRuntimeRangeCompatible } from
 import type { OpenClawImageApproval } from
   '../../../packages/openclaw-adapter/src/image-approval.js';
 import { BrokerSidecar } from './broker-sidecar.js';
-import { BrokerRoutingError, WorkerBrokerRouter, type JobBrokerPorts } from './broker-router.js';
+import { WorkerBrokerRouter, type JobBrokerPorts } from './broker-router.js';
 import type { WorkerJobControl } from './job-control.js';
 import type { WorkerLocalState } from './local-state.js';
 
@@ -50,6 +50,8 @@ export interface ImportReviewRunnerDependencies {
   readonly jobControl:WorkerJobControl;
   readonly localState:WorkerLocalState;
   readonly brokerPorts:JobBrokerPorts;
+  readonly sampleFiles?:readonly {fieldKey:string;assetId:string;
+    extension:string;detectedMimeType:string;bytesBase64:string}[];
   /** Must check exact selected resources and credential readiness, without exposing values. */
   readonly checkDependencies:(pkg:LocalCapabilityPackage)=>Promise<{
     readonly ready:boolean;readonly verifiedNodeIds:readonly string[];
@@ -80,8 +82,25 @@ export async function runRepresentativePackageTest(rawPackage:unknown,
     readonly openClawVersion:string;readonly testedAt:string}> {
   const pkg=LocalCapabilityPackageSchema.parse(rawPackage);
   const sample=testInput.parse(rawSample);
-  if(Object.values(sample.assets).some((ids)=>ids.length>0)||
-    pkg.ioContract.input.fields.some((field)=>field.type==='FILE'||field.type==='FILES'))
+  const files=deps.sampleFiles??[];
+  if(files.length>32||new Set(files.map((file)=>file.assetId)).size!==files.length)
+    throw new ImportReviewError('INPUT_UNSUPPORTED');
+  const staged:Record<string,{assetId:string;extension:string;
+    detectedMimeType:string;sizeBytes:number}[]>={};
+  let sampleBytes=Buffer.byteLength(canonicalJson(sample.values));
+  for(const file of files){
+    const bytes=Buffer.from(file.bytesBase64,'base64');
+    if(bytes.toString('base64')!==file.bytesBase64||
+      !sample.assets[file.fieldKey]?.includes(file.assetId)||
+      bytes.length===0||bytes.length>8_000_000)
+      throw new ImportReviewError('INPUT_UNSUPPORTED');
+    sampleBytes+=bytes.length;
+    (staged[file.fieldKey]??=[]).push({assetId:file.assetId,
+      extension:file.extension,detectedMimeType:file.detectedMimeType,
+      sizeBytes:bytes.length});
+  }
+  if(sampleBytes>pkg.workerManifest.limits.maxInputBytes||
+    Object.values(sample.assets).flat().length!==files.length)
     throw new ImportReviewError('INPUT_UNSUPPORTED');
   if(!deps.localState.isUnpausedForNewJobOffer(pkg.capabilityId))
     throw new ImportReviewError('NOT_READY');
@@ -102,10 +121,10 @@ export async function runRepresentativePackageTest(rawPackage:unknown,
     throw new ImportReviewError('DEPENDENCY_UNHEALTHY');
   const jobId=randomUUID(),executionId=randomUUID(),attemptId=randomUUID();
   const envelope=buildJobInstructionEnvelope(reviewedPackage.ioContract.input,
-    reviewedPackage.ioContract.output,
-    sample,{});
+    reviewedPackage.ioContract.output,sample,staged);
   const router=new WorkerBrokerRouter(reviewedPackage,jobId,deps.brokerPorts,
-    {inputFiles:false,outputFiles:reviewedPackage.ioContract.output.fields.some((field)=>
+    {inputFiles:envelope.files.length>0,
+      outputFiles:reviewedPackage.ioContract.output.fields.some((field)=>
       field.type==='FILE'||field.type==='FILES')});
   const limits=pkg.workerManifest.limits;
   const outputFileBytes=Math.max(1,Math.min(limits.maxOutputBytes,
@@ -129,6 +148,14 @@ export async function runRepresentativePackageTest(rawPackage:unknown,
   let expansion=false;
   try{
     await mkdir(inputRoot,{mode:0o700});
+    for(const binding of envelope.files){
+      const file=files.find((item)=>item.assetId===binding.assetId);
+      if(!file)throw new ImportReviewError('INPUT_UNSUPPORTED');
+      const fieldRoot=join(inputRoot,binding.fieldKey);
+      await mkdir(fieldRoot,{mode:0o700,recursive:true});
+      await writeFile(join(fieldRoot,`${binding.assetId}${file.extension}`),
+        Buffer.from(file.bytesBase64,'base64'),{flag:'wx',mode:0o600});
+    }
     await prepareOpenClawJobInput({inputRoot,localPackage:reviewedPackage,envelope,
       approvedImage:deps.approvedImage,allowedToolNames:router.allowedToolNames,
       reviewedSkills,maxOutputFileBytes:outputFileBytes});
@@ -142,7 +169,7 @@ export async function runRepresentativePackageTest(rawPackage:unknown,
       authorize,async(request,signal)=>{
         observedKinds.push(request.kind);
         try{return await router.dispatch(request,signal);}
-        catch(error){if(error instanceof BrokerRoutingError)expansion=true;throw error;}
+        catch(error){expansion=true;throw error;}
       },{begin:(id)=>deps.jobControl.beginBrokerOperation(jobId,id),
         end:(id)=>deps.jobControl.endBrokerOperation(jobId,id)});
     const broker=sidecar;
@@ -182,6 +209,20 @@ export async function runRepresentativePackageTest(rawPackage:unknown,
         }});
     if(expansion||!observedKinds.includes('INFERENCE'))
       throw new ImportReviewError('OBSERVED_EXPANSION');
+    if((pkg.permissionPolicy.localResources?.length&&!observedKinds.includes('RESOURCE_READ'))||
+      (pkg.permissionPolicy.internet?.mode==='PUBLIC_WEB_RESEARCH'&&
+        ((pkg.permissionPolicy.internet.search.enabled&&
+          !observedKinds.includes('RESEARCH_SEARCH'))||
+         (pkg.permissionPolicy.internet.fetch.enabled&&
+          !observedKinds.includes('RESEARCH_FETCH'))||
+         (pkg.permissionPolicy.internet.download.enabled&&
+          !observedKinds.includes('RESEARCH_DOWNLOAD'))))||
+      ((pkg.permissionPolicy.declaredApiPolicy??pkg.permissionPolicy.internet)?.mode===
+        'DECLARED_API_ACCESS'&&
+        !observedKinds.includes('DECLARED_API'))||
+      (pkg.selectedLocalBindings?.length&&
+        !observedKinds.includes('SELECTED_FILE_READ')))
+      throw new ImportReviewError('DEPENDENCY_UNHEALTHY');
     if(!output||!probeHash)throw new ImportReviewError('OUTPUT_MISSING');
     const outputHash=hashCanonicalJson(output);
     const packageHash=hashCanonicalJson(reviewedPackage);

@@ -18,6 +18,8 @@ import { getMarketplaceService } from '../marketplace/server.js';
 import { getBuyerApiKeys,getBuyerWebhooks } from './server.js';
 import { readBoundedJson } from './http.js';
 import { safeResultFileName } from '../../../../packages/contracts/src/file-types.js';
+import { MalwareScanError } from '../../../../packages/infrastructure/adapters/src/clamav-scanner.js';
+import { InputObjectValidationError } from '../../../../packages/application/src/input-object-validation.js';
 
 const uuid=z.uuid();
 const jobInput=z.strictObject({inputs:z.record(z.string(),z.unknown()),
@@ -158,7 +160,7 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
         if(error instanceof AvailabilityError)return finish(await unavailable(detail.id,
           actor.accountId,error.code));
         if(error instanceof BuyerMarketplaceError)return finish(json({code:error.code},
-          error.code==='NOT_FOUND'?404:409));
+          error.code==='NOT_FOUND'?404:error.code==='INVALID_INPUT'?400:409));
         if(error instanceof ContractValidationError)return finish(json({code:'INVALID_INPUT',
           reason:error.code,field:error.field??null},400));
         if(error instanceof z.ZodError)return finish(json({code:'INVALID_INPUT'},400));
@@ -183,7 +185,7 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
         if(error instanceof ContractValidationError)return finish(json({code:'INVALID_INPUT',
           reason:error.code,field:error.field??null},400));
         if(error instanceof BuyerMarketplaceError)return finish(json({code:error.code},
-          error.code==='NOT_FOUND'?404:409));
+          error.code==='NOT_FOUND'?404:error.code==='INVALID_INPUT'?400:409));
         throw error;
       }
       const response=BuyerApiJobCreatedSchema.parse({apiVersion:'v1',jobId:purchased.jobId,status:purchased.status,
@@ -235,6 +237,10 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
     }
     return json({code:'NOT_FOUND'},404);
   }catch(error){
+    if(error instanceof MalwareScanError)return json({code:error.code==='INFECTED'?
+      'UNSAFE_FILE':error.code==='LIMIT_EXCEEDED'?'FILE_LIMIT_EXCEEDED':'SCAN_UNAVAILABLE'},
+    error.code==='INFECTED'?422:error.code==='LIMIT_EXCEEDED'?413:503);
+    if(error instanceof InputObjectValidationError)return json({code:error.code},409);
     if(error instanceof BuyerApiError)return json({code:error.code},
       error.code==='UNAUTHENTICATED'?401:error.code==='FORBIDDEN'?403:
         error.code==='RATE_LIMITED'?429:error.code==='IN_PROGRESS'?409:
@@ -243,7 +249,7 @@ export async function handleBuyerV1(request:Request,path:readonly string[]):Prom
     if(error instanceof BuyerMarketplaceError||error instanceof MarketplaceAssetError||
       error instanceof BuyerWebhookError||error instanceof JobExecutionError)
       return json({code:error.code},error.code==='NOT_FOUND'?404:
-        error.code==='ABUSE_DENIED'?403:409);
+        error.code==='INVALID_INPUT'?400:error.code==='ABUSE_DENIED'?403:409);
     if(error instanceof FinanceError)return json({code:error.code==='INSUFFICIENT_CREDITS'?
       'INSUFFICIENT_FUNDS':error.code},
       error.code==='INSUFFICIENT_CREDITS'?402:409);

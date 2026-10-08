@@ -1,10 +1,12 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, randomUUID, sign } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import test from 'node:test';
 import pg from 'pg';
-import { fixture } from './seller-publication-contract.test.mjs';
+import { fixture,fixtureParts } from './seller-publication-contract.test.mjs';
+import { buildWorkerCapabilityReview } from '../dist/apps/worker/src/import-review.js';
 import { hashCanonicalJson } from '../dist/packages/contracts/src/canonical-json.js';
 import { PostgresSellerPublicationRepository } from
   '../dist/packages/persistence/src/seller-publication.js';
@@ -16,6 +18,8 @@ import { PostgresWorkerHeartbeatRepository } from
 import { PostgresFinanceRepository } from '../dist/packages/persistence/src/finance.js';
 import { handleWorkerMessage } from '../dist/apps/web/src/worker/control-handler.js';
 import { getAuthService } from '../dist/apps/web/src/auth/server.js';
+import {handleSellerPublicationRequest} from
+  '../dist/apps/web/src/seller/publication-handler.js';
 import { workerMessageHash,workerSignatureBytes } from
   '../dist/packages/worker-protocol/src/auth.js';
 
@@ -73,7 +77,7 @@ if(!process.env.M14_DATABASE_URL){
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM capabilities')).rows[0].n,0,
       'A signed Worker test report never publishes by itself');
     await new PostgresWorkerHeartbeatRepository(pool).observe({
-      type:'WORKER_HEARTBEAT',protocolVersion:'kivro-worker/1',messageId:randomUUID(),
+      type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:'kivro-worker/1',messageId:randomUUID(),
       controlPlaneId:'test-plane',workerDeviceId:worker,workerRelease:'m14-test',
       sentAt:new Date().toISOString(),openClawVersion:'2026.8.2',status:'ONLINE',
       runningJobs:0,capacity:1,policyVersion:1,localRevision:0,
@@ -98,7 +102,35 @@ if(!process.env.M14_DATABASE_URL){
       consentDependencyIds:review.requiredConsents.map((item)=>item.dependencyId),
       providerCostAcknowledged:true,localPermissionReviewAcknowledged:true,
       approvedAt:new Date().toISOString()};
+    const draft={reviewId:staged.reviewId,slug:approval.slug,name:approval.name,
+      description:approval.description};
+    await assert.rejects(repository.createDraftFromReview(otherAccount,draft),
+      {code:'NOT_FOUND'});
+    assert.deepEqual(await repository.createDraftFromReview(sellerAccount,draft),{
+      capabilityId:candidate.capabilityId,reviewId:staged.reviewId,status:'DRAFT'});
+    assert.deepEqual(await repository.createDraftFromReview(sellerAccount,draft),{
+      capabilityId:candidate.capabilityId,reviewId:staged.reviewId,status:'DRAFT'},
+    'lost seller create response cannot create a second capability');
+    assert.equal((await repository.listCapabilitySummariesForSeller(sellerAccount))[0].status,
+      'DRAFT');
+    assert.equal((await repository.listCapabilitySummariesForSeller(otherAccount)).length,0);
+    await assert.rejects(repository.createDraftFromReview(sellerAccount,
+      {...draft,name:'Changed name'}),{code:'CONFLICT'});
+    const browserAuth={database:pool,auth:{api:{async getSession(){return {
+      user:{id:sellerAccount}};}}}};
+    const request=(body)=>new globalThis.Request('http://127.0.0.1:9876/api/seller/capabilities',{
+      method:'POST',headers:{origin:'http://127.0.0.1:9876',
+        'content-type':'application/json'},body:JSON.stringify(body)});
+    assert.equal((await handleSellerPublicationRequest(request(draft),
+      'capabilities',browserAuth)).status,201);
+    const listed=await handleSellerPublicationRequest(new globalThis.Request(
+      'http://127.0.0.1:9876/api/seller/capabilities'),'capabilities',browserAuth);
+    assert.equal((await listed.json()).capabilities[0].capabilityId,candidate.capabilityId);
+    assert.equal((await handleSellerPublicationRequest(request(approval),'publish',
+      browserAuth,randomUUID())).status,404);
     await assert.rejects(repository.publish(otherAccount,approval),{code:'NOT_FOUND'});
+    await assert.rejects(repository.publish(sellerAccount,approval,randomUUID()),
+      {code:'NOT_FOUND'},'the route capability ID cannot publish another reviewed service');
     await assert.rejects(repository.publish(sellerAccount,{...approval,
       localPermissionReviewAcknowledged:undefined}),{code:'CONSENT_MISSING'});
     await assert.rejects(repository.publish(sellerAccount,{...approval,
@@ -262,4 +294,81 @@ if(!process.env.M14_DATABASE_URL){
       WHERE capability_id=$1`,[candidate.capabilityId])).rows[0].n,4);
     await assert.rejects(pool.query('DELETE FROM capability_visibility_changes'),/append-only/);
   }finally{await pool.end();await getAuthService().database.end();}
+});
+
+if(process.env.M14_DATABASE_URL)test('local inference review publishes with no external processor or seller credential',async()=>{
+  process.env.KIVRO_STRIPE_MODE='test';
+  const pool=new pg.Pool({connectionString:process.env.M14_DATABASE_URL,max:2});
+  const repository=new PostgresSellerPublicationRepository(pool);
+  const sellerAccount=randomUUID(),sellerProfile=randomUUID();
+  const {pkg}=fixtureParts();
+  const worker=pkg.workerDeviceId;
+  pkg.dependencyGraph.inference={mode:'LOCAL',dependencyId:'model',
+    provider:'seller-local',model:'private-model',endpointRef:'service',
+    billingOwner:'SELLER'};
+  pkg.dependencyGraph.nodes=pkg.dependencyGraph.nodes.map((node)=>{
+    if(node.id==='credential')return {...node,id:'service',type:'LOCAL_SERVICE',
+      name:'local-model-server'};
+    if(node.id==='model')return {...node,name:'private-model',
+      dependsOn:['provider','service']};
+    if(node.id==='provider')return {...node,name:'seller-local'};
+    return node;
+  });
+  delete pkg.permissionPolicy.providerBudget;
+  pkg.permissionPolicy.sellerCredentialRefs=[];
+  pkg.permissionPolicy.localInference={providerId:'seller-local',
+    modelId:'private-model',endpointRef:'service',maxRequestsPerJob:2,
+    maxInputTokensPerRequest:100,maxOutputTokensPerRequest:100,
+    maxTokensPerJob:400,maxDailyJobs:10};
+  const digest=`sha256:${'a'.repeat(64)}`;
+  const review=buildWorkerCapabilityReview({reviewedPackage:pkg,
+    testedAt:new Date().toISOString(),dependencyHealth:digest,
+    representativeJob:digest,observedVsDeclared:digest,
+    securityProbes:digest,outputContract:digest,
+    approvedImageDigest:digest,openClawVersion:'2026.8.2'},
+  {versionNumber:1,selectedPrice:{tier:'USD_999',currency:'USD',
+    buyerAmountMinor:999,platformFeeMinor:199,sellerEarningMinor:800},
+  externalProcessors:[]},{workerDeviceId:worker,controlPlaneId:'test-plane',
+    providerUsage:{requests:1,estimatedMicroUsd:0,unsettled:0}});
+  try{
+    await pool.query(`INSERT INTO accounts(id,primary_email,status,
+      email_verified_at,auth_email_verified) VALUES($1,$2,'ACTIVE',now(),true)`,
+    [sellerAccount,`${sellerAccount}@example.test`]);
+    await pool.query(`INSERT INTO seller_profiles(id,account_id,display_name,
+      status,payout_status) VALUES($1,$2,'Local model seller','ACTIVE','READY')`,
+    [sellerProfile,sellerAccount]);
+    await pool.query(`INSERT INTO seller_connect_profiles(seller_profile_id,
+      stripe_account_id,stripe_mode,onboarding_status,transfers_enabled,
+      payouts_enabled,last_reconciled_at) VALUES($1,'acct_M16LOCAL','test',
+      'READY',true,true,now())`,[sellerProfile]);
+    await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,
+      public_key,name,platform,worker_version,status)
+      VALUES($1,$2,'test-public-key','Local Worker','LINUX','test','PAIRED')`,
+    [worker,sellerProfile]);
+    const staged=await repository.stageFromAuthenticatedWorker(review,worker);
+    const candidate=review.candidate;
+    const approval={reviewId:staged.reviewId,capabilityVersionId:candidate.id,
+      candidateHash:staged.candidateHash,manifestHash:candidate.workerManifestHash,
+      packageHash:candidate.localPackageHash,
+      policyValidationHash:staged.policyValidationHash,
+      slug:`local-${candidate.capabilityId}`,name:'Private local model',
+      description:'A narrow seller hosted local model service.',
+      category:'RESEARCH',shortDescription:'Seller hosted local model.',
+      tags:['local'],strengths:['No external model processor'],
+      limitations:['Requires a running seller model service'],
+      visibility:'PRIVATE',availability:{schedule:null,concurrencyLimit:1,
+        queueLimit:0,futureReservationLimit:0,
+        estimatedRuntimeSeconds:120,maxWaitSeconds:3600},
+      consentDependencyIds:review.requiredConsents.map((item)=>item.dependencyId),
+      providerCostAcknowledged:true,localPermissionReviewAcknowledged:true,
+      approvedAt:new Date().toISOString()};
+    await repository.publish(sellerAccount,approval);
+    const stored=(await pool.query(`SELECT version_snapshot FROM capability_versions
+      WHERE id=$1`,[candidate.id])).rows[0].version_snapshot;
+    assert.deepEqual(stored.externalProcessors,[]);
+    assert.equal(stored.workerDeviceId,worker);
+    assert.equal((await pool.query(`SELECT count(*)::int AS n FROM
+      capability_permission_consents WHERE capability_version_id=$1
+      AND permission_type='LOCAL_SERVICE'`,[candidate.id])).rows[0].n,1);
+  }finally{await pool.end();}
 });

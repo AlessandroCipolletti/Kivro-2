@@ -119,3 +119,25 @@ export async function withStagedBuyerInputs<T>(options: {
     return await consume(inputRoot);
   } finally { await rm(attempt, { recursive: true, force: true }); }
 }
+
+/** Crash recovery removes only attempt directories recorded in the private
+ * Worker job journal, after their sandbox containers have been stopped. */
+export async function removeKnownStagedAttempts(attemptRoot:string,
+  attemptIds:readonly string[]):Promise<void>{
+  const root=privateRoot(attemptRoot);
+  for(const rawId of new Set(attemptIds)){
+    const id=z.uuid().parse(rawId);
+    const path=join(root,id);
+    let stat;
+    try{stat=lstatSync(path);}
+    catch(error){
+      if(error instanceof Error&&'code' in error&&error.code==='ENOENT')continue;
+      throw error;
+    }
+    if(!stat.isDirectory()||stat.isSymbolicLink()||
+      (stat.mode&0o077)!==0||
+      (typeof process.getuid==='function'&&stat.uid!==process.getuid()))
+      throw new InputStagingError('INSECURE_ROOT');
+    await rm(path,{recursive:true,force:false});
+  }
+}

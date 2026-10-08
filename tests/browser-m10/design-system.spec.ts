@@ -1,6 +1,31 @@
 import { expect,test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 const widths=[{width:1280,height:900},{width:768,height:900},{width:390,height:844}];
+
+test('M16 automated accessibility on public buyer pages at desktop and mobile',
+  async({page})=>{
+    for(const width of [1280,390]){
+      await page.setViewportSize({width,height:900});
+      for(const route of ['/', '/sign-in', '/discover']){
+        await page.goto(route);
+        const result=await new AxeBuilder({page}).withTags(
+          ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+        expect(result.violations.map((violation)=>({id:violation.id,
+          nodes:violation.nodes.map((node)=>node.target)})),
+        `${route} at ${width}px`).toEqual([]);
+      }
+      await page.goto('/discover');
+      const href=await page.locator('.market-card').first().getAttribute('href');
+      expect(href).toBeTruthy();
+      await page.goto(href!);
+      const detail=await new AxeBuilder({page}).withTags(
+        ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+      expect(detail.violations.map((violation)=>({id:violation.id,
+        nodes:violation.nodes.map((node)=>node.target)})),
+      `capability detail at ${width}px`).toEqual([]);
+    }
+  });
 
 test('M14 navigation, responsive content, focus and honest marketplace states',async({page})=>{
   await page.setViewportSize({width:1280,height:900});

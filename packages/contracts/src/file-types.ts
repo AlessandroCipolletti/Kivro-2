@@ -34,6 +34,14 @@ export function safeResultFileName(assetId:string,mime:string):string{
   return `kivro-result-${assetId}${format.extensions[0]}`;
 }
 
+/** Public examples use contract field names; neither storage IDs nor seller host paths become filenames. */
+export function safeExampleFileName(fieldKey:string,mime:string):string{
+  if(!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(fieldKey))throw new TypeError('Invalid example field');
+  const format=SUPPORTED_FILE_TYPES.find((candidate)=>candidate.mime===mime);
+  if(!format)throw new TypeError('Unsupported example MIME');
+  return `kivro-example-${fieldKey.toLowerCase()}${format.extensions[0]}`;
+}
+
 function isWebmHeader(bytes: Buffer): boolean {
   if (!bytes.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) return false;
   for (let offset = 4; offset + 7 <= bytes.length; offset += 1) {

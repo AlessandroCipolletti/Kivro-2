@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { WorkerHeartbeatSchema, WORKER_PROTOCOL_VERSION } from
   '../../../packages/worker-protocol/src/messages.js';
+import { hasRequiredExecutionHealth } from
+  '../../../packages/domain/src/worker-operational-health.js';
 import type { CapabilityAdmissionReadinessPort } from './job-admission.js';
 import type { WorkerCapabilityPackageStore } from './capability-package-store.js';
 import type { WorkerLocalState } from './local-state.js';
@@ -23,13 +25,14 @@ export class WorkerAvailabilityReporter {
         'SECURITY_PAUSE'|'SELLER_PAUSE'|'SANDBOX_SELF_TEST'|'EXECUTION_CAPACITY';
       state:'HEALTHY'|'BLOCKING'|'UNKNOWN';}[] }): Promise<z.infer<typeof WorkerHeartbeatSchema>> {
     const paused = this.localState.snapshot();
+    const infrastructureBlocked=!hasRequiredExecutionHealth(input.operationalChecks);
     const reports: { capabilityVersionId: string; policyValidationHash: string | null;
-      state: 'READY' | 'NOT_READY'; checks?: {sandboxVerified:boolean;
+      state: 'READY' | 'NOT_READY' | 'DEPENDENCY_BLOCKED'; checks?: {sandboxVerified:boolean;
         requiredSecretsReady:boolean;runtimeHealthy:boolean} }[] = [];
     for (const pkg of this.packages.listInstalled()) {
       if (pkg.workerDeviceId !== this.deviceId) throw new Error('WRONG_WORKER_PACKAGE');
       let policyValidationHash: string | null = null;
-      let state: 'READY' | 'NOT_READY' = 'NOT_READY';
+      let state: 'READY' | 'NOT_READY' | 'DEPENDENCY_BLOCKED' = 'NOT_READY';
       let checks: {sandboxVerified:boolean;requiredSecretsReady:boolean;
         runtimeHealthy:boolean}|undefined;
       try {
@@ -37,8 +40,9 @@ export class WorkerAvailabilityReporter {
         checks={sandboxVerified:check.sandboxVerified,
           requiredSecretsReady:check.requiredSecretsReady,runtimeHealthy:check.runtimeHealthy};
         policyValidationHash = check.policyValidationHash;
+        if(check.revalidationRequired)state='DEPENDENCY_BLOCKED';
         const age = Date.now() - Date.parse(check.checkedAt);
-        if (check.ready && check.sandboxVerified && check.requiredSecretsReady &&
+        if (!infrastructureBlocked && !check.revalidationRequired && check.ready && check.sandboxVerified && check.requiredSecretsReady &&
           check.runtimeHealthy &&
           Number.isFinite(age) && age >= 0 && age <= 30_000 &&
           policyValidationHash &&
@@ -52,8 +56,9 @@ export class WorkerAvailabilityReporter {
       controlPlaneId:input.controlPlaneId,workerDeviceId:this.deviceId,
       workerRelease:input.workerRelease,sentAt:new Date().toISOString(),
       openClawVersion:input.openClawVersion,
-      status:paused.globalPaused||paused.securityPaused?'PAUSED':'ONLINE',
-      runningJobs:input.runningJobs,capacity:input.capacity,
+      status:paused.globalPaused||paused.securityPaused?'PAUSED':
+        infrastructureBlocked?'NOT_READY':'ONLINE',
+      runningJobs:input.runningJobs,capacity:infrastructureBlocked?0:input.capacity,
       policyVersion:input.policyVersion,localRevision:paused.localRevision,
       acknowledgedCloudRevision:paused.cloudRevision??0,
       localPause:{globalPaused:paused.localPaused ?? paused.globalPaused,

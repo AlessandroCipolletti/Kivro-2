@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync, realpathSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
@@ -17,7 +17,8 @@ export class DockerSandboxError extends Error {
   constructor(readonly code: 'DOCKER_UNAVAILABLE' | 'IMAGE_UNAPPROVED' | 'INSECURE_INPUT' |
     'IMAGE_UNAVAILABLE' | 'CREATE_FAILED' | 'POLICY_MISMATCH' | 'START_FAILED' | 'TIMED_OUT' |
     'OUTPUT_LIMIT' | 'CLEANUP_FAILED' | 'COLLECTOR_UNAVAILABLE' | 'TRANSFER_FAILED' |
-    'EXECUTION_FAILED') {
+    'EXECUTION_FAILED', readonly diagnostic?: {readonly exitCode:number;
+      readonly stderrBytes:number;readonly stderrSha256:`sha256:${string}`}) {
     super(`Docker sandbox unavailable: ${code}`); this.name = 'DockerSandboxError';
   }
 }
@@ -384,7 +385,12 @@ export class DockerSandboxAdapter {
       if (control && exitCode === 0 && !attached.startedObserved) await control.onStarted(containerId);
       result = Object.freeze({ exitCode, stdout: attached.stdout, stderr: attached.stderr });
       if (delivery && collectorName) {
-        if (exitCode !== 0) throw new DockerSandboxError('EXECUTION_FAILED');
+        if (exitCode !== 0) {
+          const stderr=Buffer.from(attached.stderr,'utf8');
+          throw new DockerSandboxError('EXECUTION_FAILED',{
+            exitCode,stderrBytes:stderr.byteLength,
+            stderrSha256:`sha256:${createHash('sha256').update(stderr).digest('hex')}`});
+        }
         await transferOutput(this.dockerExecutable, collectorName, outputRoot, plan.maxOutputBytes);
         const collected = await collectStoppedAttemptOutput(this.attemptRoot, attemptId,
           delivery.outputContract, { maxFileBytes: delivery.limits.maxFileBytes,

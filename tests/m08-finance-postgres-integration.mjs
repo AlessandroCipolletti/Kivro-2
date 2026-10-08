@@ -1,3 +1,4 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID, createHmac } from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -39,7 +40,7 @@ if (!process.env.M08_DATABASE_URL) {
       await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,
         worker_version,status) VALUES($1,$2,'test-key','M08 Worker','LINUX','test','ONLINE')`,
       [worker, seller]);
-      await new PostgresWorkerHeartbeatRepository(pool).observe({ type: 'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({ type: 'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion: WORKER_PROTOCOL_VERSION, messageId: randomUUID(), controlPlaneId: plane,
         workerDeviceId: worker, workerRelease: 'test', openClawVersion: null,
         status: 'ONLINE', runningJobs: 0, capacity: 1, policyVersion: 1, localRevision: 0 }, worker, plane);
@@ -234,6 +235,14 @@ if (!process.env.M08_DATABASE_URL) {
           currency:'usd',sourceChargeId:'ch_M08PURCHASE',mode:'test'};},
         async listRefunds(){return {refunds:[],hasMore:false};} };
       assert.equal(await finance.processFinancialOutbox(gateway),1);
+      const providerGateway={...gateway,async retrieveConnectAccount(){return {
+        id:'acct_M08TEST',mode:'test',transfersEnabled:true,payoutsEnabled:true,
+        detailsSubmitted:true,requirementsDue:[],country:'US'};},
+        async listPayouts(){return {payouts:[],hasMore:false};}};
+      assert.deepEqual(await finance.reconcileStripeProviderState(providerGateway,1),
+        {purchases:1,sellers:1},
+        'provider reconciliation credits a succeeded intent even if its webhook was lost');
+      assert.equal((await finance.buyerBalance(buyer)).availableMinor,1500);
       const stamp=Math.floor(Date.now()/1000), secret='whsec_m08test';
       const makeEvent=(id,type)=>{
         const raw=Buffer.from(JSON.stringify({ id,object:'event',type,
@@ -267,10 +276,6 @@ if (!process.env.M08_DATABASE_URL) {
         new Date().toISOString()));
       await assert.rejects(finance.reserveJob(staleJob,buyer,randomUUID()),
         {code:'STRIPE_NOT_READY'});
-      const providerGateway={...gateway,async retrieveConnectAccount(){return {
-        id:'acct_M08TEST',mode:'test',transfersEnabled:true,payoutsEnabled:true,
-        detailsSubmitted:true,requirementsDue:[],country:'US'};},
-        async listPayouts(){return {payouts:[],hasMore:false};}};
       assert.deepEqual(await restarted.reconcileStripeProviderState(providerGateway,1),
         {purchases:1,sellers:1});
       const buyerMethods={...gateway,

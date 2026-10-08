@@ -10,6 +10,10 @@ import { SellerPublicationApprovalSchema, WorkerCapabilityReviewSchema,
   '../../contracts/src/seller-publication.js';
 
 const id = z.uuid();
+const draftRequest=z.strictObject({reviewId:id,
+  slug:z.string().regex(/^[a-z0-9](?:[a-z0-9-]{1,78}[a-z0-9])?$/),
+  name:z.string().trim().min(1).max(160),
+  description:z.string().trim().min(20).max(4000)});
 type ReviewRow = { id:string;seller_profile_id:string;worker_device_id:string;
   capability_id:string;capability_version_id:string;review_hash:string;
   review_json:unknown;state:'REVIEW'|'PUBLISHED';approval_hash:string|null };
@@ -29,6 +33,58 @@ function policyHash(review:WorkerCapabilityReview):string {
 /** The signed Worker may stage a buyer-safe candidate; only a seller session can publish it. */
 export class PostgresSellerPublicationRepository {
   constructor(private readonly pool:Pool) {}
+
+  /** A seller can name a draft only after a paired Worker has staged its
+   * reviewed candidate. Creating a draft grants no publication or runtime
+   * consent; the later approval remains exact and version-bound. */
+  async createDraftFromReview(sellerAccountId:string,raw:unknown):Promise<{
+    capabilityId:string;reviewId:string;status:'DRAFT'}>{
+    const sellerId=id.parse(sellerAccountId),input=draftRequest.parse(raw);
+    const client=await this.pool.connect();
+    try{
+      await client.query('BEGIN');
+      const review=await client.query<ReviewRow>(`SELECT r.* FROM capability_publication_reviews r
+        JOIN seller_profiles s ON s.id=r.seller_profile_id
+        WHERE r.id=$1 AND s.account_id=$2 FOR UPDATE OF r`,
+      [input.reviewId,sellerId]);
+      const staged=review.rows[0];
+      if(!staged||staged.state!=='REVIEW')throw new SellerPublicationError('NOT_FOUND');
+      const candidate=WorkerCapabilityReviewSchema.parse(staged.review_json).candidate;
+      if(candidate.capabilityId!==staged.capability_id||candidate.versionNumber!==1)
+        throw new SellerPublicationError('VERSION_CONFLICT');
+      const prior=await client.query<{seller_profile_id:string;slug:string;name:string;
+        description:string;status:string;current_version_id:string|null}>(`
+        SELECT seller_profile_id,slug,name,description,status,current_version_id
+        FROM capabilities WHERE id=$1 FOR UPDATE`,[staged.capability_id]);
+      if(prior.rows[0]){
+        const row=prior.rows[0];
+        if(row.seller_profile_id!==staged.seller_profile_id||row.slug!==input.slug||
+          row.name!==input.name||row.description!==input.description||
+          row.status!=='DRAFT'||row.current_version_id)
+          throw new SellerPublicationError('CONFLICT');
+      }else await client.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,
+        description,status,visibility) VALUES($1,$2,$3,$4,$5,'DRAFT','DRAFT')`,
+      [staged.capability_id,staged.seller_profile_id,input.slug,
+        input.name,input.description]);
+      await client.query('COMMIT');
+      return {capabilityId:staged.capability_id,reviewId:input.reviewId,status:'DRAFT'};
+    }catch(error){await client.query('ROLLBACK');throw error;}
+    finally{client.release();}
+  }
+
+  async listCapabilitySummariesForSeller(sellerAccountId:string):Promise<readonly {
+    capabilityId:string;slug:string;name:string;status:string;visibility:string;
+    currentVersionId:string|null}[]>{
+    const rows=await this.pool.query<{capability_id:string;slug:string;name:string;
+      status:string;visibility:string;current_version_id:string|null}>(`
+      SELECT c.id AS capability_id,c.slug,c.name,c.status,c.visibility,
+      c.current_version_id FROM capabilities c JOIN seller_profiles s
+      ON s.id=c.seller_profile_id WHERE s.account_id=$1
+      ORDER BY c.created_at DESC,c.id DESC LIMIT 100`,[id.parse(sellerAccountId)]);
+    return rows.rows.map((row)=>({capabilityId:row.capability_id,slug:row.slug,
+      name:row.name,status:row.status,visibility:row.visibility,
+      currentVersionId:row.current_version_id}));
+  }
 
   async stageFromAuthenticatedWorker(raw:unknown, authenticatedWorkerId:string):Promise<{
     reviewId:string;candidateHash:string;policyValidationHash:string }> {
@@ -142,7 +198,8 @@ export class PostgresSellerPublicationRepository {
     return [...grouped.values()];
   }
 
-  async publish(sellerAccountId:string,rawApproval:unknown):Promise<{
+  async publish(sellerAccountId:string,rawApproval:unknown,
+    expectedCapabilityId?:string):Promise<{
     capabilityId:string;capabilityVersionId:string;visibility:string }> {
     const sellerId=id.parse(sellerAccountId), approval=SellerPublicationApprovalSchema.parse(rawApproval);
     const stripeMode=process.env.KIVRO_STRIPE_MODE;
@@ -158,6 +215,8 @@ export class PostgresSellerPublicationRepository {
         WHERE r.id=$1 AND s.account_id=$2 FOR UPDATE OF r`,[approval.reviewId,sellerId]);
       const staged=row.rows[0];
       if(!staged)throw new SellerPublicationError('NOT_FOUND');
+      if(expectedCapabilityId&&staged.capability_id!==id.parse(expectedCapabilityId))
+        throw new SellerPublicationError('NOT_FOUND');
       if(staged.state==='PUBLISHED'){
         if(staged.approval_hash!==approvalHash)throw new SellerPublicationError('CONFLICT');
         await client.query('COMMIT');
@@ -219,7 +278,8 @@ export class PostgresSellerPublicationRepository {
       if(existing.rows[0]){
         if(existing.rows[0].seller_profile_id!==staged.seller_profile_id||
           existing.rows[0].slug!==approval.slug)throw new SellerPublicationError('NOT_ELIGIBLE');
-        if(approval.versionChangeAcknowledged!==true)
+        if(existing.rows[0].current_version_id&&
+          approval.versionChangeAcknowledged!==true)
           throw new SellerPublicationError('CONSENT_MISSING');
         const max=await client.query<{n:number}>(`SELECT COALESCE(max(version_number),0)::int AS n
           FROM capability_versions WHERE capability_id=$1`,[candidate.capabilityId]);

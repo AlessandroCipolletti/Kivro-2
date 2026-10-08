@@ -53,6 +53,10 @@ if(!process.env.M12_DATABASE_URL){
     await operations.setWorkerPause(sellerAccount,worker,true,null);
     assert.equal((await operations.cloudDirective(worker)).revision,1,'retry is idempotent');
     assert.equal((await operations.dashboard(sellerAccount)).workers[0].status,'OFFLINE');
+    const healthyChecks=[{code:'DEVICE_IDENTITY',state:'HEALTHY'},
+      {code:'DOCKER_DAEMON',state:'HEALTHY'},
+      {code:'APPROVED_SANDBOX_IMAGE',state:'HEALTHY'},
+      {code:'SANDBOX_SELF_TEST',state:'HEALTHY'}];
     const beat=(revision,localPause,sentAt=new Date().toISOString(),cloudRevision=0,
       workerRelease='0.0.0-dev')=>({
       type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),
@@ -60,12 +64,10 @@ if(!process.env.M12_DATABASE_URL){
       sentAt,openClawVersion:null,status:localPause.globalPaused?'PAUSED':'ONLINE',
       runningJobs:0,capacity:1,policyVersion:1,localRevision:revision,
       acknowledgedCloudRevision:cloudRevision,
-      localPause,capabilityReadiness:[]});
+      localPause,capabilityReadiness:[],operationalChecks:healthyChecks});
     let sent=Date.now();
     await heartbeat.observe(beat(1,{globalPaused:true,securityPaused:false,
       capabilityPauses:[]},new Date(sent).toISOString(),1),worker,'m12-plane');
-    const healthyChecks=[{code:'DOCKER_DAEMON',state:'HEALTHY'},
-      {code:'APPROVED_SANDBOX_IMAGE',state:'HEALTHY'}];
     await heartbeat.observe({...beat(1,{globalPaused:true,securityPaused:false,
       capabilityPauses:[]},new Date(++sent).toISOString(),1),operationalChecks:healthyChecks},
     worker,'m12-plane');
@@ -92,6 +94,14 @@ if(!process.env.M12_DATABASE_URL){
     await heartbeat.observe(beat(2,{globalPaused:false,securityPaused:false,
       capabilityPauses:[]},new Date(++sent).toISOString(),2),worker,'m12-plane');
     assert.equal((await operations.dashboard(sellerAccount)).workers[0].status,'HEALTHY');
+    await heartbeat.observe({...beat(2,{globalPaused:false,securityPaused:false,
+      capabilityPauses:[]},new Date(++sent).toISOString(),2),operationalChecks:[]},
+    worker,'m12-plane');
+    assert.equal((await operations.dashboard(sellerAccount)).workers[0].status,'NOT_READY',
+      'seller health cannot infer Docker readiness from an incomplete heartbeat');
+    await heartbeat.observe(beat(2,{globalPaused:false,securityPaused:false,
+      capabilityPauses:[]},new Date(++sent).toISOString(),2),worker,'m12-plane');
+    assert.equal((await operations.dashboard(sellerAccount)).workers[0].status,'HEALTHY');
     await operations.setWorkerPause(sellerAccount,worker,true,'Planned maintenance',
       new Date(Date.now()+60_000).toISOString());
     assert.ok((await operations.dashboard(sellerAccount)).workers[0].maintenanceUntil);
@@ -108,13 +118,25 @@ if(!process.env.M12_DATABASE_URL){
     assert.ok(history.rows.some((row)=>row.kind==='WORKER_RECONNECTED'));
     assert.ok(history.rows.some((row)=>row.kind==='HEALTH_CHANGED'),
       'sanitized health changes are retained for seller diagnosis');
+    const visibleHistory=(await operations.dashboard(sellerAccount)).history;
+    assert.ok(visibleHistory.some((row)=>row.kind==='WORKER_STALE'));
+    assert.ok(visibleHistory.some((row)=>row.kind==='WORKER_RECONNECTED'));
+    assert.ok(visibleHistory.some((row)=>row.kind==='HEALTH_CHANGED'));
+    assert.ok(visibleHistory.every((row)=>row.worker_name==='M12 Worker'),
+      'seller timeline identifies the affected Worker without exposing a host path');
+    assert.ok(visibleHistory.every((row)=>/^[A-Z][A-Z0-9_]{2,63}$/.test(row.code)),
+      'seller health history contains bounded event codes, not raw stderr or job content');
     const priorMinimum=process.env.KIVRO_MIN_WORKER_RELEASE;
     try{
       process.env.KIVRO_MIN_WORKER_RELEASE='1.0.0';
       await heartbeat.observe(beat(2,{globalPaused:false,securityPaused:false,
         capabilityPauses:[]},new Date(++sent).toISOString(),2,'0.0.0'),worker,'m12-plane');
       assert.equal((await operations.cloudDirective(worker)).securityPaused,true);
-      assert.equal((await operations.dashboard(sellerAccount)).workers[0].status,'SECURITY_WARNING');
+      const securityDashboard=(await operations.dashboard(sellerAccount)).workers[0];
+      assert.equal(securityDashboard.status,'SECURITY_WARNING');
+      assert.ok(securityDashboard.warnings.some((warning)=>warning.severity==='CRITICAL'&&
+        warning.blocking&&warning.affected==='M12 Worker'&&warning.detectedAt&&
+        warning.action),'security warning identifies the affected device and action');
       await operations.setWorkerPause(sellerAccount,worker,true,null);
       await assert.rejects(operations.setWorkerPause(sellerAccount,worker,false,null),
         {code:'SECURITY_BLOCK'});
@@ -130,7 +152,7 @@ if(!process.env.M12_DATABASE_URL){
         {code:'SECURITY_BLOCK'},'the old version cannot be cleared');
       await heartbeat.observe({...beat(2,{globalPaused:false,securityPaused:false,
         capabilityPauses:[]},new Date(++sent).toISOString(),2,'1.0.0'),
-        operationalChecks:[{code:'DEVICE_IDENTITY',state:'HEALTHY'},...healthyChecks]},
+        operationalChecks:healthyChecks},
       worker,'m12-plane');
       await operations.clearSecurityBlockByPlatform(worker,'health-policy');
       const cleared=await operations.cloudDirective(worker);
@@ -156,6 +178,21 @@ if(!process.env.M12_DATABASE_URL){
     await operations.setWorkerPause(sellerAccount,imageWorker,true,null);
     await assert.rejects(operations.setWorkerPause(sellerAccount,imageWorker,false,null),
       {code:'SECURITY_BLOCK'});
+    const selfTestWorker=randomUUID();
+    await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,
+      worker_version,status) VALUES($1,$2,'fixture-self-test-key','Self-test Worker','LINUX',
+      '0.0.0-dev','OFFLINE')`,[selfTestWorker,sellerProfile]);
+    await heartbeat.observe({...beat(0,{globalPaused:false,securityPaused:false,
+      capabilityPauses:[]},new Date().toISOString(),0),workerDeviceId:selfTestWorker,
+      operationalChecks:healthyChecks.map((check)=>check.code==='SANDBOX_SELF_TEST'?
+        {...check,state:'BLOCKING'}:check)},selfTestWorker,'m12-plane');
+    assert.equal((await operations.cloudDirective(selfTestWorker)).securityPaused,true,
+      'a failed isolation self-test blocks new work before dashboard observation');
+    const selfTestHealth=(await operations.dashboard(sellerAccount)).workers.find((item)=>
+      item.id===selfTestWorker);
+    assert.equal(selfTestHealth.status,'SECURITY_WARNING');
+    assert.ok(selfTestHealth.warnings.some((warning)=>warning.blocking&&
+      warning.affected==='Self-test Worker'&&warning.code==='SANDBOX_ISOLATION_FAILED'));
   }finally{await pool.end();}
 });
 
@@ -275,6 +312,54 @@ if(process.env.M12_DATABASE_URL)test('overdue paid pause terminates only after l
     assert.deepEqual((await operations.cloudDirective(worker)).capabilityPauses,[cap]);
     await assert.rejects(operations.setCapabilityPause(sellerAccount,cap,false,null),
       {code:'NOT_READY'});
+    const healthyChecks=[{code:'DEVICE_IDENTITY',state:'HEALTHY'},
+      {code:'DOCKER_DAEMON',state:'HEALTHY'},
+      {code:'APPROVED_SANDBOX_IMAGE',state:'HEALTHY'},
+      {code:'SANDBOX_SELF_TEST',state:'HEALTHY'}];
+    await pool.query(`INSERT INTO worker_heartbeats(worker_device_id,control_plane_id,
+      worker_release,reported_status,running_jobs,capacity,policy_version,
+      local_revision,operational_checks) VALUES($1,'m12-plane','0.0.0-dev',
+      'ONLINE',0,1,1,0,$2)`,[worker,JSON.stringify(healthyChecks)]);
+    await pool.query(`INSERT INTO capability_readiness(capability_id,capability_version_id,
+      worker_device_id,state,sandbox_verified,required_secrets_ready,runtime_healthy)
+      VALUES($1,$2,$3,'NOT_READY',true,true,true)`,[cap,version,worker]);
+    await operations.setCapabilityPause(sellerAccount,cap,false,null);
+    assert.deepEqual((await operations.cloudDirective(worker)).capabilityPauses,[],
+      'fresh healthy NOT_READY is the expected Worker observation while cloud pause is active');
+    await operations.setCapabilityPause(sellerAccount,cap,true,null);
+    await pool.query(`UPDATE capability_readiness SET state='DEPENDENCY_BLOCKED'
+      WHERE capability_version_id=$1`,[version]);
+    await assert.rejects(operations.setCapabilityPause(sellerAccount,cap,false,null),
+      {code:'NOT_READY'},'a changed published dependency cannot be resumed');
+    await pool.query(`UPDATE capability_readiness SET state='NOT_READY',
+      required_secrets_ready=false WHERE capability_version_id=$1`,[version]);
+    await assert.rejects(operations.setCapabilityPause(sellerAccount,cap,false,null),
+      {code:'NOT_READY'},'missing secrets must fail closed');
+    await pool.query(`UPDATE capability_readiness SET required_secrets_ready=true
+      WHERE capability_version_id=$1`,[version]);
+    await pool.query(`UPDATE worker_heartbeats SET operational_checks='[]'::jsonb
+      WHERE worker_device_id=$1`,[worker]);
+    await assert.rejects(operations.setCapabilityPause(sellerAccount,cap,false,null),
+      {code:'NOT_READY'},'missing security health checks must fail closed');
+    await pool.query(`UPDATE worker_heartbeats SET operational_checks=$2
+      WHERE worker_device_id=$1`,[worker,JSON.stringify(healthyChecks)]);
+    const unrelatedCap=randomUUID(),unrelatedVersion=randomUUID();
+    await pool.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,status)
+      VALUES($1,$2,$3,'Unrelated blocked service','PUBLISHED')`,
+    [unrelatedCap,seller,`m12-${unrelatedCap}`]);
+    await pool.query(`INSERT INTO capability_versions(id,capability_id,version_number,
+      publication_state,version_snapshot,worker_manifest_hash,policy_validation_hash,published_at)
+      VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())`,[unrelatedVersion,unrelatedCap,
+      {workerDeviceId:worker},`sha256:${'d'.repeat(64)}`,`sha256:${'e'.repeat(64)}`]);
+    await pool.query('UPDATE capabilities SET current_version_id=$2 WHERE id=$1',
+      [unrelatedCap,unrelatedVersion]);
+    await pool.query(`INSERT INTO capability_readiness(capability_id,capability_version_id,
+      worker_device_id,state,sandbox_verified,required_secrets_ready,runtime_healthy)
+      VALUES($1,$2,$3,'DEPENDENCY_BLOCKED',true,false,false)`,
+    [unrelatedCap,unrelatedVersion,worker]);
+    await operations.setCapabilityPause(sellerAccount,cap,false,null);
+    assert.deepEqual((await operations.cloudDirective(worker)).capabilityPauses,[],
+      'one blocked capability must not prevent a healthy sibling from resuming');
     for(const id of [job,activeJob]){
       const attempt=randomUUID(),execution=randomUUID();
       await pool.query(`INSERT INTO jobs(id,buyer_account_id,capability_version_id,

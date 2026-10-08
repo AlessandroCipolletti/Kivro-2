@@ -1,5 +1,7 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import test from 'node:test';
@@ -10,6 +12,7 @@ import { PublishedCapabilityVersionSchema } from '../dist/packages/contracts/src
 import { PostgresJobExecutionRepository } from '../dist/packages/persistence/src/job-execution.js';
 import { PostgresFinanceRepository } from '../dist/packages/persistence/src/finance.js';
 import { PostgresAvailabilityRepository } from '../dist/packages/persistence/src/availability.js';
+import { PostgresSellerOperations } from '../dist/packages/persistence/src/seller-operations.js';
 import { PostgresPriceTierCatalog } from '../dist/packages/persistence/src/price-tiers.js';
 import { HmacLeaseTokenIssuer } from '../dist/packages/application/src/lease-token.js';
 import { PostgresWorkerHeartbeatRepository } from '../dist/packages/persistence/src/worker-heartbeat.js';
@@ -39,16 +42,18 @@ if (!process.env.M09_DATABASE_URL) {
     const worker = randomUUID(), capability = randomUUID(), versionId = randomUUID();
     const hash = `sha256:${'a'.repeat(64)}`, plane = 'm09-test-plane';
     let lastBeatSent=0;
-    const beat = async (ready=false,runningJobs=0) => {
+    const beat = async (ready=false,runningJobs=0,dependencyBlocked=false) => {
       const controls=await pool.query('SELECT revision FROM worker_cloud_control_revisions WHERE worker_device_id=$1',[worker]);
-      return heartbeat.observe({ type: 'WORKER_HEARTBEAT',
+      return heartbeat.observe({ type: 'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
       protocolVersion: WORKER_PROTOCOL_VERSION, messageId: randomUUID(), controlPlaneId: plane,
       workerDeviceId: worker, workerRelease: 'test',
       sentAt:new Date(lastBeatSent=Math.max(Date.now(),lastBeatSent+1)).toISOString(),
       openClawVersion: null,
       status: 'ONLINE', runningJobs, capacity: 1, policyVersion: 1, localRevision: 0,
       acknowledgedCloudRevision:Number(controls.rows[0]?.revision??0),
-      capabilityReadiness:ready?[{capabilityVersionId:versionId,
+      capabilityReadiness:dependencyBlocked?[{capabilityVersionId:versionId,
+        policyValidationHash:hash,state:'DEPENDENCY_BLOCKED',checks:{sandboxVerified:true,
+          requiredSecretsReady:true,runtimeHealthy:false}}]:ready?[{capabilityVersionId:versionId,
         policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
           requiredSecretsReady:true,runtimeHealthy:true}}]:[] },
     worker, plane);};
@@ -129,6 +134,15 @@ if (!process.env.M09_DATABASE_URL) {
       await assert.rejects(quote('EARLIEST_AVAILABLE'),{code:'NOT_READY'});
       await beat(true);
       assert.equal((await availability.publicStatus(capability)).status,'ONLINE');
+      await beat(false,0,true);
+      assert.equal((await availability.publicStatus(capability)).status,'READINESS_BLOCKED',
+        'a changed reviewed dependency cannot admit a paid job');
+      const revalidation=new PostgresSellerOperations(pool,availability,finance);
+      const sellerWarnings=(await revalidation.dashboard(sellerAccount)).workers[0].warnings;
+      assert.ok(sellerWarnings.some((warning)=>warning.code==='CAPABILITY_REVALIDATION_REQUIRED'&&
+        warning.blocking&&warning.affected==='M09 Capability'&&warning.action),
+      'the seller sees an actionable version-scoped revalidation warning');
+      await beat(true);
       assert.equal(JSON.stringify(await availability.publicStatus(capability)).includes('weeklyWindows'),false);
       await assert.rejects(availability.setCapabilityPolicy({capabilityId:capability,
         sellerAccountId:randomUUID(),policy:policy(),paused:false,source:'API',expectedRevision:1}),
@@ -146,7 +160,7 @@ if (!process.env.M09_DATABASE_URL) {
       await pool.query("UPDATE capabilities SET visibility='PUBLIC' WHERE id=$1",[capability]);
       const latestBeat=await pool.query(`SELECT latest_heartbeat_reported_at AS at
         FROM worker_devices WHERE id=$1`,[worker]);
-      const staleBody={ type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+      const staleBody={ type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
         messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:worker,
         workerRelease:'test',sentAt:new Date(latestBeat.rows[0].at.getTime()-1000).toISOString(),
         openClawVersion:null,status:'PAUSED',runningJobs:0,capacity:1,
@@ -208,10 +222,35 @@ if (!process.env.M09_DATABASE_URL) {
       {code:'NO_FUTURE_WINDOW'});
       const j1=await job(),j2=await job();
       const r1=randomUUID(),r2=randomUUID();
-      const race=await Promise.allSettled([book(q1,j1,r1),book(q2,j2,r2)]);
-      assert.equal(race.filter((result)=>result.status==='fulfilled').length,2);
+      // Book in a known order: the fairness assertion below must follow the
+      // persisted queue order, not whichever concurrent request wins a race.
+      await book(q1,j1,r1);
+      await book(q2,j2,r2);
       assert.equal((await finance.buyerBalance(buyer)).reservedMinor,1998);
-      const first=await repo.offer(j1,worker,plane,120);
+      const scheduler=spawnSync(process.execPath,['tools/kivro-scheduler.mjs','--once'],{
+        encoding:'utf8',timeout:20_000,env:{...process.env,
+          DATABASE_URL:process.env.M09_DATABASE_URL,KIVRO_STRIPE_MODE:'test',
+          KIVRO_CONTROL_PLANE_ID:plane,KIVRO_CONTROL_PLANE_STATE:'ACTIVE',
+          KIVRO_LEASE_KEY_VERSION:'v1',
+          KIVRO_LEASE_KEY_BASE64:Buffer.alloc(32,9).toString('base64')}});
+      assert.equal(scheduler.status,0,scheduler.stderr);
+      const dispatch=JSON.parse(scheduler.stdout).dispatch;
+      assert.equal(dispatch.offered,1,
+        'production scheduler must turn one paid eligible job into a lease');
+      const first=(await repo.pendingOffers(worker,plane)).find((offer)=>offer.jobId===j1);
+      assert.ok(first,'first queue member is the offered execution');
+      process.env.KIVRO_CONTROL_PLANE_ID=plane;
+      process.env.KIVRO_CONTROL_PLANE_STATE='DRAINING';
+      try{
+        assert.deepEqual(await repo.pendingOffers(worker,plane),[],
+          'a draining backend cannot redeliver an unaccepted offer');
+        await assert.rejects(repo.accept(first.executionId,worker,plane,
+          first.leaseToken,randomUUID()),{code:'NOT_ELIGIBLE'});
+        await assert.rejects(repo.dispatchEligible(plane,10,120),{code:'NOT_ELIGIBLE'});
+      }finally{
+        delete process.env.KIVRO_CONTROL_PLANE_ID;
+        delete process.env.KIVRO_CONTROL_PLANE_STATE;
+      }
       await assert.rejects(repo.offer(j2,worker,plane,120),{code:'NOT_ELIGIBLE'});
       await repo.accept(first.executionId,worker,plane,first.leaseToken,randomUUID());
       await repo.workerTransition({id:randomUUID(),jobId:j1,from:'ACCEPTED',to:'STARTING',
@@ -298,6 +337,15 @@ if (!process.env.M09_DATABASE_URL) {
       await availability.setCapabilityPolicy({capabilityId:capability,
         sellerAccountId:sellerAccount,policy:policy(always),paused:false,source:'WEB',expectedRevision:4});
       await beat(true);
+      const expiredQuote=await quote('IMMEDIATE_ONLY');
+      const expiredQuoteJob=await job();
+      const afterQuoteExpiry=new PostgresAvailabilityRepository(pool,finance,
+        ()=>new Date(Date.parse(expiredQuote.quoteExpiresAt)+1));
+      await assert.rejects(afterQuoteExpiry.book({quoteId:expiredQuote.id,
+        jobId:expiredQuoteJob,buyerAccountId:buyer,reservationId:randomUUID()}),
+      {code:'STALE_QUOTE'});
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM payment_reservations
+        WHERE job_id=$1`,[expiredQuoteJob])).rows[0].n,0);
 
       const expiring=await quote('EARLIEST_AVAILABLE');
       const j4=await job();
@@ -538,9 +586,19 @@ if (!process.env.M09_DATABASE_URL) {
       await pool.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,status)
         VALUES($1,$2,$3,'M09 Second Capability','PUBLISHED')`,
       [secondCapability,seller,`m09-${secondCapability}`]);
-      const secondPublished=PublishedCapabilityVersionSchema.parse({ ...published,
-        id:secondVersionId,capabilityId:secondCapability,versionNumber:1,
-        publishedAt:new Date().toISOString() });
+      const secondLocalPackage={...localPackage,capabilityId:secondCapability,
+        capabilityVersionId:secondVersionId,concurrencyLimit:4,
+        workerManifest:{...localPackage.workerManifest,
+          capabilityVersionId:secondVersionId}};
+      const secondCandidate=buildVersionCandidate({id:secondVersionId,
+        capabilityId:secondCapability,versionNumber:1,workerDeviceId:worker,
+        requestedAt:new Date().toISOString(),localPackage:secondLocalPackage,
+        selectedPrice:await new PostgresPriceTierCatalog(pool).selected('USD_999')});
+      const {requestedAt:secondRequestedAt,...secondFields}=secondCandidate;
+      void secondRequestedAt;
+      const secondPublished=PublishedCapabilityVersionSchema.parse({...secondFields,
+        publicationState:'PUBLISHED',publishedAt:new Date().toISOString(),
+        policyValidationHash:hash});
       await pool.query(`INSERT INTO capability_versions(id,capability_id,version_number,
         publication_state,version_snapshot,worker_manifest_hash,policy_validation_hash,published_at)
         VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())`,
@@ -558,7 +616,7 @@ if (!process.env.M09_DATABASE_URL) {
         sellerAccountId:sellerAccount,
         policy:policy(future,{queueLimit:0,estimatedRuntimeSeconds:86400,futureReservationLimit:1}),
         paused:false,source:'WEB',expectedRevision:null});
-      await heartbeat.observe({type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+      await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
         messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:worker,
         workerRelease:'test',sentAt:new Date(Date.now()+10).toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,
@@ -676,6 +734,106 @@ if (!process.env.M09_DATABASE_URL) {
         FROM job_schedule_events WHERE job_id=$1 GROUP BY kind`,[scheduledSuccessJob]);
       assert.equal(successfulEvents.rows.find((entry)=>entry.kind==='STARTED').n,1);
       assert.equal(successfulEvents.rows.find((entry)=>entry.kind==='DELIVERED').n,1);
+      const rejectedJob=await job();
+      await book(await quote('IMMEDIATE_ONLY'),rejectedJob);
+      const rejectedOffer=await repo.offer(rejectedJob,worker,plane,5);
+      await pool.query(`UPDATE job_executions SET created_at=now()-interval '10 minutes',
+        offer_expires_at=now()-interval '1 second'
+        WHERE id=$1`,[rejectedOffer.executionId]);
+      const restartedExecution=new PostgresJobExecutionRepository(pool,finance,
+        new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,9)},'v1'),availability);
+      assert.equal(await restartedExecution.requeueExpiredOffers(),1,
+        'unaccepted offer must be durably requeued after timeout or Worker refusal');
+      assert.equal(await restartedExecution.requeueExpiredOffers(),0);
+      assert.equal((await repo.load(rejectedJob)).status,'QUEUED');
+      assert.equal((await finance.buyerBalance(buyer)).reservedMinor,999,
+        'bounded requeue keeps exactly one secured reservation');
+      const retryOffer=await restartedExecution.offer(rejectedJob,worker,plane,5);
+      assert.notEqual(retryOffer.executionId,rejectedOffer.executionId);
+      await pool.query(`UPDATE job_executions SET created_at=now()-interval '10 minutes',
+        offer_expires_at=now()-interval '1 second'
+        WHERE id=$1`,[retryOffer.executionId]);
+      assert.equal(await restartedExecution.requeueExpiredOffers(),1);
+      await availability.cancel(rejectedJob,buyer,randomUUID());
+      assert.equal((await finance.buyerBalance(buyer)).reservedMinor,0,
+        'buyer cancellation releases once after rejected offer replay');
+      await heartbeat.observe({type:'WORKER_HEARTBEAT',
+        operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
+        messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:worker,
+        workerRelease:'test',sentAt:new Date(Date.now()+30).toISOString(),
+        openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,
+        policyVersion:1,localRevision:0,capabilityReadiness:[
+          {capabilityVersionId:versionId,policyValidationHash:hash,state:'READY',checks:{
+            sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:true}},
+          {capabilityVersionId:secondVersionId,policyValidationHash:hash,state:'NOT_READY',
+            checks:{sandboxVerified:true,requiredSecretsReady:true,runtimeHealthy:false}}]},
+      worker,plane);
+      const healthyCapability=await availability.publicStatus(capability);
+      const blockedCapability=await availability.publicStatus(secondCapability);
+      assert.equal(healthyCapability.readinessReady,true);
+      assert.equal(blockedCapability.status,'READINESS_BLOCKED');
+      assert.equal(blockedCapability.readinessReady,false,
+        'one unhealthy capability must not be made ready by a healthy shared Worker');
+
+      // §343: published ceiling 4, seller choice 2, and Worker physical capacity
+      // 1 or 3 are independent limits. The buyer cannot purchase past their min.
+      const secondRevision=(await pool.query(`SELECT revision FROM
+        capability_availability_policies WHERE capability_id=$1`,
+      [secondCapability])).rows[0].revision;
+      await availability.setCapabilityPolicy({capabilityId:secondCapability,
+        sellerAccountId:sellerAccount,
+        policy:policy(always,{concurrencyLimit:2,queueLimit:0,
+          futureReservationLimit:0}),paused:false,source:'WEB',
+        expectedRevision:Number(secondRevision)});
+      const capacityBeat=async(capacity)=>{
+        const previous=(await pool.query(`SELECT latest_heartbeat_reported_at AS at
+          FROM worker_devices WHERE id=$1`,[worker])).rows[0].at;
+        const control=(await pool.query(`SELECT revision FROM worker_cloud_control_revisions
+          WHERE worker_device_id=$1`,[worker])).rows[0];
+        await heartbeat.observe({type:'WORKER_HEARTBEAT',
+          operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
+          messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:worker,
+          workerRelease:'test',sentAt:new Date(Math.max(Date.now(),
+            new Date(previous).getTime()+1)).toISOString(),openClawVersion:null,
+          status:'ONLINE',runningJobs:0,capacity,policyVersion:1,localRevision:0,
+          acknowledgedCloudRevision:Number(control?.revision??0),
+          capabilityReadiness:[{capabilityVersionId:versionId,
+            policyValidationHash:hash,state:'READY',checks:{sandboxVerified:true,
+              requiredSecretsReady:true,runtimeHealthy:true}},
+            {capabilityVersionId:secondVersionId,policyValidationHash:hash,
+              state:'READY',checks:{sandboxVerified:true,
+                requiredSecretsReady:true,runtimeHealthy:true}}]},worker,plane);
+      };
+      const newSecondJob=async(owner)=>{
+        const id=randomUUID();
+        await repo.createJob(createJobContractSnapshot(secondPublished,id,owner,
+          new Date().toISOString()));
+        await repo.finalizeInputManifest(id,randomUUID(),
+          {values:{question:'Capacity proof'},assets:{}});
+        return id;
+      };
+      const secondQuote=async(owner)=>availability.quote({id:randomUUID(),
+        buyerAccountId:owner,capabilityId:secondCapability,
+        executionMode:'IMMEDIATE_ONLY'});
+      await capacityBeat(1);
+      const deviceLimited=await newSecondJob(buyer);
+      await availability.book({quoteId:(await secondQuote(buyer)).id,
+        jobId:deviceLimited,buyerAccountId:buyer,reservationId:randomUUID()});
+      await assert.rejects(secondQuote(rivalBuyer),{code:'QUEUE_FULL'},
+        'Worker capacity 1 wins over seller concurrency 2');
+      await availability.cancel(deviceLimited,buyer,randomUUID());
+      await capacityBeat(3);
+      const sellerLimited=[];
+      for(const owner of [buyer,rivalBuyer]){
+        const id=await newSecondJob(owner);
+        await availability.book({quoteId:(await secondQuote(owner)).id,
+          jobId:id,buyerAccountId:owner,reservationId:randomUUID()});
+        sellerLimited.push([id,owner]);
+      }
+      await assert.rejects(secondQuote(buyer),{code:'QUEUE_FULL'},
+        'seller concurrency 2 wins over Worker capacity 3 and published maximum 4');
+      for(const [id,owner] of sellerLimited)
+        await availability.cancel(id,owner,randomUUID());
     } finally { await pool.end(); }
   });
 }

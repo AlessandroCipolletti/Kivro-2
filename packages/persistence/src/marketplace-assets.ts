@@ -6,6 +6,7 @@ import { Sha256DigestSchema, newPrivateAssetKey } from '../../contracts/src/asse
 import { PLATFORM_FILE_LIMITS } from '../../contracts/src/file-limits.js';
 import { validateUploadedInputObject } from '../../application/src/input-object-validation.js';
 import type { ObjectStoragePort } from '../../infrastructure/contracts/src/ports.js';
+import type { MalwareScannerPort } from '../../infrastructure/contracts/src/malware-ports.js';
 
 const uuid=z.uuid();
 export class MarketplaceAssetError extends Error {
@@ -14,7 +15,12 @@ export class MarketplaceAssetError extends Error {
 
 /** Same-origin streamed upload; no buyer can overwrite a READY object through an outstanding signed URL. */
 export class MarketplaceAssetRepository {
-  constructor(private readonly pool:Pool,private readonly storage:ObjectStoragePort){}
+  constructor(private readonly pool:Pool,private readonly storage:ObjectStoragePort,
+    private readonly malwareScanner:MalwareScannerPort){}
+
+  private async scanInput(objectKey:string,sizeBytes:number):Promise<void>{
+    await this.malwareScanner.scan(await this.storage.readPrivateObject(objectKey),sizeBytes);
+  }
 
   private async field(buyerId:string,capabilityId:string,fieldKey:string){
     const row=await this.pool.query<{version_snapshot:unknown}>(`SELECT v.version_snapshot FROM capabilities c
@@ -112,6 +118,7 @@ export class MarketplaceAssetRepository {
         fileName:asset.file_name,expectedSizeBytes:Number(asset.declared_size_bytes),
         expectedSha256:asset.declared_sha256,
         maxPlatformFileBytes:PLATFORM_FILE_LIMITS.maxSingleFileBytes,field});
+      await this.scanInput(asset.object_key,verified.sizeBytes);
       await client.query(`UPDATE assets SET state='READY',size_bytes=$2,sha256=$3,
         detected_mime_type=$4,finalized_at=now() WHERE id=$1`,
       [input.assetId,verified.sizeBytes,verified.sha256,verified.detectedMimeType]);
@@ -158,6 +165,7 @@ export class MarketplaceAssetRepository {
       const verified=await validateUploadedInputObject(this.storage,{objectKey:asset.object_key,
         fileName,expectedSizeBytes:size,expectedSha256:sha256,
         maxPlatformFileBytes:PLATFORM_FILE_LIMITS.maxSingleFileBytes,field});
+      await this.scanInput(asset.object_key,verified.sizeBytes);
       await client.query(`UPDATE assets SET state='READY',size_bytes=$2,sha256=$3,
         detected_mime_type=$4,finalized_at=now() WHERE id=$1`,
       [input.assetId,verified.sizeBytes,verified.sha256,verified.detectedMimeType]);

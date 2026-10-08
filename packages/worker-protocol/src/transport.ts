@@ -9,6 +9,14 @@ export interface WorkerProtocolTransport {
   close(): Promise<void>;
 }
 
+/** Both network adapters expose identical signed Worker RPC semantics. */
+export interface WorkerRpcTransport extends WorkerProtocolTransport {
+  poll(hello:unknown):Promise<readonly unknown[]>;
+  postJobRpc(kind:'ACCEPT'|'ACCEPTED_INPUT'|'TRANSITION'|'RENEW_LEASE'|
+    'PREPARE_RESULT_ASSET'|'FINALIZE_RESULT'|'RESEARCH_SEARCH'|'RESEARCH_FETCH'|
+    'RESEARCH_DOWNLOAD'|'PRIVATE_RESOURCE_READ',body:unknown):Promise<unknown>;
+}
+
 export class WorkerTransportError extends Error {
   constructor(readonly code: 'INCOMPATIBLE_PROTOCOL' | 'UNKNOWN_CONTROL_PLANE' |
     'WRONG_CONTROL_PLANE' | 'RETIRED_CONTROL_PLANE') {

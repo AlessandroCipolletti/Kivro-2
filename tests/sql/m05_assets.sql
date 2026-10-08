@@ -71,6 +71,19 @@ INSERT INTO asset_read_grants(id,asset_id,target_job_id,expires_at)
   VALUES ('dddddddd-dddd-4ddd-8ddd-dddddddddddd','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '77777777-7777-4777-8777-777777777777',now()+interval '1 day');
 DO $$ BEGIN
+  IF (SELECT permission FROM asset_read_grants
+    WHERE id='dddddddd-dddd-4ddd-8ddd-dddddddddddd') <> 'READ' THEN
+    RAISE EXCEPTION 'Asset grant must persist READ-only scope';
+  END IF;
+  BEGIN
+    UPDATE asset_read_grants SET permission='WRITE'
+      WHERE id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    RAISE EXCEPTION 'Expected write-capable grant rejection';
+  EXCEPTION WHEN check_violation OR raise_exception THEN
+    IF SQLERRM = 'Expected write-capable grant rejection' THEN RAISE; END IF;
+  END;
+END $$;
+DO $$ BEGIN
   BEGIN
     UPDATE assets SET retain_until=now()+interval '1 day'
       WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';

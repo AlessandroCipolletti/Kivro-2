@@ -1,0 +1,31 @@
+{
+  "contractVersion": 1,
+  "input": {
+    "schemaVersion": 1,
+    "fields": [
+      { "key": "instructions", "label": "Render instructions", "order": 0, "required": true, "type": "LONG_TEXT" },
+      { "key": "scene", "label": "Blender scene", "order": 1, "required": true, "type": "FILE",
+        "constraints": { "maxFiles": 1, "maxFileSizeBytes": 524288000, "maxTotalSizeBytes": 524288000,
+          "allowedMimeTypes": ["application/x-blender"], "allowedExtensions": [".blend"] } },
+      { "key": "referenceImages", "label": "Reference images", "order": 2, "required": false, "type": "FILES",
+        "constraints": { "maxFiles": 10, "maxFileSizeBytes": 10485760, "maxTotalSizeBytes": 104857600,
+          "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp"],
+          "allowedExtensions": [".jpg", ".jpeg", ".png", ".webp"] } },
+      { "key": "resolution", "label": "Resolution", "order": 3, "required": true, "type": "SELECT",
+        "constraints": { "allowedValues": ["1080p", "1440p", "4K"] }, "defaultValue": "1080p" }
+    ]
+  },
+  "output": {
+    "schemaVersion": 1,
+    "fields": [
+      { "key": "renderedImages", "label": "Rendered images", "order": 0, "required": true, "type": "FILES",
+        "constraints": { "minFiles": 1, "maxFiles": 10, "maxFileSizeBytes": 104857600,
+          "maxTotalSizeBytes": 1048576000,
+          "allowedMimeTypes": ["image/jpeg", "image/png"],
+          "allowedExtensions": [".jpg", ".jpeg", ".png"] } },
+      { "key": "modifiedScene", "label": "Modified scene", "order": 1, "required": false, "type": "FILE",
+        "constraints": { "maxFiles": 1, "maxFileSizeBytes": 524288000, "maxTotalSizeBytes": 524288000,
+          "allowedMimeTypes": ["application/x-blender"], "allowedExtensions": [".blend"] } }
+    ]
+  }
+}

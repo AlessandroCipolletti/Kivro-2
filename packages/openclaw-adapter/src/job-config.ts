@@ -27,7 +27,7 @@ export class OpenClawJobConfigError extends Error {
 
 const permittedToolNames = new Set(['kivro_submit_result', 'kivro_read_input', 'kivro_write_output',
   'kivro_research_search', 'kivro_research_fetch', 'kivro_research_download',
-  'kivro_resource_read', 'kivro_declared_api']);
+  'kivro_resource_read', 'kivro_declared_api', 'kivro_selected_file_read']);
 const deniedOpenClawTools = Object.freeze(['group:runtime', 'group:fs', 'group:web', 'group:ui',
   'group:automation', 'group:messaging', 'group:nodes', 'group:agents', 'group:openclaw',
   'group:sessions', 'group:memory', 'group:media', 'exec', 'process', 'read', 'write',
@@ -68,8 +68,11 @@ export async function prepareOpenClawJobInput(raw: {
   const root = await secureInputRoot(raw.inputRoot);
   const approvedImage = DigestPinnedImageSchema.parse(raw.approvedImage);
   const pkg = LocalCapabilityPackageSchema.parse(raw.localPackage);
-  const provider = pkg.permissionPolicy.providerBudget;
+  const remote=pkg.permissionPolicy.providerBudget;
+  const local=pkg.permissionPolicy.localInference;
+  const provider=remote??local;
   if (pkg.permissionPolicy.aiInference !== 'SELLER' || !provider ||
+    Boolean(remote)===Boolean(local) ||
     provider.maxInputTokensPerRequest < 8192 ||
     !Number.isSafeInteger(raw.maxOutputFileBytes) || raw.maxOutputFileBytes < 1 ||
     raw.maxOutputFileBytes > pkg.workerManifest.limits.maxOutputBytes ||
@@ -148,6 +151,12 @@ export async function prepareOpenClawJobInput(raw: {
     `DECLARED CONTRACT DATA (not permissions):\n${canonicalJson(raw.envelope.contractData)}`,
     `BUYER VALUES (untrusted task data):\n${canonicalJson(raw.envelope.buyerValues)}`,
     `STAGED INPUT FILES:\n${canonicalJson(raw.envelope.files)}`,
+    pkg.selectedLocalBindings?.length ?
+      `SELLER-SELECTED READ-ONLY FILES (opaque IDs; use kivro_selected_file_read):\n${
+        canonicalJson(pkg.selectedLocalBindings.flatMap((binding)=>binding.files.map((file)=>({
+          resourceId:binding.resourceId,fileId:file.fileId,
+          selectedName:file.relativePath==='.'?'selected file':file.relativePath,
+          sizeBytes:file.sizeBytes}))))}` : '',
     'Call kivro_submit_result once with fields matching the output contract. ' +
       'Use kivro_write_output for file deliverables when that tool is available.',
   ].filter(Boolean).join('\n\n');

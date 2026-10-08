@@ -11,9 +11,10 @@ import { MarketplaceActionError } from '../../../../packages/persistence/src/mar
 import { MarketplaceAssetError } from '../../../../packages/persistence/src/marketplace-assets.js';
 import { ContractValidationError } from '../../../../packages/contracts/src/contract-values.js';
 import { InputObjectValidationError } from '../../../../packages/application/src/input-object-validation.js';
+import { MalwareScanError } from '../../../../packages/infrastructure/adapters/src/clamav-scanner.js';
 import { PlatformOperationsError,PlatformOperationsRepository } from
   '../../../../packages/persistence/src/platform-operations.js';
-import { safeResultFileName } from '../../../../packages/contracts/src/file-types.js';
+import { safeExampleFileName,safeResultFileName } from '../../../../packages/contracts/src/file-types.js';
 
 const id=z.uuid();
 const preflight=z.strictObject({capabilityId:id,mode:z.enum(['IMMEDIATE_ONLY','EARLIEST_AVAILABLE']),
@@ -103,7 +104,7 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
         const preview=url.searchParams.get('preview')==='1'&&
           /^(image\/(png|jpeg|webp|gif)|video\/(mp4|webm)|audio\/(mpeg|wav|ogg)|application\/pdf)$/.test(asset.mimeType);
         return new Response(body,{headers:{'Content-Type':asset.mimeType,
-          'Content-Disposition':`${preview?'inline':'attachment'}; filename="kivro-example-${path[1]}"`,
+          'Content-Disposition':`${preview?'inline':'attachment'}; filename="${safeExampleFileName(asset.fieldKey,asset.mimeType)}"`,
           'Content-Security-Policy':"default-src 'none'; sandbox",
           'X-Content-Type-Options':'nosniff','Cache-Control':'private, no-store'}});
       }
@@ -202,6 +203,9 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
     }
     return json({code:'NOT_FOUND'},404);
   }catch(error){
+    if(error instanceof MalwareScanError)return json({code:error.code==='INFECTED'?
+      'UNSAFE_FILE':error.code==='LIMIT_EXCEEDED'?'FILE_LIMIT_EXCEEDED':'SCAN_UNAVAILABLE'},
+    error.code==='INFECTED'?422:error.code==='LIMIT_EXCEEDED'?413:503);
     if(error instanceof InputObjectValidationError)return json({code:error.code},409);
     if(error instanceof PlatformOperationsError)return json({code:error.code},
       error.code==='FORBIDDEN'?403:error.code==='NOT_FOUND'?404:409);
@@ -214,7 +218,7 @@ export async function handleMarketplaceRequest(request:Request,path:readonly str
       error instanceof MarketplaceAssetError||error instanceof AvailabilityError||
       error instanceof FinanceError||error instanceof JobExecutionError){
       const code=error.code;
-      return json({code},code==='NOT_FOUND'?404:
+      return json({code},code==='NOT_FOUND'?404:code==='INVALID_INPUT'?400:
         ['NOT_ELIGIBLE','PAYMENT_NOT_SECURED','ABUSE_DENIED'].includes(code)?403:409);
     }
     throw error;

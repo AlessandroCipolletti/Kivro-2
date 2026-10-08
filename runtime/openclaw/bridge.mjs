@@ -12,6 +12,7 @@ const allowed = new Map([
   ['/broker/research/fetch', 'RESEARCH_FETCH'],
   ['/broker/research/download', 'RESEARCH_DOWNLOAD'],
   ['/broker/resource/read', 'RESOURCE_READ'],
+  ['/broker/selected-file/read', 'SELECTED_FILE_READ'],
   ['/broker/declared-api/invoke', 'DECLARED_API'],
 ]);
 const pending = new Map();
@@ -91,7 +92,9 @@ const server = createServer(async (request, response) => {
         'cache-control': 'no-cache', 'content-length': Buffer.byteLength(body) });
       response.end(body); return;
     }
-    const body = JSON.stringify(reply.ok ? reply.result : { error: { code: 'BROKER_DENIED' } });
+    const body = JSON.stringify(reply.ok ? reply.result : { error: {
+      code: reply.code === 'SOURCE_UNAVAILABLE' ? 'SOURCE_UNAVAILABLE' : 'BROKER_DENIED',
+    } });
     if (Buffer.byteLength(body) > MAX_RESPONSE_BYTES) throw new Error('LIMIT');
     response.writeHead(reply.ok ? 200 : 403, { 'content-type': 'application/json',
       'content-length': Buffer.byteLength(body) });

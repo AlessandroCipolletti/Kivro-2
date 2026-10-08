@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync,
+  symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { withStagedBuyerInputs } from '../dist/apps/worker/src/input-staging.js';
+import { removeKnownStagedAttempts,withStagedBuyerInputs } from
+  '../dist/apps/worker/src/input-staging.js';
 
 const bytes = Buffer.from('hello buyer file');
 const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -69,4 +71,27 @@ test('Worker refuses untrusted storage origins, redirects, tampering and forged 
     }, async () => undefined), { code: 'DOWNLOAD_FAILED' });
     assert.equal(existsSync(join(g.root, g.attemptId)), false);
   } finally { g.cleanup(); }
+});
+
+test('crash recovery removes only journaled private attempts and refuses symlink escape',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'kivro-crash-inputs-'));
+  const outside=mkdtempSync(join(tmpdir(),'kivro-crash-outside-'));
+  const known=randomUUID(),other=randomUUID(),malicious=randomUUID();
+  try{
+    mkdirSync(join(root,known),{mode:0o700});
+    mkdirSync(join(root,other),{mode:0o700});
+    writeFileSync(join(root,known,'buyer.txt'),'private input');
+    writeFileSync(join(root,other,'not-this-job.txt'),'other job');
+    await removeKnownStagedAttempts(root,[known,known]);
+    assert.equal(existsSync(join(root,known)),false);
+    assert.equal(readFileSync(join(root,other,'not-this-job.txt'),'utf8'),'other job');
+    await assert.rejects(removeKnownStagedAttempts(root,['../escape']));
+    symlinkSync(outside,join(root,malicious));
+    await assert.rejects(removeKnownStagedAttempts(root,[malicious]),
+      {code:'INSECURE_ROOT'});
+    assert.equal(existsSync(outside),true);
+  }finally{
+    rmSync(root,{recursive:true,force:true});
+    rmSync(outside,{recursive:true,force:true});
+  }
 });

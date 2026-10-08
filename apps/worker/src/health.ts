@@ -53,7 +53,7 @@ export async function localHealth(stateDir:string,pause:PauseState,
     const refs=[...new Set(packages.flatMap((item)=>
       item.permissionPolicy.sellerCredentialRefs))];
     const missingInference=packages.some((item)=>
-      item.permissionPolicy.aiInference==='SELLER'&&
+      item.dependencyGraph.inference?.mode==='REMOTE_PROVIDER'&&
       item.permissionPolicy.sellerCredentialRefs.length===0);
     if(refs.length||missingInference){
       let allPresent=!!deviceId&&!missingInference;

@@ -13,6 +13,8 @@ export interface CapabilityAdmissionReadiness {
   readonly requiredSecretsReady: boolean;
   readonly runtimeHealthy: boolean;
   readonly capacityAvailable: boolean;
+  /** An installed published package or approved runtime changed after seller review. */
+  readonly revalidationRequired?: boolean;
 }
 
 export interface CapabilityAdmissionReadinessPort {

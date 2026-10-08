@@ -21,6 +21,16 @@ export class DeclaredApiBroker {
   constructor(private readonly connectors: ReadonlyMap<string, DeclaredApiConnector<unknown, unknown>>,
     private readonly usage: DeclaredApiUsagePort) {}
 
+  /** Readiness checks the exact immutable connector binding before an offer.
+   * A missing or changed registry entry must not become a runtime surprise. */
+  hasDeclaredConnector(declared:{id:string;host:string;method:'GET'|'HEAD'|'POST';
+    path:string}):boolean{
+    const connector=this.connectors.get(declared.id);
+    return !!connector&&connector.sideEffect==='READ_ONLY'&&
+      connector.host===declared.host&&connector.method===declared.method&&
+      connector.path===declared.path;
+  }
+
   async invoke(binding: { jobId: string; capabilityVersionId: string; internetPolicy: unknown },
     input: { connectorId: string; parameters: unknown; requestId?: string }): Promise<unknown> {
     try { return await this.invokeInternal(binding, input); }
@@ -40,8 +50,7 @@ export class DeclaredApiBroker {
     const declared = policy.connectors.find((item) => item.id === input.connectorId);
     if (!declared) throw new NetworkPolicyError('NETWORK_POLICY_DENIED');
     const connector = this.connectors.get(input.connectorId);
-    if (!connector || connector.sideEffect !== 'READ_ONLY' || !['GET', 'HEAD', 'POST'].includes(connector.method) ||
-      connector.host !== declared.host || connector.method !== declared.method || connector.path !== declared.path) {
+    if (!connector || !this.hasDeclaredConnector(declared)) {
       throw new NetworkPolicyError('NETWORK_POLICY_DENIED');
     }
     const parsedInput = connector.input.safeParse(input.parameters);

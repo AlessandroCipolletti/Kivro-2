@@ -115,6 +115,9 @@ test('seller final approval carries exact candidate, price and consent identifie
     consentDependencyIds:[...approval.consentDependencyIds,'skill']}));
   assert.throws(()=>SellerPublicationApprovalSchema.parse({...approval,
     availability:{...approval.availability,concurrencyLimit:0}}));
+  assert.throws(()=>SellerPublicationApprovalSchema.parse({...approval,
+    publicPermissionManifest:{entries:[{category:'PUBLIC_INTERNET',state:'NOT_USED'}]}}),
+  'seller approval cannot supply its own factual permission labels');
 });
 
 test('real review builder binds observed provider cost and refuses unaccounted execution',()=>{

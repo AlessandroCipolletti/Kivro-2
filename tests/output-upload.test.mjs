@@ -108,6 +108,11 @@ test('Worker uses only a cloud-issued presigned output key and never needs stora
     assert.equal(requests,1);
     assert.equal(uploadedBytes.toString(),'hello');
     assert.equal(result.assets[0].objectKey.split('/')[2],result.assets[0].id);
+    await assert.rejects(run(async()=>{
+      throw new Error('CLOUD_PREPARE_UNAVAILABLE');
+    }),{code:'UPLOAD_FAILED'});
+    assert.equal(requests,1,
+      'a failed cloud prepare must not open a file stream or send bytes');
     await assert.rejects(run(async(asset)=>({...prepared(asset),
       uploadUrl:'https://evil.example/private/put'})),{code:'UPLOAD_FAILED'});
     assert.equal(requests,1);

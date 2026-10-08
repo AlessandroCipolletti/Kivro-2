@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { InternetPolicySchema } from './internet-policy.js';
 import { ReadOnlyResourcePolicySchema } from './local-resource-policy.js';
 import { ProviderBudgetPolicySchema } from './provider-budget-policy.js';
+import { LocalInferencePolicySchema } from './local-inference-policy.js';
 
 const reference = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/);
 
@@ -10,8 +11,10 @@ export const InternalPermissionPolicySchema = z.strictObject({
   policyVersion: z.literal(1),
   aiInference: z.enum(['NONE', 'SELLER']),
   providerBudget: ProviderBudgetPolicySchema.optional(),
+  localInference: LocalInferencePolicySchema.optional(),
   publicInternet: z.enum(['DENY', 'PUBLIC_RESEARCH_BROKER', 'DECLARED_DOMAINS']),
   internet: InternetPolicySchema.optional(),
+  declaredApiPolicy: InternetPolicySchema.optional(),
   browser: z.boolean(),
   proprietaryDatabase: z.enum(['NONE', 'READ_ONLY', 'LIMITED']),
   privateApi: z.enum(['NONE', 'READ_ONLY', 'LIMITED']),
@@ -27,6 +30,11 @@ export const InternalPermissionPolicySchema = z.strictObject({
   if (policy.internet && ({ NO_NETWORK: 'DENY', PUBLIC_WEB_RESEARCH: 'PUBLIC_RESEARCH_BROKER', DECLARED_API_ACCESS: 'DECLARED_DOMAINS' } as const)[policy.internet.mode] !== policy.publicInternet) {
     context.addIssue({ code: 'custom', message: 'Detailed Internet mode and public permission disagree' });
   }
+  if(policy.declaredApiPolicy?.mode!=='DECLARED_API_ACCESS'&&
+    policy.declaredApiPolicy!==undefined)
+    context.addIssue({code:'custom',message:'Separate API policy must declare APIs'});
+  if(policy.declaredApiPolicy&&policy.internet?.mode!=='PUBLIC_WEB_RESEARCH')
+    context.addIssue({code:'custom',message:'Separate API policy requires public research mode'});
   for (const ids of [policy.selectedFileResourceIds, policy.selectedDirectoryResourceIds, policy.sellerCredentialRefs]) {
     if (new Set(ids).size !== ids.length) context.addIssue({ code: 'custom', message: 'Duplicate permission reference' });
   }
@@ -35,6 +43,10 @@ export const InternalPermissionPolicySchema = z.strictObject({
   }
   if (policy.providerBudget && policy.aiInference !== 'SELLER') {
     context.addIssue({ code: 'custom', message: 'Provider budget requires seller inference consent' });
+  }
+  if (policy.localInference &&
+    (policy.aiInference!=='SELLER'||policy.providerBudget!==undefined)) {
+    context.addIssue({code:'custom',message:'Local inference cannot use a remote provider budget'});
   }
 });
 

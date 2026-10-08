@@ -49,6 +49,12 @@ const routes = [
     operationId: Type.String({ minLength: 1, maxLength: 160 }),
     lookup: Type.String({ minLength: 1, maxLength: 160 }),
   })],
+  ['kivro_selected_file_read', '/broker/selected-file/read', Type.Object({
+    resourceId: Type.String({ minLength: 1, maxLength: 160 }),
+    fileId: Type.String({ minLength: 1, maxLength: 160 }),
+    offset: Type.Integer({ minimum: 0 }),
+    length: Type.Integer({ minimum: 1, maximum: 65_536 }),
+  })],
   ['kivro_declared_api', '/broker/declared-api/invoke', Type.Object({
     connectorId: Type.String({ minLength: 1, maxLength: 160 }),
     input: Type.Record(Type.String(), Type.Unknown()),
@@ -60,7 +66,11 @@ async function invoke(path, params) {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(params), signal: AbortSignal.timeout(30_000),
   });
-  if (!response.ok) throw new Error('KIVRO_BROKER_DENIED');
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.error?.code === 'SOURCE_UNAVAILABLE' ?
+      'KIVRO_SOURCE_UNAVAILABLE' : 'KIVRO_BROKER_DENIED');
+  }
   const text = await response.text();
   if (Buffer.byteLength(text) > 2_097_152) throw new Error('KIVRO_BROKER_LIMIT');
   return JSON.parse(text);

@@ -56,6 +56,22 @@ test('real Docker transfers bounded stopped output, validates it and cleans up a
     assert.equal(existsSync(join(root, attemptId, 'output')), false);
     assert.deepEqual(inventory(), before);
 
+    const hostileStderr='PRIVATE_BUYER_CONTENT_MUST_NOT_BE_LOGGED';
+    await assert.rejects(adapter.runWithOutput(plan,attemptId,
+      ['/bin/sh','-c',`printf '${hostileStderr}' >&2; exit 17`],contract,
+      {maxFileBytes:1024,maxResultBytes:4096},async()=>{
+        throw new Error('failed execution cannot deliver output');
+      }),error=>{
+      assert.equal(error.code,'EXECUTION_FAILED');
+      assert.equal(error.diagnostic?.exitCode,17);
+      assert.equal(error.diagnostic?.stderrBytes,hostileStderr.length);
+      assert.match(error.diagnostic?.stderrSha256??'',/^sha256:[a-f0-9]{64}$/);
+      assert.equal(JSON.stringify(error).includes(hostileStderr),false,
+        'untrusted OpenClaw stderr must not enter the structured diagnostic');
+      return true;
+    });
+    assert.deepEqual(inventory(),before,'a failed process leaves no sandbox resources');
+
     const unsafe = 'printf \'{"schemaVersion":1,"fields":{"message":{"type":"SHORT_TEXT","value":"ok"},' +
       '"file":{"type":"FILE","path":"note.txt"}}}\' > /job/output/result.json; ' +
       'ln -s /etc/passwd /job/output/note.txt';

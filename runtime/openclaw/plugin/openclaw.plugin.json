@@ -20,6 +20,7 @@
       "kivro_research_fetch",
       "kivro_research_download",
       "kivro_resource_read",
+      "kivro_selected_file_read",
       "kivro_declared_api",
       "kivro_submit_result",
       "kivro_read_input",

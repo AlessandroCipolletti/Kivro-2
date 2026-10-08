@@ -1,3 +1,4 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -101,7 +102,7 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         policy:{schedule:null,concurrencyLimit:1,queueLimit:2,futureReservationLimit:2,
           estimatedRuntimeSeconds:60,maxWaitSeconds:604800},paused:false,source:'WEB',
         expectedRevision:null});
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
@@ -256,10 +257,62 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
 
       // Two paid jobs must advance from a persisted DAG, with the second
       // purchase receiving only the first job's validated and settled output.
+      // The target job belongs to a different seller and Worker.
+      const sellerBAccount=randomUUID(),sellerB=randomUUID(),workerB=randomUUID();
+      const capabilityB=randomUUID(),versionB=randomUUID();
+      await pool.query(`INSERT INTO accounts(id,primary_email,status,email_verified_at)
+        VALUES($1,$2,'ACTIVE',now())`,[sellerBAccount,`${sellerBAccount}@example.test`]);
+      await pool.query(`INSERT INTO seller_profiles(id,account_id,display_name,status,payout_status)
+        VALUES($1,$2,'Second Seller','ACTIVE','READY')`,[sellerB,sellerBAccount]);
+      await pool.query(`INSERT INTO seller_connect_profiles(seller_profile_id,stripe_account_id,
+        stripe_mode,onboarding_status,transfers_enabled,payouts_enabled,country,last_reconciled_at)
+        VALUES($1,'acct_M11SELLERB','test','READY',true,true,'US',now())`,[sellerB]);
+      await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,
+        worker_version,status) VALUES($1,$2,'m11-key-b','Second Worker','LINUX','test','ONLINE')`,
+      [workerB,sellerB]);
+      await pool.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,description,status)
+        VALUES($1,$2,$3,'Second research brief','Processes a linked file','PUBLISHED')`,
+      [capabilityB,sellerB,`m11-${capabilityB}`]);
+      const packageB={...localPackage,capabilityId:capabilityB,capabilityVersionId:versionB,
+        workerDeviceId:workerB,workerManifest:{...localPackage.workerManifest,
+          workerId:randomUUID(),capabilityVersionId:versionB}};
+      const candidateB=buildVersionCandidate({id:versionB,capabilityId:capabilityB,
+        versionNumber:1,workerDeviceId:workerB,requestedAt:new Date().toISOString(),
+        localPackage:packageB,
+        selectedPrice:await new PostgresPriceTierCatalog(pool).selected('USD_999')});
+      const fieldsB={...candidateB};delete fieldsB.requestedAt;
+      const publishedB=PublishedCapabilityVersionSchema.parse({...fieldsB,
+        publicationState:'PUBLISHED',publishedAt:new Date().toISOString(),
+        policyValidationHash:hash});
+      await pool.query(`INSERT INTO capability_versions(id,capability_id,version_number,
+        publication_state,version_snapshot,worker_manifest_hash,policy_validation_hash,published_at)
+        VALUES($1,$2,1,'PUBLISHED',$3,$4,$5,now())`,
+      [versionB,capabilityB,publishedB,publishedB.workerManifestHash,hash]);
+      await pool.query(`UPDATE capabilities SET current_version_id=$2,visibility='PUBLIC' WHERE id=$1`,
+        [capabilityB,versionB]);
+      await availability.setWorkerDefault({workerDeviceId:workerB,
+        sellerAccountId:sellerBAccount,
+        schedule:{mode:'ALWAYS_AVAILABLE',timezone:'UTC',weeklyWindows:[]},
+        paused:false,source:'WEB',expectedRevision:null});
+      await availability.setCapabilityPolicy({capabilityId:capabilityB,
+        sellerAccountId:sellerBAccount,policy:{schedule:null,concurrencyLimit:1,
+          queueLimit:2,futureReservationLimit:2,estimatedRuntimeSeconds:60,
+          maxWaitSeconds:604800},paused:false,source:'WEB',expectedRevision:null});
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+        operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
+        messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:workerB,
+        workerRelease:'test',sentAt:new Date().toISOString(),openClawVersion:null,
+        status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,localRevision:0,
+        capabilityReadiness:[{capabilityVersionId:versionB,policyValidationHash:hash,
+          state:'READY',checks:{sandboxVerified:true,requiredSecretsReady:true,
+            runtimeHealthy:true}}]},workerB,plane);
+      await social.setSellerMetadata(capabilityB,sellerBAccount,{category:'RESEARCH',
+        shortDescription:'A narrow file transformation',tags:['research','brief'],
+        strengths:['Explicit contract'],limitations:['No private web access']});
       const chainInference={generate:async()=>({structuredOutput:{steps:[
         {key:'first',capabilityId:capability,dependsOnKeys:[],
           inputValues:[{fieldKey:'question',value:'Research Acme'}],inputAssetIds:[],mappings:[]},
-        {key:'second',capabilityId:capability,dependsOnKeys:['first'],inputValues:[],
+        {key:'second',capabilityId:capabilityB,dependsOnKeys:['first'],inputValues:[],
           inputAssetIds:[],mappings:[{sourceKey:'first',sourceOutputKey:'answer',
             targetInputKey:'question'},{sourceKey:'first',sourceOutputKey:'report',
             targetInputKey:'supportingFile'}]}
@@ -267,7 +320,7 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       const chainPlanner=new MarketplaceAgentPlanner(catalog,availability,()=>buyerRepo,repo,
         chainInference);
       const chained=(await chainPlanner.propose({buyerId:buyer,conversationId:conversation,
-        goal:'Research Acme',constraints,candidateIds:[capability],ownedAssetIds:[]})).plan;
+        goal:'Research Acme',constraints,candidateIds:[capability,capabilityB],ownedAssetIds:[]})).plan;
       assert.equal(chained.quotedTotalMinor,1998);
       await repo.approvePlan(buyer,chained.id,randomUUID());
       assert.equal(await restarted.advanceOne(buyer,chained.id),'PURCHASED');
@@ -283,6 +336,7 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       let fileKey;
       const resultStorage={
         async presignPrivateUpload(){return {url:'https://storage.example.test/put',headers:{}};},
+        async presignPrivateDownload(){return 'https://storage.example.test/get';},
         async headPrivateObject(key){const bytes=fileObjects.get(key);
           return bytes?{sizeBytes:bytes.length,claimedSha256:fileHash}:null;},
         async readPrivateObject(key){const bytes=fileObjects.get(key);
@@ -291,26 +345,28 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
           if(!bytes)throw new Error('missing');fileObjects.set(target,Buffer.from(bytes));},
         async deletePrivateObject(key){fileObjects.delete(key)},
       };
-      const deliver=async(step,answer,withFile=false)=>{
-        const offered=await execution.offer(step.jobId,worker,plane,120);
-        await execution.accept(offered.executionId,worker,plane,offered.leaseToken,randomUUID());
+      const deliver=async(step,answer,withFile=false,existingOffer=null)=>{
+        const executingWorker=step===second?workerB:worker;
+        const offered=existingOffer??await execution.offer(step.jobId,executingWorker,plane,120);
+        if(!existingOffer)await execution.accept(offered.executionId,executingWorker,plane,
+          offered.leaseToken,randomUUID());
         for(const [from,to] of [['ACCEPTED','STARTING'],['STARTING','RUNNING'],
           ['RUNNING','UPLOADING_RESULT']]){
           await execution.workerTransition({id:randomUUID(),jobId:step.jobId,from,to,
             actor:'WORKER',reason:`M11_${to}`,attemptId:offered.attemptId,
             correlationId:randomUUID(),paymentReservationId:null,resultManifestId:null},
-          offered.executionId,worker,plane,offered.leaseToken);
+          offered.executionId,executingWorker,plane,offered.leaseToken);
         }
         if(withFile){
           const prepared=await execution.prepareResultAsset({assetId:fileId,jobId:step.jobId,
             executionId:offered.executionId,attemptId:offered.attemptId,
-            workerDeviceId:worker,controlPlaneId:plane,leaseToken:offered.leaseToken,
+            workerDeviceId:executingWorker,controlPlaneId:plane,leaseToken:offered.leaseToken,
             fieldKey:'report',extension:'.txt',sizeBytes:fileBytes.length,sha256:fileHash,
             detectedMimeType:'text/plain'},resultStorage);
           fileKey=prepared.objectKey;fileObjects.set(fileKey,fileBytes);
         }
         await execution.finalizeResult({resultManifestId:randomUUID(),jobId:step.jobId,
-          executionId:offered.executionId,attemptId:offered.attemptId,workerDeviceId:worker,
+          executionId:offered.executionId,attemptId:offered.attemptId,workerDeviceId:executingWorker,
           controlPlaneId:plane,leaseToken:offered.leaseToken,
           payload:{values:{answer},assets:withFile?{report:[fileId]}:{}},
           assets:withFile?[{id:fileId,fieldKey:'report',objectKey:fileKey,
@@ -322,27 +378,27 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       await deliver(first,'Validated result for downstream question',true);
       const policy={schedule:null,concurrencyLimit:1,queueLimit:2,futureReservationLimit:2,
         estimatedRuntimeSeconds:60,maxWaitSeconds:604800};
-      await availability.setCapabilityPolicy({capabilityId:capability,
-        sellerAccountId:sellerAccount,policy,paused:true,source:'WEB',expectedRevision:1});
+      await availability.setCapabilityPolicy({capabilityId:capabilityB,
+        sellerAccountId:sellerBAccount,policy,paused:true,source:'WEB',expectedRevision:1});
       assert.equal(await restarted.advanceOne(buyer,chained.id),'PAUSED');
       assert.equal((await repo.planView(buyer,chained.id)).spentMinor,999);
-      await availability.setCapabilityPolicy({capabilityId:capability,
-        sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',expectedRevision:2});
+      await availability.setCapabilityPolicy({capabilityId:capabilityB,
+        sellerAccountId:sellerBAccount,policy,paused:false,source:'WEB',expectedRevision:2});
       const revision=await pool.query(`SELECT revision FROM worker_cloud_control_revisions
-        WHERE worker_device_id=$1`,[worker]);
+        WHERE worker_device_id=$1`,[workerB]);
       const lastBeat=await pool.query(`SELECT latest_heartbeat_reported_at AS at
-        FROM worker_devices WHERE id=$1`,[worker]);
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+        FROM worker_devices WHERE id=$1`,[workerB]);
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
-        workerDeviceId:worker,workerRelease:'test',
+        workerDeviceId:workerB,workerRelease:'test',
         sentAt:new Date(Math.max(Date.now(),lastBeat.rows[0].at.getTime()+1)).toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
         localRevision:0,acknowledgedCloudRevision:Number(revision.rows[0].revision),
-        capabilityReadiness:[{capabilityVersionId:versionId,policyValidationHash:hash,
+        capabilityReadiness:[{capabilityVersionId:versionB,policyValidationHash:hash,
           state:'READY',checks:{sandboxVerified:true,requiredSecretsReady:true,
-            runtimeHealthy:true}}]},worker,plane);
+            runtimeHealthy:true}}]},workerB,plane);
       await restarted.revisePaused(buyer,chained.id,[{
-        stepId:second.id,capabilityId:capability}]);
+        stepId:second.id,capabilityId:capabilityB}]);
       await repo.approvePlan(buyer,chained.id,randomUUID());
       assert.equal(await restarted.advanceOne(buyer,chained.id),'PURCHASED');
       const downstream=await pool.query('SELECT payload FROM job_input_manifests WHERE job_id=$1',
@@ -353,7 +409,44 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       assert.equal((await pool.query(`SELECT count(*)::int AS n FROM orchestration_asset_links
         WHERE plan_id=$1 AND source_job_id=$2 AND target_job_id=$3 AND asset_id=$4`,
       [chained.id,first.jobId,second.jobId,fileId])).rows[0].n,1);
-      await deliver(second,'Validated final chained result');
+      const secondOffer=await execution.offer(second.jobId,workerB,plane,120);
+      await execution.accept(secondOffer.executionId,workerB,plane,
+        secondOffer.leaseToken,randomUUID());
+      const acceptedSecond=await execution.acceptedInputForWorker(
+        secondOffer.executionId,workerB,plane,secondOffer.leaseToken,
+        resultStorage,86_400);
+      assert.deepEqual(acceptedSecond.downloads.map((item)=>item.binding.assetId),[fileId],
+        'the downstream Worker receives only the explicitly linked output asset');
+      assert.equal(JSON.stringify(acceptedSecond).includes(fileKey),false,
+        'the source object key and seller metadata never enter the Worker grant');
+      assert.equal(JSON.stringify(acceptedSecond).includes(first.jobId),false,
+        'the target Worker must not learn the source job identity');
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM assets
+        WHERE id=$1`,[fileId])).rows[0].n,1,
+      'output-to-input chaining reuses one private object rather than copying it');
+      const scopedGrant=(await pool.query(`SELECT id,expires_at,permission
+        FROM asset_read_grants WHERE asset_id=$1 AND target_job_id=$2`,
+      [fileId,second.jobId])).rows[0];
+      assert.equal(scopedGrant.permission,'READ');
+      assert.ok(new Date(scopedGrant.expires_at).getTime()>Date.now());
+      await pool.query(`UPDATE assets SET retain_until=retain_until+interval '2 days'
+        WHERE id=$1`,[fileId]);
+      const realNow=Date.now;
+      try{
+        Date.now=()=>new Date(scopedGrant.expires_at).getTime()+1000;
+        await assert.rejects(execution.acceptedInputForWorker(secondOffer.executionId,
+          workerB,plane,secondOffer.leaseToken,resultStorage,86_400),
+        {code:'NOT_ELIGIBLE'},'an expired grant cannot expose seller A output to seller B');
+      }finally{Date.now=realNow;}
+      await pool.query(`UPDATE asset_read_grants SET revoked_at=now()
+        WHERE id=$1`,[scopedGrant.id]);
+      await assert.rejects(execution.acceptedInputForWorker(secondOffer.executionId,
+        workerB,plane,secondOffer.leaseToken,resultStorage,86_400),
+      {code:'NOT_ELIGIBLE'},'a revoked cross-job grant cannot be staged to the Worker');
+      await assert.rejects(execution.acceptedInputForWorker(secondOffer.executionId,
+        randomUUID(),plane,secondOffer.leaseToken,resultStorage,86_400),
+      {code:'NOT_ELIGIBLE'},'a different Worker cannot reuse the target job grant');
+      await deliver(second,'Validated final chained result',false,secondOffer);
       assert.equal(await restarted.advance(buyer,chained.id),'COMPLETED');
       const chainView=await repo.planView(buyer,chained.id);
       assert.deepEqual(chainView.finalResult.finalJobIds,[second.jobId]);
@@ -364,18 +457,18 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
         goal:'Research Acme',constraints,candidateIds:[capability],ownedAssetIds:[]})).plan;
       await repo.approvePlan(buyer,paused.id,randomUUID());
       await availability.setCapabilityPolicy({capabilityId:capability,
-        sellerAccountId:sellerAccount,policy,paused:true,source:'WEB',expectedRevision:3});
+        sellerAccountId:sellerAccount,policy,paused:true,source:'WEB',expectedRevision:1});
       assert.equal(await restarted.advanceOne(buyer,paused.id),'PAUSED');
       assert.equal((await repo.plan(buyer,paused.id)).status,'AWAITING_REAPPROVAL');
       assert.equal((await pool.query('SELECT count(*)::int AS n FROM jobs WHERE id=$1',
         [paused.steps[0].jobId])).rows[0].n,0);
       await availability.setCapabilityPolicy({capabilityId:capability,
-        sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',expectedRevision:4});
+        sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',expectedRevision:2});
       const revisionAgain=await pool.query(`SELECT revision FROM worker_cloud_control_revisions
         WHERE worker_device_id=$1`,[worker]);
       const lastBeatAgain=await pool.query(`SELECT latest_heartbeat_reported_at AS at
         FROM worker_devices WHERE id=$1`,[worker]);
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker,workerRelease:'test',
         sentAt:new Date(Math.max(Date.now(),lastBeatAgain.rows[0].at.getTime()+1)).toISOString(),
@@ -431,7 +524,7 @@ if(!process.env.M11_DATABASE_URL){test('M11 requires disposable PostgreSQL',{ski
       await availability.setCapabilityPolicy({capabilityId:capability2,
         sellerAccountId:sellerAccount,policy,paused:false,source:'WEB',
         expectedRevision:null});
-      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker2,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,

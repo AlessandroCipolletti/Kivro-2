@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
-import { WorkerDispatchLoop } from '../dist/apps/worker/src/dispatch-loop.js';
+import { WorkerDispatchLoop,workerRetryDelayMs } from
+  '../dist/apps/worker/src/dispatch-loop.js';
+
+test('transport retry jitter remains bounded and rejects invalid inputs',()=>{
+  assert.equal(workerRetryDelayMs(1_000,0),800);
+  assert.equal(workerRetryDelayMs(1_000,0.5),1_000);
+  assert.ok(workerRetryDelayMs(30_000,0.99)<=30_000);
+  assert.throws(()=>workerRetryDelayMs(1_000,1),RangeError);
+});
 import { WORKER_PROTOCOL_VERSION } from '../dist/packages/worker-protocol/src/messages.js';
 
 test('poll dispatcher loads only local reviewed packages and never starts one offer twice', async () => {
@@ -136,26 +144,36 @@ test('dispatch refuses a paid offer without same-cycle capability readiness',asy
     recordCloudContact(){},isUnpausedForNewJobOffer(){return true;}};
   const control={snapshots(){return [];},async stopOrphanedAtStartup(){},
     async expireLeases(){},async expireOverdue(){}};
+  const errors=[];
   const loop=new WorkerDispatchLoop(transport,deviceId,{load(){throw Error('NO_LOAD');}},
-    local,control,{async execute(){throw Error('NO_EXECUTION');}},()=>{});
-  await assert.rejects(loop.pollOnce(),{code:'NOT_READY'});
+    local,control,{async execute(){throw Error('NO_EXECUTION');}},
+    (_offer,error)=>errors.push(error.code));
+  await loop.pollOnce();
+  await loop.pollOnce();
+  assert.deepEqual(errors,['NOT_READY','NOT_READY'],
+    'a denied offer cannot crash the Worker or execute after retry');
 });
 
 test('draining control plane refuses a fresh job offer', async () => {
   const deviceId = randomUUID();
+  const errors=[];
   const transport = { controlPlaneId: 'plane-a', kind: 'HTTPS_POLLING',
     supportedProtocolVersions: [WORKER_PROTOCOL_VERSION], async poll() { return [
       { type: 'WORKER_WELCOME', messageId: randomUUID(), controlPlaneId: 'plane-a',
         selectedProtocolVersion: WORKER_PROTOCOL_VERSION, controlPlaneState: 'DRAINING',
-        serverTime: new Date().toISOString() },
+        serverTime: new Date().toISOString(),pauseDirective:{revision:0,paused:false,
+          securityPaused:false,capabilityPauses:[]} },
       { type: 'JOB_OFFER', controlPlaneId: 'plane-a', workerDeviceId: deviceId },
     ]; }, async send() {}, async close() {} };
   const dispatcher = new WorkerDispatchLoop(transport, deviceId, { load() {
-    throw new Error('SHOULD_NOT_LOAD'); } }, { snapshot() { return { localRevision: 0 }; },recordCloudContact() {} },
+    throw new Error('SHOULD_NOT_LOAD'); } }, { snapshot() { return { localRevision: 0 }; },
+      applyCloudDirective(){},recordCloudContact() {} },
   { snapshots() { return []; }, async stopOrphanedAtStartup() {},
     async expireLeases() {}, async expireOverdue() {} },
-  { async execute() { throw new Error('SHOULD_NOT_EXECUTE'); } }, () => {});
-  await assert.rejects(dispatcher.pollOnce(), { code: 'DRAINING' });
+  { async execute() { throw new Error('SHOULD_NOT_EXECUTE'); } },
+  (_offer,error)=>errors.push(error.code));
+  await dispatcher.pollOnce();
+  assert.deepEqual(errors,['DRAINING']);
 });
 
 test('local emergency revision is acknowledged only after durable cloud heartbeat',async()=>{
@@ -178,4 +196,32 @@ test('local emergency revision is acknowledged only after durable cloud heartbea
   await assert.rejects(loop.pollOnce(),/CLOUD_UNAVAILABLE/);
   assert.deepEqual(acknowledgements,[]);
   fail=false;await loop.pollOnce();assert.deepEqual(acknowledgements,[7]);
+});
+
+test('every signed polling heartbeat includes freshly observed sandbox health',async()=>{
+  const deviceId=randomUUID(),seen=[];
+  const transport={controlPlaneId:'plane-a',kind:'HTTPS_POLLING',
+    supportedProtocolVersions:[WORKER_PROTOCOL_VERSION],
+    async send(message){seen.push(message);},async close(){},async poll(){return [
+      {type:'WORKER_WELCOME',messageId:randomUUID(),controlPlaneId:'plane-a',
+        selectedProtocolVersion:WORKER_PROTOCOL_VERSION,controlPlaneState:'ACTIVE',
+        serverTime:new Date().toISOString(),pauseDirective:{revision:0,paused:false,
+          securityPaused:false,capabilityPauses:[]}}];}};
+  const local={snapshot(){return {localRevision:0};},applyCloudDirective(){},
+    recordCloudContact(){},acknowledgeCloudRevision(){}};
+  const control={snapshots(){return [];},async stopOrphanedAtStartup(){},
+    async expireLeases(){},async expireOverdue(){}};
+  let checks=0;
+  const loop=new WorkerDispatchLoop(transport,deviceId,{listInstalled(){return [];},
+    load(){throw Error('NO_OFFER');}},local,control,
+  {async execute(){throw Error('NO_OFFER');}},()=>{},
+  {reporter:{async heartbeat(input){return {localRevision:0,
+    operationalChecks:input.operationalChecks,capabilityReadiness:[]};}},
+  capacity:1,workerRelease:'0.0.0-dev',openClawVersion:'2026.8.2',policyVersion:1,
+  async operationalChecks(){checks++;return [{code:'DOCKER_DAEMON',
+    state:checks===1?'HEALTHY':'BLOCKING'}];}});
+  await loop.pollOnce();await loop.pollOnce();
+  assert.deepEqual(seen.map((beat)=>beat.operationalChecks),[
+    [{code:'DOCKER_DAEMON',state:'HEALTHY'}],
+    [{code:'DOCKER_DAEMON',state:'BLOCKING'}]]);
 });

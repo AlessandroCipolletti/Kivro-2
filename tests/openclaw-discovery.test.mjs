@@ -7,6 +7,7 @@ import process from 'node:process';
 import { test } from 'node:test';
 import { OpenClawDiscoveryAdapter } from '../dist/packages/openclaw-adapter/src/discovery.js';
 import { ReadOnlyOpenClawDiscovery } from '../dist/packages/openclaw-adapter/src/read-only-discovery.js';
+import { checkLocalInferenceHealth } from '../dist/packages/openclaw-adapter/src/local-inference-health.js';
 import { LocalOpenClawCommandRunner } from '../dist/packages/openclaw-adapter/src/command-runner.js';
 import { buildSuggestedDependencyGraph } from '../dist/packages/openclaw-adapter/src/dependency-candidates.js';
 
@@ -116,6 +117,41 @@ test('read-only scanner finds file-backed skill and configured references withou
     assert.deepEqual(snapshot(f.homeDir), before, 'scan must preserve file bytes, modes and mtimes');
     assert.doesNotMatch(JSON.stringify(result), /PRIVATE|client data|\.env|openclaw\.json|extra-skills/);
   } finally { f.cleanup(); }
+});
+
+test('local model discovery is read-only, explicit and uncertain until bounded health evidence exists',async()=>{
+  const f=fixture();
+  try{
+    writeFileSync(f.configPath,JSON.stringify({models:{providers:{
+      ollama:{baseUrl:'http://127.0.0.1:11434/v1',api:'openai-completions',
+        apiKey:'PERSONAL_SECRET',models:[{id:'qwen3:8b'}]},
+      unsupported:{baseUrl:'http://192.168.1.2:11434/v1',api:'openai-completions',
+        models:[{id:'private'}]},
+    }}}));
+    const before=snapshot(f.homeDir);
+    const discovered=await f.scanner.scan();
+    assert.deepEqual(discovered.localInference,[{provider:'ollama',model:'qwen3:8b',
+      endpoint:'http://127.0.0.1:11434/v1',requiredService:'local-model-server',
+      estimatedHardware:'unknown',availability:'unknown',consent:'not-granted'}]);
+    assert.ok(discovered.issues.includes('LOCAL_INFERENCE_UNDETERMINED'));
+    assert.doesNotMatch(JSON.stringify(discovered),/PERSONAL_SECRET|192\.168/);
+    assert.deepEqual(snapshot(f.homeDir),before);
+    const candidate=discovered.localInference[0];
+    const calls=[];
+    const fetcher=async(url,options)=>{
+      calls.push([String(url),options.method,options.redirect]);
+      return new globalThis.Response(JSON.stringify({data:[{id:'qwen3:8b'}]}),
+        {status:200,headers:{'content-type':'application/json'}});
+    };
+    assert.equal((await checkLocalInferenceHealth(candidate,fetcher)).state,'READY');
+    assert.deepEqual(calls,[['http://127.0.0.1:11434/v1/models','GET','manual']]);
+    assert.equal((await checkLocalInferenceHealth(candidate,async()=>
+      new globalThis.Response(null,{status:302,headers:{location:'http://evil.test/'}}))).state,
+    'NOT_READY');
+    assert.equal((await checkLocalInferenceHealth(candidate,async()=>
+      new globalThis.Response(JSON.stringify({data:[{id:'different'}]}),
+        {headers:{'content-type':'application/json'}}))).state,'NOT_READY');
+  }finally{f.cleanup();}
 });
 
 test('seller-selected skill snapshot is bounded, lossless and read-only; unsafe descendants fail closed',async()=>{

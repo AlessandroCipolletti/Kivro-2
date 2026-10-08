@@ -4,7 +4,8 @@ import { ReadOnlyResourcePolicySchema, type ReadOnlyResourcePolicy } from '../..
 /** Dedicated seller DB credentials live only in this Worker-side adapter; the agent sees named calls and rows. */
 export class LocalResourceBroker {
   constructor(private readonly query: LocalResourceQueryPort, private readonly policy: ReadOnlyResourcePolicy,
-    private readonly audit: LocalResourceAuditPort, private readonly researchUsage: ResearchUsagePort) {
+    private readonly audit: LocalResourceAuditPort,
+    private readonly researchUsage: Pick<ResearchUsagePort,'markPrivateResourceRead'>) {
     ReadOnlyResourcePolicySchema.parse(policy);
   }
 

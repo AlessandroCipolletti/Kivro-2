@@ -193,10 +193,11 @@ export class MarketplaceSocialRepository {
   }
 
   async publicExampleAsset(assetId:string,buyerId:string|null=null):Promise<
-    {objectKey:string;mimeType:string;sizeBytes:number}|null>{
+    {objectKey:string;mimeType:string;sizeBytes:number;fieldKey:string}|null>{
     if(buyerId)uuid.parse(buyerId);
-    const row=await this.pool.query<{object_key:string;detected_mime_type:string;size_bytes:string}>(`
-      SELECT a.object_key,a.detected_mime_type,a.size_bytes FROM assets a
+    const row=await this.pool.query<{object_key:string;detected_mime_type:string;size_bytes:string;
+      field_key:string}>(`
+      SELECT a.object_key,a.detected_mime_type,a.size_bytes,ea.field_key FROM assets a
       JOIN capability_example_assets ea ON ea.asset_id=a.id
       JOIN capability_examples e ON e.id=ea.example_id
       JOIN capabilities c ON c.id=e.capability_id
@@ -211,6 +212,7 @@ export class MarketplaceSocialRepository {
               AND g.revoked_at IS NULL)))
         AND c.status='PUBLISHED'`,[uuid.parse(assetId),buyerId]);
     const found=row.rows[0];return found?{objectKey:found.object_key,
-      mimeType:found.detected_mime_type,sizeBytes:Number(found.size_bytes)}:null;
+      mimeType:found.detected_mime_type,sizeBytes:Number(found.size_bytes),
+      fieldKey:found.field_key}:null;
   }
 }

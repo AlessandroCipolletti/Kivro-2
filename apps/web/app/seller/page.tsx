@@ -9,6 +9,7 @@ import { openClawCompatibilityMatrix } from '../../../../packages/openclaw-adapt
 import SellerPairing from './seller-pairing';
 import SellerPublication from './seller-publication';
 import SellerVersionControl from './seller-version-control';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,12 +39,13 @@ export default async function SellerPage() {
           <div className={acknowledged && !paired ? 'seller-step current' : 'seller-step'}><span>01</span><div><strong>Connect Worker</strong><p>Pair the computer that will run approved jobs.</p>{acknowledged&&!paired&&
             <SellerPairing cloudUrl={process.env.APP_ORIGIN??''}/>}</div><b>{paired?'Paired':acknowledged?'Ready to pair':'Locked'}</b></div>
           <div className="seller-step"><span>02</span><div><strong>Inspect skills on your computer</strong><p>After pairing, run <code>kivro-worker discover</code> on the Worker. It reads OpenClaw metadata locally and marks unknown readiness. Nothing it finds is published or approved automatically.</p></div><b>{paired?'Local review':'Pending'}</b></div>
-          <div className="seller-step"><span>03</span><div><strong>Choose a skill and review its dependencies</strong><p>On your paired Worker, run <code>kivro-worker import guided</code> for a single skill with dedicated remote inference. It scans read-only, asks you to select every dependency, creates the private package and runs isolated tests without editing JSON. Other dependency types require the advanced import commands and remain blocked until supported. Selection does not grant runtime access; final consent is still required here.</p></div><b>{paired?'Local draft':'Pending'}</b></div>
+          <div className="seller-step"><span>03</span><div><strong>Choose a skill and review its dependencies</strong><p>On your paired Worker, run <code>kivro-worker import guided</code> for a single skill with a dedicated remote model or a discovered local model. To declare a private database or API, use the advanced import commands and review each narrow broker operation. Selection does not grant runtime access; final consent is still required here.</p></div><b>{paired?'Local draft':'Pending'}</b></div>
           <div className="seller-step"><span>04</span><div><strong>Publish</strong><p>Set price, availability and capacity after all checks pass.</p></div><b>Pending</b></div>
         </div>
         <p className="seller-footnote">Discovery never publishes a skill or grants access. Each permission needs your explicit approval.</p>
       </div>
     </section>}
+    {profile && paired && <p className="seller-muted"><Link href="/seller/input-contracts">Build a typed buyer input form</Link> before running the Worker review.</p>}
     {profile && paired && <SellerPublication />}
     {profile && paired && <SellerVersionControl />}
     {profile && (!showOnboarding || paired) && <OperationsDashboard supportedOpenClawVersion={

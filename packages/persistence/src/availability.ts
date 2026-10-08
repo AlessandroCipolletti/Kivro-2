@@ -705,7 +705,7 @@ export class PostgresAvailabilityRepository {
         Number(prior.spend_day)+proposed>Number(ceiling.max_spend_minor_per_day)||
         Number(prior.active_jobs)>=ceiling.max_active_jobs)
         throw new AvailabilityError('BUYER_LIMIT');
-      if (q.expires_at.getTime()<=Date.now()) throw new AvailabilityError('STALE_QUOTE');
+      if (q.expires_at.getTime()<=this.clock().getTime()) throw new AvailabilityError('STALE_QUOTE');
       const dispatch=await client.query<{halted:boolean}>(
         'SELECT halted FROM platform_dispatch_control WHERE singleton=true FOR SHARE');
       if(dispatch.rows[0]?.halted!==false)throw new AvailabilityError('STALE_QUOTE');
@@ -782,6 +782,7 @@ export class PostgresAvailabilityRepository {
         const extended=await client.query<{id:string}>(`UPDATE assets a SET retain_until=GREATEST(
           a.retain_until,$3::timestamptz+($4::numeric*interval '1 second')+interval '1 day')
           FROM asset_read_grants g WHERE g.asset_id=a.id AND g.target_job_id=$1
+          AND g.revoked_at IS NULL
           AND a.owner_account_id=$2 AND a.state='READY' AND a.retain_until>now()
           RETURNING a.id`,[job.id,input.buyerAccountId,q.latest_start_at,
           version.resourceLimits.timeoutSeconds]);
@@ -789,7 +790,7 @@ export class PostgresAvailabilityRepository {
           throw new AvailabilityError('NOT_ELIGIBLE');
         await client.query(`UPDATE asset_read_grants g SET expires_at=GREATEST(
           g.expires_at,a.retain_until) FROM assets a
-          WHERE g.asset_id=a.id AND g.target_job_id=$1`,[job.id]);
+          WHERE g.asset_id=a.id AND g.target_job_id=$1 AND g.revoked_at IS NULL`,[job.id]);
       }
       await client.query('UPDATE job_schedule_quotes SET accepted_job_id=$2 WHERE id=$1',[q.id,job.id]);
       await this.event(client,job.id,'BOOKED',`job:${job.id}:book`,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ProviderBudgetPolicySchema } from '../../contracts/src/provider-budget-policy.js';
+import { LocalInferencePolicySchema } from '../../contracts/src/local-inference-policy.js';
 import type { ProviderUsagePort } from '../../infrastructure/contracts/src/research-ports.js';
 import { NetworkPolicyError } from '../../policy-engine/src/public-destination.js';
 import type { SellerCredentialVault } from './provider-broker.js';
@@ -46,7 +47,17 @@ export type CompletionResponse = z.infer<typeof responseSchema>;
 /** A provider adapter owns HTTPS, DNS pinning and credential injection; it never runs in the sandbox. */
 export interface CompletionConnector {
   readonly providerId: string;
+  readonly local?: boolean;
   complete(request: CompletionRequest, credential: string, signal: AbortSignal): Promise<unknown>;
+}
+
+export interface LocalInferenceUsagePort{
+  begin(input:{requestId:string;jobId:string;capabilityVersionId:string;
+    providerId:string;modelId:string;reservedInputTokens:number;
+    reservedOutputTokens:number;maxRequestsPerJob:number;maxTokensPerJob:number;
+    maxDailyJobs:number}):Promise<void>;
+  finish(input:{requestId:string;inputTokens:number;outputTokens:number;
+    status:'SUCCEEDED'|'FAILED'}):Promise<void>;
 }
 
 function upperCost(input: number, output: number, prices: {
@@ -59,12 +70,20 @@ function deny(): never { throw new NetworkPolicyError('NETWORK_POLICY_DENIED'); 
 
 /** Validates OpenClaw's structured tool-call transcript and reserves worst-case seller cost first. */
 export class SellerCompletionBroker {
-  constructor(private readonly vault: SellerCredentialVault, private readonly connector: CompletionConnector,
-    private readonly usage: ProviderUsagePort) {}
+  constructor(private readonly vault: SellerCredentialVault|null,
+    private readonly connector: CompletionConnector,
+    private readonly usage: ProviderUsagePort|null,
+    private readonly localUsage?:LocalInferenceUsagePort) {}
 
-  async invoke(binding: { jobId: string; capabilityVersionId: string; providerBudget: unknown;
+  async invoke(binding: { jobId: string; capabilityVersionId: string; providerBudget?: unknown;
+    localInference?:unknown;
     allowedToolNames: readonly string[] }, rawRequest: unknown, requestId: string, signal: AbortSignal): Promise<CompletionResponse> {
-    const policy = ProviderBudgetPolicySchema.parse(binding.providerBudget);
+    const local=binding.localInference!==undefined;
+    if(local===(binding.providerBudget!==undefined)||local!==Boolean(this.connector.local))return deny();
+    const remotePolicy=local?null:ProviderBudgetPolicySchema.parse(binding.providerBudget);
+    const localPolicy=local?LocalInferencePolicySchema.parse(binding.localInference):null;
+    const policy=remotePolicy??localPolicy;
+    if(!policy)return deny();
     const parsed = requestSchema.safeParse(rawRequest);
     if (!parsed.success) return deny();
     const request = parsed.data;
@@ -82,23 +101,35 @@ export class SellerCompletionBroker {
     const encoded = JSON.stringify(request);
     if (Buffer.byteLength(encoded) > 1_048_576 ||
       request.tools?.some((item) => Buffer.byteLength(JSON.stringify(item.function.parameters)) > 32_768)) return deny();
-    const reserved = upperCost(policy.maxInputTokensPerRequest, maxOutput, policy);
-    if (reserved <= 0) return deny();
-    await this.usage.reserve({ requestId, jobId: binding.jobId,
-      capabilityVersionId: binding.capabilityVersionId, providerId: policy.providerId,
-      modelId: policy.modelId, reserveMicroUsd: reserved,
-      maxRequestsPerJob: policy.maxRequestsPerJob,
-      maxSpendMicroUsdPerJob: policy.maxEstimatedSpendMicroUsdPerJob,
-      reservedInputTokens: policy.maxInputTokensPerRequest, reservedOutputTokens: maxOutput,
-      maxTokensPerJob: policy.maxTokensPerJob ??
-        (policy.maxInputTokensPerRequest + policy.maxOutputTokensPerRequest) * policy.maxRequestsPerJob,
-      maxDailyJobs: policy.maxDailyJobs ?? 1,
-      maxDailySpendMicroUsd: policy.maxDailyProviderSpendMicroUsd ?? policy.maxEstimatedSpendMicroUsdPerJob });
+    const reserved=remotePolicy?upperCost(remotePolicy.maxInputTokensPerRequest,
+      maxOutput,remotePolicy):0;
+    if(remotePolicy){
+      if(reserved<=0||!this.usage||!this.vault)return deny();
+      await this.usage.reserve({requestId,jobId:binding.jobId,
+        capabilityVersionId:binding.capabilityVersionId,providerId:policy.providerId,
+        modelId:policy.modelId,reserveMicroUsd:reserved,
+        maxRequestsPerJob:policy.maxRequestsPerJob,
+        maxSpendMicroUsdPerJob:remotePolicy.maxEstimatedSpendMicroUsdPerJob,
+        reservedInputTokens:policy.maxInputTokensPerRequest,reservedOutputTokens:maxOutput,
+        maxTokensPerJob:remotePolicy.maxTokensPerJob??
+          (policy.maxInputTokensPerRequest+policy.maxOutputTokensPerRequest)*policy.maxRequestsPerJob,
+        maxDailyJobs:remotePolicy.maxDailyJobs??1,
+        maxDailySpendMicroUsd:remotePolicy.maxDailyProviderSpendMicroUsd??
+          remotePolicy.maxEstimatedSpendMicroUsdPerJob});
+    }else{
+      if(!localPolicy||!this.localUsage)return deny();
+      await this.localUsage.begin({requestId,jobId:binding.jobId,
+        capabilityVersionId:binding.capabilityVersionId,providerId:policy.providerId,
+        modelId:policy.modelId,reservedInputTokens:policy.maxInputTokensPerRequest,
+        reservedOutputTokens:maxOutput,maxRequestsPerJob:policy.maxRequestsPerJob,
+        maxTokensPerJob:localPolicy.maxTokensPerJob,maxDailyJobs:localPolicy.maxDailyJobs});
+    }
     let accounted = reserved, inputTokens = 0, outputTokens = 0;
     let status: 'SUCCEEDED' | 'FAILED' = 'FAILED';
     try {
-      const credential = await this.vault.resolve(policy.credentialRef);
-      if (!credential) return deny();
+      const credential=remotePolicy&&this.vault?
+        await this.vault.resolve(remotePolicy.credentialRef):'';
+      if(remotePolicy&&!credential)return deny();
       // Kivro streams only the validated whole completion back to OpenClaw.
       const upstream = { ...request, stream: false };
       delete upstream.stream_options;
@@ -113,12 +144,14 @@ export class SellerCompletionBroker {
         response.usage.total_tokens !== inputTokens + outputTokens ||
         inputTokens > policy.maxInputTokensPerRequest || outputTokens > maxOutput ||
         response.choices[0].message.tool_calls?.some((call) => !allowed.has(call.function.name)) ||
-        JSON.stringify(response).includes(credential)) return deny();
-      accounted = upperCost(inputTokens, outputTokens, policy);
+        credential!==''&&JSON.stringify(response).includes(credential)) return deny();
+      accounted=remotePolicy?upperCost(inputTokens,outputTokens,remotePolicy):0;
       status = 'SUCCEEDED';
       return response;
     } finally {
-      await this.usage.settle({ requestId, accountedMicroUsd: accounted, inputTokens, outputTokens, status });
+      if(remotePolicy)await this.usage!.settle({requestId,accountedMicroUsd:accounted,
+        inputTokens,outputTokens,status});
+      else await this.localUsage!.finish({requestId,inputTokens,outputTokens,status});
     }
   }
 }

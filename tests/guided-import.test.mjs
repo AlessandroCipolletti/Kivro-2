@@ -10,11 +10,12 @@ import { WorkerUnreviewedPackageStore } from
   '../dist/apps/worker/src/import-package.js';
 import { hashCanonicalJson } from '../dist/packages/contracts/src/canonical-json.js';
 
-function fixture(resources={binaries:[],environmentKeys:[],configKeys:[],anyBinaries:[]}){
+function fixture(resources={binaries:[],environmentKeys:[],configKeys:[],anyBinaries:[]},
+  localInference=[]){
   const bytes=Buffer.from('---\nname: research\n---\nReturn a concise answer.\n');
   const contentHash=hashCanonicalJson([{path:'SKILL.md',
     sha256:`sha256:${createHash('sha256').update(bytes).digest('hex')}`}]);
-  return {async scan(){return {status:'ready',issues:[],skills:[{
+  return {async scan(){return {status:'ready',issues:[],localInference,skills:[{
     name:'research',metadata:'parsed',ambiguous:false,declaredResources:resources}]};},
   async snapshotSelectedSkill(){return {name:'research',contentHash,
     files:[{path:'SKILL.md',bytesBase64:bytes.toString('base64')}]};}};
@@ -34,7 +35,7 @@ function question(prompt){
   if(prompt.includes('USD per job'))return '0.30';
   if(prompt.includes('USD per day'))return '3.00';
   if(prompt.startsWith('Maximum model requests'))return '2';
-  if(prompt.startsWith('Maximum provider jobs'))return '10';
+  if(prompt.startsWith('Maximum model jobs'))return '10';
   if(prompt.startsWith('Provider HTTPS'))return 'https://api.example.com/v1';
   if(prompt.startsWith('Seller instructions'))return 'Answer only the buyer question.';
   if(prompt.startsWith('Version number'))return '1';
@@ -91,3 +92,40 @@ test('guided import fails closed on declared resource needs and a missing dedica
       ask:async()=>''}),{code:'SELLER_DECLINED'});
   }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test('guided import keeps discovered local inference unselected until explicit seller consent',
+  async()=>{
+    const root=mkdtempSync(join(tmpdir(),'kivro-guided-local-'));
+    const sellerAccountId=randomUUID(),deviceId=randomUUID();
+    let reviewed=0;
+    const candidate={provider:'seller-local',model:'private-model',
+      endpoint:'http://127.0.0.1:11434/v1',requiredService:'local-model-server',
+      estimatedHardware:'unknown',availability:'unknown',consent:'not-granted'};
+    try{
+      await runGuidedImport({stateDir:root,sellerAccountId,signer:{deviceId},
+        discovery:fixture(undefined,[candidate]),write:()=>{},
+        ask:async(prompt)=>{
+          if(prompt.startsWith('Inference route:'))return '2';
+          if(prompt==='Maximum local model tokens per job: ')return '20_000'.replace('_','');
+          return question(prompt);
+        },review:async(input)=>{
+          reviewed++;
+          const store=new WorkerUnreviewedPackageStore(root);
+          try{
+            const staged=store.load(input.versionId,sellerAccountId);
+            assert.equal(staged.localPackage.dependencyGraph.inference.mode,'LOCAL');
+            assert.equal(staged.localPackage.permissionPolicy.providerBudget,undefined);
+            assert.deepEqual(staged.localPackage.permissionPolicy.sellerCredentialRefs,[]);
+            assert.equal(staged.localPackage.permissionPolicy.localInference.modelId,
+              candidate.model);
+            assert.equal(staged.localPackage.dependencyGraph.nodes.every((node)=>
+              node.selected),true);
+            assert.equal(input.privateConfig.providerEndpoint,candidate.endpoint);
+            assert.deepEqual(input.privateConfig.externalProcessors,[]);
+          }finally{store.close();}
+          return {capabilityVersionId:input.versionId,
+            state:'STAGED_FOR_SELLER_REVIEW',packageHash:'unused'};
+        }});
+      assert.equal(reviewed,1);
+    }finally{rmSync(root,{recursive:true,force:true});}
+  });

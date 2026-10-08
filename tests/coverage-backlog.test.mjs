@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-test('every open verification or implementation row has one dependency and closing-evidence entry', () => {
+test('every deferred, tested or open implementation row has one closing-evidence entry', () => {
   const coverage = readFileSync(join(root, 'spec/COVERAGE.md'), 'utf8');
   const backlog = readFileSync(join(root, 'docs/verification-backlog.md'), 'utf8');
-  const deferred = [...coverage.matchAll(/^\s+`?([A-Z]+-\d+)`?\s+P\d+\s+(?:§\d+\s+)?`?(?:DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION)`?/gm)]
+  const deferred = [...coverage.matchAll(/^\s+`?([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-\d{3,4})`?\s+P\d+\s+(?:§\d+\s+)?`?(?:DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION|TESTED)`?/gm)]
     .map((match) => match[1]);
-  const entries = [...backlog.matchAll(/^\| `([A-Z]+-\d+)` \(§\d+\) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gm)];
+  const entries = [...backlog.matchAll(/^\| `([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-\d{3,4})` \(§\d+\) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gm)];
   assert.equal(new Set(deferred).size, deferred.length, 'coverage IDs must be unique');
   assert.equal(new Set(entries.map((entry) => entry[1])).size, entries.length, 'backlog IDs must be unique');
   assert.deepEqual(new Set(deferred), new Set(entries.map((entry) => entry[1])));

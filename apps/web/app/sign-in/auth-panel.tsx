@@ -31,9 +31,11 @@ export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean })
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
 
   useEffect(() => {
+    setReady(true);
     const query = new URLSearchParams(window.location.search);
     if (query.get('mode') === 'create') setMode('create');
     if (query.get('verified') === '1') setNotice({ kind: 'success', text: 'Email verified. Sign in to continue.' });
@@ -95,8 +97,8 @@ export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean })
       <p className="form-eyebrow">One more step</p><h2>Verify your email</h2>
       <p className="card-copy">We sent a link to <strong>{email}</strong>. Open it to activate your account, then sign in.</p>
       {notice && <p className={`notice ${notice.kind}`} role={notice.kind==='error'?'alert':'status'}>{notice.text}</p>}
-      <button className="full-button" type="button" onClick={resend} disabled={busy}>{busy ? 'Sending…' : 'Resend verification link'}</button>
-      <p className="auth-note">Already verified? <button type="button" className="form-link" onClick={() => { setMode('sign-in'); setNotice(null); }}>Sign in</button></p>
+      <button className="full-button" type="button" onClick={resend} disabled={busy||!ready}>{busy ? 'Sending…' : 'Resend verification link'}</button>
+      <p className="auth-note">Already verified? <button type="button" className="form-link" disabled={!ready} onClick={() => { setMode('sign-in'); setNotice(null); }}>Sign in</button></p>
     </> : <>
       <p className="form-eyebrow">Welcome to Kivro</p><h2>{mode === 'create' ? 'Create your account' : 'Sign in to Kivro'}</h2>
       <p className="card-copy">{mode === 'create' ? 'Start with a verified email. You can use one account to buy and sell.' : 'Pick up where you left off.'}</p>
@@ -107,17 +109,17 @@ export default function AuthPanel({ googleEnabled }: { googleEnabled: boolean })
           mode==='create'?'sign-in':'create';
         setMode(next);setNotice(null);
         document.getElementById(`auth-tab-${next}`)?.focus();
-      }}><button id="auth-tab-sign-in" type="button" className="auth-tab" role="tab" tabIndex={mode==='sign-in'?0:-1} aria-controls="auth-panel" aria-selected={mode === 'sign-in'} onClick={() => { setMode('sign-in'); setNotice(null); }}>Sign in</button><button id="auth-tab-create" type="button" className="auth-tab" role="tab" tabIndex={mode==='create'?0:-1} aria-controls="auth-panel" aria-selected={mode === 'create'} onClick={() => { setMode('create'); setNotice(null); }}>Create account</button></div>
+      }}><button id="auth-tab-sign-in" type="button" className="auth-tab" role="tab" tabIndex={mode==='sign-in'?0:-1} aria-controls="auth-panel" aria-selected={mode === 'sign-in'} disabled={!ready} onClick={() => { setMode('sign-in'); setNotice(null); }}>Sign in</button><button id="auth-tab-create" type="button" className="auth-tab" role="tab" tabIndex={mode==='create'?0:-1} aria-controls="auth-panel" aria-selected={mode === 'create'} disabled={!ready} onClick={() => { setMode('create'); setNotice(null); }}>Create account</button></div>
       <div id="auth-panel" role="tabpanel" aria-labelledby={`auth-tab-${mode}`}>
       {notice && <p id="auth-notice" className={`notice ${notice.kind}`} role={notice.kind==='error'?'alert':'status'}>{notice.text}</p>}
       <form className="auth-form" onSubmit={onSubmit}>
         {mode === 'create' && <div className="field"><label htmlFor="full-name">Your name</label><input id="full-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={160} placeholder="Alex Morgan" /></div>}
         <div className="field"><label htmlFor="email">Email address</label><input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={320} placeholder="you@example.com" /></div>
         <div className="field"><div className="form-row"><label htmlFor="password">Password</label>{mode === 'sign-in' && <Link href="/reset-password" className="form-link">Forgot password?</Link>}</div><input id="password" type="password" autoComplete={mode === 'create' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={mode === 'create' ? 12 : 1} maxLength={128} aria-describedby={mode==='create'?'password-help':undefined} placeholder="Enter your password" />{mode === 'create' && <p id="password-help" className="field-help">Use at least 12 characters.</p>}</div>
-        <button type="submit" className="full-button" disabled={busy}>{busy ? 'Please wait…' : mode === 'create' ? 'Create account' : 'Sign in'}</button>
+        <button type="submit" className="full-button" disabled={busy||!ready}>{busy ? 'Please wait…' : mode === 'create' ? 'Create account' : 'Sign in'}</button>
       </form>
       <div className="divider">or continue with</div>
-      <button type="button" className="google-button" onClick={googleSignIn} disabled={busy || !googleEnabled}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button>
+      <button type="button" className="google-button" onClick={googleSignIn} disabled={busy || !googleEnabled || !ready}><span className="google-g" aria-hidden="true">G</span>Continue with Google</button>
       {!googleEnabled && <p className="auth-note">Google sign-in is unavailable right now.</p>}
       </div>
     </>}

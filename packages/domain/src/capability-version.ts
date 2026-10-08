@@ -42,7 +42,8 @@ export function buildVersionCandidate(input: VersionCandidateInput): Readonly<Ca
   }
   const manifest = localPackage.workerManifest;
   const permissionPolicy = localPackage.permissionPolicy;
-  const noExternalAccess=permissionPolicy.aiInference==='NONE'&&
+  const noExternalAccess=(permissionPolicy.aiInference==='NONE'||
+    localPackage.dependencyGraph.inference?.mode==='LOCAL')&&
     permissionPolicy.publicInternet==='DENY'&&permissionPolicy.privateApi==='NONE'&&
     !permissionPolicy.externalSideEffects;
   if(!noExternalAccess&&(!input.externalProcessors||input.externalProcessors.length===0))

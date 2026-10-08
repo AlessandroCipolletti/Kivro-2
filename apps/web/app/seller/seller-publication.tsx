@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import type { InputContract } from '../../../../packages/contracts/src/capability-io.js';
+import type { PublicPermissionManifest } from '../../../../packages/contracts/src/permission-policy.js';
+import { permissionCategoryLabel, permissionStateLabel } from '../ui/permission-copy';
 
 type Permission={dependencyId:string;permissionType:string;permissionValueRef:string;sellerLabel:string};
 type Review={reviewId:string;state:'REVIEW'|'PUBLISHED';candidateHash:string;
@@ -16,7 +18,7 @@ type Review={reviewId:string;state:'REVIEW'|'PUBLISHED';candidateHash:string;
     price:{tier:string;currency:string;buyerAmountMinor:number;platformFeeMinor:number;
       sellerEarningMinor:number};ioContract:{input:InputContract;
       output:{fields:{key:string;label:string;required:boolean;type:string}[]}};
-    publicPermissionManifest:{entries:{category:string;state:string}[]};
+    publicPermissionManifest:PublicPermissionManifest;
     externalProcessors:string[]|null}};
 
 function money(minor:number):string{return `$${(minor/100).toFixed(2)}`;}
@@ -131,7 +133,7 @@ function PublicationReview({review,onPublished}:{review:Review;onPublished:()=>v
       <p>External processors: {review.candidate.externalProcessors?.join(', ')||'None declared'}.</p>
       <h4>Buyer-visible access summary</h4>
       <ul className="publication-public-access">{review.candidate.publicPermissionManifest.entries.map((entry)=><li key={entry.category}>
-        <span>{entry.category.replaceAll('_',' ').toLowerCase()}</span><strong>{entry.state.replaceAll('_',' ').toLowerCase()}</strong>
+        <span>{permissionCategoryLabel(entry.category)}</span><strong>{permissionStateLabel(entry.state)}</strong>
       </li>)}</ul>
     </details>
     {review.state==='REVIEW'&&<details className="publication-buyer-preview">

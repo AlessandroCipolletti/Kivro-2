@@ -72,7 +72,6 @@ export async function uploadValidatedOutput(storage: ObjectStoragePort | null, r
       if (!rel || rel === '..' || rel.startsWith('../') || rel.startsWith('..\\')) {
         throw new OutputUploadError('INVALID_SOURCE');
       }
-      const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
       const id = randomUUID();
       const prepared=raw.prepareAsset?await raw.prepareAsset({assetId:id,fieldKey:file.fieldKey,
         extension:extname(file.relativePath).toLowerCase(),sizeBytes:file.sizeBytes,
@@ -80,6 +79,7 @@ export async function uploadValidatedOutput(storage: ObjectStoragePort | null, r
       if(prepared&&(prepared.assetId!==id||prepared.objectKey.split('/')[2]!==id))
         throw new OutputUploadError('UPLOAD_FAILED');
       const objectKey=prepared?.objectKey??newPrivateAssetKey(id);
+      const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
       try {
         const before = await handle.stat();
         if (!before.isFile() || before.nlink !== 1 || before.size !== file.sizeBytes) {

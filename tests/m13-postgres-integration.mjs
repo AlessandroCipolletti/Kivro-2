@@ -1,8 +1,13 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
-import { createHash,generateKeyPairSync,randomUUID,sign } from 'node:crypto';
+import { createHash,randomUUID } from 'node:crypto';
+import { mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import process from 'node:process';
+import { URL } from 'node:url';
 import test from 'node:test';
 import pg from 'pg';
 import { BuyerApiKeyRepository } from '../dist/packages/persistence/src/buyer-api-keys.js';
@@ -13,6 +18,7 @@ import { PublishedCapabilityVersionSchema } from
   '../dist/packages/contracts/src/capability-version.js';
 import { PostgresPriceTierCatalog } from '../dist/packages/persistence/src/price-tiers.js';
 import { PostgresFinanceRepository } from '../dist/packages/persistence/src/finance.js';
+import { createSellerProfile } from '../dist/packages/persistence/src/seller-profiles.js';
 import { PostgresAvailabilityRepository } from '../dist/packages/persistence/src/availability.js';
 import { PostgresAvailabilityMetrics } from
   '../dist/packages/persistence/src/availability-metrics.js';
@@ -27,6 +33,13 @@ import { WORKER_PROTOCOL_VERSION } from '../dist/packages/worker-protocol/src/me
 import { workerMessageHash,workerSignatureBytes } from '../dist/packages/worker-protocol/src/auth.js';
 import { handleBuyerV1 } from '../dist/apps/web/src/buyer-api/handler.js';
 import { handleWorkerJobRpc } from '../dist/apps/web/src/worker/control-handler.js';
+import {startWorkerWebSocketServer} from
+  '../dist/apps/web/src/worker/websocket-server.js';
+import {WebSocketWorkerTransport} from
+  '../dist/packages/infrastructure/adapters/src/websocket-worker.js';
+import {EncryptedDeviceIdentityStore} from
+  '../dist/apps/worker/src/device-identity.js';
+import {rememberPairedSeller} from '../dist/apps/worker/src/paired-seller.js';
 import { runM16CoreWorkerSlice } from './m16-core-worker-integration.mjs';
 
 if(!process.env.M13_DATABASE_URL){
@@ -43,6 +56,35 @@ if(!process.env.M13_DATABASE_URL){
       await pool.query(`INSERT INTO accounts(id,primary_email,status,email_verified_at)
         VALUES($1,$3,'ACTIVE',now()),($2,$4,'ACTIVE',now())`,
       [buyer,other,`${buyer}@example.test`,`${other}@example.test`]);
+      const unverified=randomUUID();
+      await pool.query(`INSERT INTO accounts(id,primary_email,status)
+        VALUES($1,$2,'ACTIVE')`,[unverified,`${unverified}@example.test`]);
+      await assert.rejects(keys.create(unverified,{name:'blocked-unverified',
+        scopes:['jobs:create','assets:create']}),{code:'FORBIDDEN'});
+      await assert.rejects(createSellerProfile(pool,unverified,
+        'Unverified seller',true),{code:'ACCOUNT_NOT_ELIGIBLE'});
+      const financial=new PostgresFinanceRepository(pool,'test');
+      const blockedPurchase=randomUUID();
+      await assert.rejects(financial.beginCreditPurchase({purchaseId:blockedPurchase,
+        buyerId:unverified,amountMinor:999}),{code:'NOT_ELIGIBLE'});
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM credit_purchases
+        WHERE id=$1`,[blockedPurchase])).rows[0].n,0,
+      'unverified identity cannot produce a billable credit purchase');
+      await pool.query(`UPDATE accounts SET email_verified_at=now(),auth_email_verified=true
+        WHERE id=$1`,[unverified]);
+      const verifiedKey=await keys.create(unverified,{name:'verified-after-email',
+        scopes:['jobs:create']});
+      assert.match(verifiedKey.secret,/^kv_test_/);
+      const eligibleSeller=await createSellerProfile(pool,unverified,'Verified seller',true);
+      await pool.query(`UPDATE accounts SET email_verified_at=NULL,
+        auth_email_verified=false WHERE id=$1`,[unverified]);
+      await assert.rejects(keys.authenticate(verifiedKey.secret,'jobs:create','jobs:create'),
+        {code:'FORBIDDEN'},'an existing API key cannot bypass later identity unverification');
+      await assert.rejects(financial.beginSellerConnect(eligibleSeller.id,
+        unverified,'US'),{code:'NOT_ELIGIBLE'},
+      'a seller cannot start payout onboarding after losing email verification');
+      await pool.query(`UPDATE accounts SET email_verified_at=now(),
+        auth_email_verified=true WHERE id=$1`,[unverified]);
       const created=await keys.create(buyer,{name:'automation',
         scopes:['capabilities:read','jobs:create','jobs:read']});
       assert.match(created.secret,/^kv_test_[a-f0-9]{12}_[A-Za-z0-9_-]{43}$/);
@@ -234,12 +276,22 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
   async()=>{
     const pool=new pg.Pool({connectionString:process.env.M13_DATABASE_URL,max:12});
     const buyer=randomUUID(),other=randomUUID(),sellerAccount=randomUUID(),seller=randomUUID();
-    const worker=randomUUID(),capability=randomUUID(),versionId=randomUUID();
-    const {publicKey,privateKey}=generateKeyPairSync('ed25519');
+    const capability=randomUUID(),versionId=randomUUID();
+    const workerRoot=mkdtempSync(join(tmpdir(),'kivro-m16-worker-'));
+    const workerStateDir=join(workerRoot,'state');mkdirSync(workerStateDir,{mode:0o700});
+    const workerPassphrase=`m16-${randomUUID()}-${randomUUID()}`;
+    const workerPassphrasePath=join(workerRoot,'passphrase');
+    writeFileSync(workerPassphrasePath,workerPassphrase,{mode:0o600});
+    const identity=new EncryptedDeviceIdentityStore(workerStateDir)
+      .create(workerPassphrase);
+    const worker=identity.deviceId;
+    const deviceSigner=await new EncryptedDeviceIdentityStore(workerStateDir)
+      .unlock(workerPassphrase);
     const hash=`sha256:${'a'.repeat(64)}`,plane='m13-test-plane';
     // This M13 API regression exercises the scanner port with a local clamd
     // protocol fixture. M15 malware-detection and live-service gates are
     // separately tested; this fixture is not their acceptance evidence.
+    let scannerMode='CLEAN';
     const scannerServer=createServer((socket)=>{
       let received=Buffer.alloc(0);
       socket.on('data',(part)=>{
@@ -248,7 +300,12 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
         let offset=10;
         while(offset+4<=received.length){
           const length=received.readUInt32BE(offset);offset+=4;
-          if(length===0){socket.end('stream: OK\0');return;}
+          if(length===0){
+            if(scannerMode==='UNAVAILABLE')socket.destroy();
+            else socket.end(scannerMode==='INFECTED'?
+              'stream: Eicar-Test-Signature FOUND\0':'stream: OK\0');
+            return;
+          }
           if(offset+length>received.length)return;
           offset+=length;
         }
@@ -279,6 +336,7 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
     const execution=new PostgresJobExecutionRepository(pool,finance,
       new HmacLeaseTokenIssuer({v1:Buffer.alloc(32,17)},'v1'),availability);
     const buyerRepo=new MarketplaceBuyerRepository(pool,availability,finance,execution);
+    let m16WssServer=null,m16WssTransport=null;
     try{
       await pool.query(`INSERT INTO accounts(id,primary_email,status,email_verified_at)
         VALUES($1,$4,'ACTIVE',now()),($2,$5,'ACTIVE',now()),($3,$6,'ACTIVE',now())`,
@@ -292,7 +350,9 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
         VALUES($1,'acct_M13TEST','test','READY',true,true,'US',now())`,[seller]);
       await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,
         worker_version,status) VALUES($1,$2,$3,'M13 Worker','LINUX','test','ONLINE')`,
-      [worker,seller,publicKey.export({type:'spki',format:'pem'}).toString()]);
+      [worker,seller,identity.publicKeyPem]);
+      rememberPairedSeller(workerStateDir,{deviceId:worker,
+        sellerAccountId:sellerAccount,sellerProfileId:seller});
       const slug=`m13-${capability}`;
       await pool.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,description,status)
         VALUES($1,$2,$3,'Research brief','A focused research brief','PUBLISHED')`,
@@ -347,7 +407,7 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
           queueLimit:2,futureReservationLimit:2,estimatedRuntimeSeconds:60,
           maxWaitSeconds:604800},paused:false,source:'WEB',expectedRevision:null});
       const heartbeat=new PostgresWorkerHeartbeatRepository(pool);
-      await heartbeat.observe({type:'WORKER_HEARTBEAT',
+      await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
         protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
         workerDeviceId:worker,workerRelease:'test',sentAt:new Date().toISOString(),
         openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
@@ -359,16 +419,40 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
           FROM worker_cloud_control_revisions WHERE worker_device_id=$1`,[worker])).rows[0];
         const prior=(await pool.query(`SELECT latest_heartbeat_reported_at AS at
           FROM worker_devices WHERE id=$1`,[worker])).rows[0].at;
-        await heartbeat.observe({type:'WORKER_HEARTBEAT',
+        await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
           protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
           workerDeviceId:worker,workerRelease:'test',
           sentAt:new Date(Math.max(Date.now(),prior.getTime()+1000)).toISOString(),
           openClawVersion:null,status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,
-          localRevision:0,acknowledgedCloudRevision:Number(revision.revision),
+          localRevision:0,acknowledgedCloudRevision:Number(revision?.revision??0),
           capabilityReadiness:[{capabilityVersionId:versionId,policyValidationHash:hash,
             state:'READY',checks:{sandboxVerified:true,requiredSecretsReady:true,
               runtimeHealthy:true}}]},worker,plane);
       };
+      const healthEventCount=async()=>(await pool.query(`SELECT count(*)::int AS n
+        FROM worker_operational_events WHERE worker_device_id=$1 AND
+        capability_id=$2 AND kind='HEALTH_CHANGED'`,[worker,capability])).rows[0].n;
+      const initialHealthEvents=await healthEventCount();
+      await ackCloud();
+      assert.equal(await healthEventCount(),initialHealthEvents,
+        'unchanged healthy heartbeats cannot create false health-history transitions');
+      const reportedAt=(await pool.query(`SELECT latest_heartbeat_reported_at AS at
+        FROM worker_devices WHERE id=$1`,[worker])).rows[0].at;
+      await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,
+        protocolVersion:WORKER_PROTOCOL_VERSION,messageId:randomUUID(),controlPlaneId:plane,
+        workerDeviceId:worker,workerRelease:'test',
+        sentAt:new Date(reportedAt.getTime()+1000).toISOString(),openClawVersion:null,
+        status:'ONLINE',runningJobs:0,capacity:1,policyVersion:1,localRevision:0,
+        capabilityReadiness:[]},worker,plane);
+      assert.equal((await pool.query(`SELECT state FROM capability_readiness WHERE
+        capability_version_id=$1`,[versionId])).rows[0].state,'NOT_READY');
+      assert.equal(await healthEventCount(),initialHealthEvents+1);
+      assert.equal((await pool.query(`SELECT code FROM worker_operational_events WHERE
+        worker_device_id=$1 AND capability_id=$2 ORDER BY created_at DESC,id DESC LIMIT 1`,
+      [worker,capability])).rows[0].code,'READINESS_REPORT_MISSING');
+      await ackCloud();
+      assert.equal((await pool.query(`SELECT state FROM capability_readiness WHERE
+        capability_version_id=$1`,[versionId])).rows[0].state,'READY');
       const keys=new BuyerApiKeyRepository(pool,'test');
       const key=await keys.create(buyer,{name:'REST client',scopes:['capabilities:read',
         'jobs:create','jobs:read','assets:read']});
@@ -385,11 +469,30 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
           ...(idem?{'Idempotency-Key':idem}:{})},...(body?{body:JSON.stringify(body)}:{})});
       const call=(method,path,body=null,idem=null,token=key.secret)=>
         handleBuyerV1(req(method,path,body,idem,token),path.split('/'));
-      const rpc=(kind,body,forged=false)=>{
+      if(process.env.M16_REAL_OPENCLAW==='1'){
+        m16WssServer=await startWorkerWebSocketServer({host:'127.0.0.1',port:0,
+          allowLocalWs:true});
+        m16WssTransport=new WebSocketWorkerTransport(plane,
+          `ws://127.0.0.1:${m16WssServer.port}/worker/socket`,{
+            deviceId:worker,signChallenge(bytes){return deviceSigner.signChallenge(bytes);}},
+        {allowLocalHttp:true});
+        const welcome=await m16WssTransport.poll({type:'WORKER_HELLO',
+          messageId:randomUUID(),workerDeviceId:worker,controlPlaneId:plane,
+          supportedProtocolVersions:[WORKER_PROTOCOL_VERSION],workerRelease:'m16-wss',
+          localRevision:0,activeExecutionIds:[]});
+        assert.equal(welcome[0].type,'WORKER_WELCOME');
+        assert.equal(welcome[0].controlPlaneId,plane);
+      }
+      const rpc=async(kind,body,forged=false)=>{
+        if(m16WssTransport&&!forged){
+          try{return globalThis.Response.json(await m16WssTransport.postJobRpc(kind,body));}
+          catch(error){return globalThis.Response.json({code:error?.code??'TRANSPORT_FAILED'},
+            {status:error?.code==='PAYMENT_NOT_SECURED'?409:403});}
+        }
         const fields={workerDeviceId:worker,controlPlaneId:plane,messageId:randomUUID(),
           signedAt:new Date().toISOString(),bodyHash:workerMessageHash(body)};
         const signature=forged?Buffer.alloc(64).toString('base64url'):
-          sign(null,workerSignatureBytes(fields),privateKey).toString('base64url');
+          deviceSigner.signChallenge(workerSignatureBytes(fields)).toString('base64url');
         const request=new globalThis.Request('http://127.0.0.1:9876/worker/jobs/rpc',{method:'POST',
           headers:{'content-type':'application/json'},
           body:JSON.stringify({body,envelope:{...fields,signature}})});
@@ -436,7 +539,8 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       assert.equal((await call('GET',`capabilities/${slug}`)).status,200);
       assert.equal((await (await call('GET','capabilities')).json()).items.length,0);
       await pool.query(`UPDATE capabilities SET visibility='PUBLIC' WHERE id=$1`,[capability]);
-      const fileBytes=Buffer.from('M13 private input\n');
+      const fileBytes=readFileSync(new URL('./fixtures/m16-document-analyzer/source.txt',
+        import.meta.url));
       const digest=`sha256:${createHash('sha256').update(fileBytes).digest('hex')}`;
       const intentResponse=await call('POST','assets/upload-intents',{
         capabilityId:capability,fieldKey:'supportingFile',fileName:'input.txt',
@@ -447,6 +551,14 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       const uploadResult=await globalThis.fetch(intent.url,{method:'PUT',headers:intent.headers,
         body:fileBytes});
       assert.ok(uploadResult.ok,`private staging upload returned ${uploadResult.status}`);
+      const pendingJob=await call('POST',`capabilities/${capability}/jobs`,{
+        inputs:{question:'Do not run with an unfinalized file'},
+        assets:{supportingFile:[intent.id]}},'pending-file-denied-0001',key.secret);
+      assert.equal(pendingJob.status,400,
+        'an object uploaded to staging is not a finalized buyer input');
+      assert.equal((await pendingJob.json()).code,'INVALID_INPUT');
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM jobs
+        WHERE buyer_account_id=$1`,[buyer])).rows[0].n,0);
       const finishPath=`assets/${intent.id}/finalize`;
       assert.equal((await call('POST',finishPath,{capabilityId:capability,
         fieldKey:'supportingFile'},null,otherKey.secret)).status,404);
@@ -625,15 +737,22 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
         otherKey.secret)).status,404);
       assert.equal((await finance.buyerBalance(buyer)).reservedMinor,0);
       if(process.env.M16_REAL_OPENCLAW==='1'){
-        await runM16CoreWorkerSlice({pool,buyer,otherToken:otherKey.secret,seller,worker,
+        await runM16CoreWorkerSlice({pool,buyer,otherToken:otherKey.secret,seller,
+          sellerAccount,worker,
           capability,originalPackage:localPackage,policyValidationHash:hash,plane,
-          inputAssetId:intent.id,call,rpc,execution,finance});
+          inputAssetId:intent.id,call,rpc,execution,finance,
+          workerStateDir,workerPassphrasePath,
+          scannerControl:{setMode(value){scannerMode=value;}}});
+        policyRevision=Number((await pool.query(`SELECT revision FROM
+          capability_availability_policies WHERE capability_id=$1`,
+        [capability])).rows[0].revision);
       }
       const availabilityKey=await keys.create(buyer,{name:'Availability checks',
         scopes:['jobs:create']});
       const failedResponse=await call('POST',jobPath,body,'failed-job-0001',
         availabilityKey.secret);
-      assert.equal(failedResponse.status,201);
+      assert.equal(failedResponse.status,201,
+        JSON.stringify(await failedResponse.clone().json()));
       const failedJob=(await failedResponse.json()).jobId;
       const failedOffer=await execution.offer(failedJob,worker,plane,120);
       const failedBinding={jobId:failedJob,executionId:failedOffer.executionId,
@@ -654,8 +773,13 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
         paymentReservationId:null,resultManifestId:null}})).status,200);
       assert.equal((await finance.buyerBalance(buyer)).reservedMinor,0);
       const observed=[];
-      await hooks.deliverDue({async post(input){observed.push(JSON.parse(input.body));
-        return {status:204};}},20);
+      const webhookTransport={async post(input){observed.push(JSON.parse(input.body));
+        return {status:204};}};
+      // The real Worker slice creates more events than the default dispatcher batch.
+      // Drain bounded pages so this assertion tests delivery, not queue position.
+      for(let page=0;page<5;page++){
+        if(await hooks.deliverDue(webhookTransport,100)<100)break;
+      }
       assert.ok(observed.some((event)=>event.type==='job.started'&&
         event.data.jobId===winner.jobId));
       assert.ok(observed.some((event)=>event.type==='job.completed'&&
@@ -711,5 +835,7 @@ if(process.env.M13_DATABASE_URL)test('M13 REST buyer jobs share Core payment and
       assert.equal(tooMany.status,429);
       assert.equal((await tooMany.json()).code,'RATE_LIMITED');
       assert.equal(tooMany.headers.get('retry-after'),'60');
-    }finally{await pool.end();await new Promise((resolve)=>scannerServer.close(resolve));}
+    }finally{await m16WssTransport?.close();await m16WssServer?.close();
+      await pool.end();await new Promise((resolve)=>scannerServer.close(resolve));
+      rmSync(workerRoot,{recursive:true,force:true});}
   });

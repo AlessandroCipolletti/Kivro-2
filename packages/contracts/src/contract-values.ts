@@ -11,6 +11,17 @@ const payloadSchema = z.strictObject({
   assets: z.record(z.string(), z.array(z.uuid()).max(50)),
 });
 
+/** Explicitly opted-in research provenance remains structured and buyer-safe. */
+export const ResearchSourcesSchema = z.array(z.strictObject({
+  url: z.url().max(2048).refine((value) => {
+    const parsed = new URL(value);
+    return (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
+      !parsed.username && !parsed.password;
+  }),
+  title: z.string().trim().min(1).max(500).optional(),
+  accessedAt: z.iso.datetime(),
+})).max(100);
+
 export interface ContractPayload {
   readonly values: Readonly<Record<string, unknown>>;
   readonly assets: Readonly<Record<string, readonly string[]>>;
@@ -177,5 +188,12 @@ export function validateOutputPayload(contract: unknown, payload: unknown): Cont
       throw new ContractValidationError('INVALID_VALUE',field.key);
     values[field.key]=normalized;
   }
-  return validatePayload(parsed.data.fields,{values,assets:submitted.data.assets});
+  const accepted=validatePayload(parsed.data.fields,{values,assets:submitted.data.assets});
+  for(const field of parsed.data.fields){
+    if(field.type!=='JSON'||field.semanticType!=='RESEARCH_SOURCES'||
+      accepted.values[field.key]===undefined)continue;
+    if(!ResearchSourcesSchema.safeParse(accepted.values[field.key]).success)
+      throw new ContractValidationError('INVALID_VALUE',field.key);
+  }
+  return accepted;
 }

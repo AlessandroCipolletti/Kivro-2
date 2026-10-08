@@ -1,4 +1,5 @@
 import { expect,test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
 import { getAuthService } from '../../dist/apps/web/src/auth/server.js';
 import { createSmtpAuthTransport } from '../../dist/apps/web/src/auth/smtp-transport.js';
@@ -14,6 +15,11 @@ import { PostgresFinanceRepository } from '../../dist/packages/persistence/src/f
 import { PostgresSellerPublicationRepository } from
   '../../dist/packages/persistence/src/seller-publication.js';
 import { hashCanonicalJson } from '../../dist/packages/contracts/src/canonical-json.js';
+import { healthyWorkerChecks } from '../fixtures/healthy-worker-checks.mjs';
+import { WorkerAvailabilityReporter } from
+  '../../dist/apps/worker/src/availability-reporter.js';
+import { PostgresWorkerHeartbeatRepository } from
+  '../../dist/packages/persistence/src/worker-heartbeat.js';
 
 async function verificationLink(email:string):Promise<string>{
   const api=`http://127.0.0.1:${process.env.M12_MAIL_API_PORT}`;
@@ -66,6 +72,11 @@ test('verified seller can stop new work from web while Worker is offline',async(
   await page.evaluate(()=>new Promise<void>((resolve)=>requestAnimationFrame(()=>resolve())));
   await page.screenshot({path:'test-results/m14-seller-onboarding-mobile.png',
     fullPage:true,animations:'disabled'});
+  const onboardingAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(onboardingAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller onboarding at 390px').toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
   expect(await page.locator('.seller-step p').first().evaluate((element)=>
     parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(13);
@@ -93,6 +104,47 @@ test('verified seller can stop new work from web while Worker is offline',async(
   await pool.query(`INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,
     worker_version,status) VALUES($1,$2,$3,'Studio Worker','MACOS','0.0.0-dev','OFFLINE')`,
   [worker,seller,`test-only-${worker}`]);
+  await page.goto('/seller/input-contracts');
+  await expect(page.getByRole('heading',{name:'Define what buyers provide.'})).toBeVisible();
+  const inputRows=page.locator('.input-contract-fields > li');
+  await inputRows.nth(0).getByLabel('Key').fill('mode');
+  await inputRows.nth(0).getByLabel('Label').fill('Output format');
+  await inputRows.nth(0).getByLabel('Type').selectOption('SELECT');
+  await inputRows.nth(0).getByLabel('Options, one per line').fill('png\nvideo');
+  await inputRows.nth(0).getByLabel('Default value').selectOption('png');
+  await page.getByRole('button',{name:'+ Add input'}).click();
+  await inputRows.nth(1).getByLabel('Key').fill('duration');
+  await inputRows.nth(1).getByLabel('Label').fill('Duration');
+  await inputRows.nth(1).getByLabel('Type').selectOption('INTEGER');
+  await inputRows.nth(1).getByLabel('Show when').selectOption('mode');
+  await inputRows.nth(1).getByLabel('Equals').selectOption('video');
+  await page.getByRole('button',{name:'Save draft'}).click();
+  await expect(page.locator('.input-contract-builder [role="status"]'))
+    .toContainText('Saved private draft');
+  await page.reload();
+  await page.getByLabel('Saved drafts').selectOption({index:1});
+  await expect(inputRows.nth(0).getByLabel('Key')).toHaveValue('mode');
+  await expect(inputRows.nth(0).getByLabel('Default value')).toHaveValue('png');
+  await expect(inputRows.nth(1).getByLabel('Key')).toHaveValue('duration');
+  await expect(inputRows.nth(1).getByLabel('Show when')).toHaveValue('mode');
+  await expect(inputRows.nth(1).getByLabel('Equals')).toHaveValue('video');
+  await page.getByText('Preview buyer form').click();
+  const buyerPreview=page.locator('.input-contract-preview');
+  await expect(buyerPreview.getByLabel('Duration')).toHaveCount(0);
+  await buyerPreview.getByLabel('Output format').selectOption('video');
+  await expect(buyerPreview.getByLabel('Duration')).toBeVisible();
+  await expect(buyerPreview).toContainText('Shown when Output format = video');
+  await page.screenshot({path:'test-results/m16-input-contract-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'test-results/m16-input-contract-mobile.png',
+    animations:'disabled'});
+  await page.getByRole('button',{name:'Export input contract JSON'}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:'test-results/m16-input-contract-mobile-bottom.png',
+    animations:'disabled'});
+  await expect(page.getByRole('heading',{name:'Define what buyers provide.'})).toHaveCount(1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
+  await page.setViewportSize({width:1280,height:720});
   const capability=randomUUID(),version=randomUUID();
   await pool.query(`INSERT INTO capabilities(id,seller_profile_id,slug,name,description,status)
     VALUES($1,$2,$3,'Research studio','Seller reviewed service','PUBLISHED')`,
@@ -150,6 +202,9 @@ test('verified seller can stop new work from web while Worker is offline',async(
       estimatedRuntimeSeconds:60,maxWaitSeconds:604800},paused:false,
     source:'WEB',expectedRevision:null});
   await new PostgresAvailabilityMetrics(pool,availability).sample();
+  await pool.query(`INSERT INTO worker_operational_events(id,worker_device_id,capability_id,
+    actor_kind,actor_id,kind,code) VALUES($1,$2,$3,'WORKER',($2::uuid)::text,'HEALTH_CHANGED',
+    'READINESS_BLOCKED')`,[randomUUID(),worker,capability]);
   await page.goto('/seller');
   await expect(page.getByRole('heading',{name:'Your work, at a glance.'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Review before buyers can see it.'})).toBeVisible();
@@ -163,6 +218,52 @@ test('verified seller can stop new work from web while Worker is offline',async(
     fullPage:true,animations:'disabled'});
   await expect(page.getByRole('heading',{name:/Build a useful service/})).toHaveCount(0);
   await expect(page.getByText('Studio Worker')).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Recent health and controls'})).toBeVisible();
+  await expect(page.locator('.ops-history').getByText('Research studio')).toBeVisible();
+  await expect(page.locator('.ops-history').getByText('HEALTH CHANGED · READINESS BLOCKED'))
+    .toBeVisible();
+  const dashboardAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(dashboardAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller operations dashboard at 1280px').toEqual([]);
+  await page.setViewportSize({width:390,height:844});
+  const mobileDashboardAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(mobileDashboardAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller operations dashboard at 390px').toEqual([]);
+  await pool.query(`INSERT INTO worker_security_blocks(worker_device_id,blocked,code)
+    VALUES($1,true,'SANDBOX_SELF_TEST_FAILED')`,[worker]);
+  await page.reload();
+  const securityAlert=page.getByRole('alert').filter({hasText:'Worker security block'});
+  await expect(securityAlert).toContainText('CRITICAL · Blocking');
+  await expect(securityAlert).toContainText('Resolve the security condition');
+  const securityAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(securityAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller critical security warning at 390px').toEqual([]);
+  await pool.query(`UPDATE worker_security_blocks SET blocked=false,resolved_at=now()
+    WHERE worker_device_id=$1`,[worker]);
+  await page.reload();
+  await pool.query(`INSERT INTO capability_readiness(capability_id,
+    capability_version_id,worker_device_id,state,observed_at,sandbox_verified,
+    required_secrets_ready,runtime_healthy)
+    VALUES($1,$2,$3,'DEPENDENCY_BLOCKED',now(),true,true,false)`,
+  [capability,version,worker]);
+  await page.reload();
+  const reviewAlert=page.getByRole('alert').filter({hasText:'Capability requires revalidation'});
+  await expect(reviewAlert).toContainText('WARNING · Blocking');
+  await expect(reviewAlert).toContainText('approve a new version');
+  const reviewAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(reviewAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller capability revalidation warning at 390px').toEqual([]);
+  await pool.query('DELETE FROM capability_readiness WHERE capability_version_id=$1',[version]);
+  await page.reload();
+  await page.setViewportSize({width:1280,height:720});
   await expect(page.locator('.ops-state.offline').first()).toHaveText('Offline');
   await expect(page.getByText('Research studio').first()).toBeVisible();
   const [reportResponse]=await Promise.all([page.waitForResponse((response)=>
@@ -206,6 +307,16 @@ test('verified seller can stop new work from web while Worker is offline',async(
     weeklyWindows:{dayOfWeek:number}[]}}>(`SELECT schedule_override FROM capability_availability_policies
     WHERE capability_id=$1`,[capability]);
   expect(scheduled.rows[0]?.schedule_override.weeklyWindows).toHaveLength(5);
+  await page.getByRole('button',{name:'Edit service hours and capacity'}).click();
+  await page.getByLabel('Availability').selectOption('ALWAYS_AVAILABLE');
+  await page.getByRole('button',{name:'Save availability'}).click();
+  await expect(page.getByRole('button',{name:'Edit service hours and capacity'})).toHaveAttribute(
+    'aria-expanded','false');
+  const alwaysSelected=await pool.query<{schedule_override:{mode:string;weeklyWindows:unknown[]}}>(
+    `SELECT schedule_override FROM capability_availability_policies WHERE capability_id=$1`,
+    [capability]);
+  expect(alwaysSelected.rows[0]?.schedule_override).toMatchObject({
+    mode:'ALWAYS_AVAILABLE',weeklyWindows:[]});
   await expect(page.getByRole('button',{name:'Pause all new jobs'})).toBeVisible();
   await page.getByRole('button',{name:'Pause all new jobs'}).click();
   await expect(page.getByRole('button',{name:'Resume new jobs'})).toBeVisible();
@@ -227,6 +338,11 @@ test('verified seller can stop new work from web while Worker is offline',async(
   expect(publicState.status).toBe('PAUSED');
   expect(publicState.maintenanceUntil).toBeTruthy();
   expect(publicState.acceptingImmediate).toBe(false);
+  const pausedAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(pausedAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'seller global pause and scheduled maintenance at 1280px').toEqual([]);
   await page.screenshot({path:'test-results/m12-seller-desktop.png',
     fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:768,height:900});
@@ -465,4 +581,63 @@ test('verified seller can stop new work from web while Worker is offline',async(
   expect((await pool.query<{current_version_id:string}>(
     'SELECT current_version_id FROM capabilities WHERE id=$1',[reviewCapability]))
     .rows[0]?.current_version_id).toBe(nextVersion);
+
+  // One healthy device may host capabilities with independent dependency health.
+  await pool.query(`UPDATE worker_devices SET status='ONLINE',last_seen_at=now(),
+    openclaw_version='2026.8.2' WHERE id=$1`,[worker]);
+  const healthVersions=[{workerDeviceId:worker,capabilityId:capability,capabilityVersionId:version},
+    {workerDeviceId:worker,capabilityId:reviewCapability,capabilityVersionId:nextVersion}];
+  const healthHashes=(await pool.query<{id:string;hash:string}>(`SELECT id,
+    version_snapshot->>'policyValidationHash' AS hash FROM capability_versions
+    WHERE id=ANY($1::uuid[])`,[[version,nextVersion]])).rows;
+  const reporter=new WorkerAvailabilityReporter(worker,
+    {listInstalled:()=>healthVersions},
+    {snapshot:()=>({globalPaused:false,securityPaused:false,localRevision:0}),
+      isUnpausedForNewJobOffer:()=>true},
+    {async check(id:string){return {ready:id===version,
+      checkedAt:new Date().toISOString(),
+      policyValidationHash:healthHashes.find((item)=>item.id===id)?.hash??null,
+      sandboxVerified:true,requiredSecretsReady:true,
+      runtimeHealthy:id===version,capacityAvailable:true,
+      revalidationRequired:id===nextVersion};}});
+  const producedBeat=await reporter.heartbeat({controlPlaneId:'m16-health-browser',
+    workerRelease:'0.0.0-dev',openClawVersion:'2026.8.2',runningJobs:0,
+    capacity:2,policyVersion:1,operationalChecks:healthyWorkerChecks});
+  expect(producedBeat.capabilityReadiness.map((item)=>item.state)).toEqual([
+    'READY','DEPENDENCY_BLOCKED']);
+  await new PostgresWorkerHeartbeatRepository(pool).observe(producedBeat,worker,
+    'm16-health-browser');
+  await pool.query(`UPDATE capability_availability_policies SET seller_paused=false
+    WHERE capability_id=ANY($1::uuid[])`,[[capability,reviewCapability]]);
+  await pool.query(`DELETE FROM worker_local_capability_pauses
+    WHERE capability_id=ANY($1::uuid[])`,[[capability,reviewCapability]]);
+  await pool.query(`UPDATE worker_availability_schedules SET seller_paused=false
+    WHERE worker_device_id=$1`,[worker]);
+  await pool.query(`UPDATE worker_local_pause_reports SET global_paused=false,
+    security_paused=false WHERE worker_device_id=$1`,[worker]);
+  await pool.query(`UPDATE worker_cloud_control_revisions SET
+    acknowledged_revision=revision WHERE worker_device_id=$1`,[worker]);
+  const latestHealth=(await pool.query<{status:string;reported_status:string}>(`SELECT
+    d.status,h.reported_status FROM worker_devices d LEFT JOIN LATERAL
+    (SELECT reported_status FROM worker_heartbeats WHERE worker_device_id=d.id
+      ORDER BY reported_at DESC LIMIT 1) h ON true WHERE d.id=$1`,[worker])).rows[0];
+  expect(latestHealth).toEqual({status:'ONLINE',reported_status:'ONLINE'});
+  await page.reload();
+  const capabilityPanel=page.locator('.ops-panel').filter({has:page.getByRole('heading',
+    {name:'Capabilities',exact:true})});
+  const healthyService=capabilityPanel.locator('.ops-row').filter({hasText:'Research studio'});
+  const blockedService=capabilityPanel.locator('.ops-row').filter({hasText:'Reviewed research'});
+  await expect(healthyService.locator('p').nth(1)).toContainText('Available now');
+  await expect(healthyService).toContainText('runtime ready');
+  await expect(healthyService).toContainText(/0 queued\s*·\s*0 running\s*\/\s*1 max/);
+  await expect(blockedService.locator('p').nth(1)).toContainText('Temporarily unavailable');
+  await expect(blockedService).toContainText('runtime blocked');
+  await expect(blockedService).toContainText(/0 queued\s*·\s*0 running\s*\/\s*1 max/);
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);
+  const healthAudit=await new AxeBuilder({page}).withTags(
+    ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+  expect(healthAudit.violations.map((violation)=>({id:violation.id,
+    nodes:violation.nodes.map((node)=>node.target)})),
+  'independent capability health at 390px').toEqual([]);
 });

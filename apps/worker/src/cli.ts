@@ -61,7 +61,7 @@ function runningJobCount(): number {
 }
 
 function help(): string {
-  return 'Usage: kivro-worker pair <code> | discover [--json] | import guided | import start <skill-name> | import show <draft-id> [--json] | import select <draft-id> <dependency-id> --allow|--deny | import inference <draft-id> remote <provider> <model> <seller:credential-ref> | import inference <draft-id> local <provider> <model> <endpoint-ref> | import package <draft-id> <private-config.json> | import review <version-id> <private-review.json> | import review-retry <version-id> | import permissions <version-id> [--against <prior-version-id>] | pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | stop --all --confirm | job pause|resume|cancel|status <job-id> | credential check <seller:ref> | credential set <seller:ref> --from-fd <fd> | health [--json] | doctor [--json] | device status [--json]';
+  return 'Usage: kivro-worker pair <code> | discover [--json] | import guided | import start <skill-name> | import show <draft-id> [--json] | import declare <draft-id> database|api <resource-id> <label> | import select <draft-id> <dependency-id> --allow|--deny | import inference <draft-id> remote <provider> <model> <seller:credential-ref> | import inference <draft-id> local <provider> <model> <endpoint-ref> | import package <draft-id> <private-config.json> | import review <version-id> <private-review.json> | import review-retry <version-id> | import permissions <version-id> [--against <prior-version-id>] | pause --all|<capability-id> [--reason <text>] | resume --all|<capability-id> | stop --all --confirm | job pause|resume|cancel|status <job-id> | credential check <seller:ref> | credential set <seller:ref> --from-fd <fd> | health [--json] | doctor [--json] | device status [--json]';
 }
 
 function readPrivateAuthoring(path: string): unknown {
@@ -119,6 +119,11 @@ function pairingEndpoint(): URL {
   return url;
 }
 
+function boundedCliCode(value:unknown,fallback:string):string{
+  return typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,79}$/.test(value)?
+    value:fallback;
+}
+
 async function pairDevice(args:readonly string[],write:(line:string)=>void):Promise<number>{
   if(args.length!==1||! /^[A-F0-9]{8}(?:-[A-F0-9]{8}){3}$/.test(args[0]??'')){
     write(help());return 2;
@@ -146,14 +151,19 @@ async function pairDevice(args:readonly string[],write:(line:string)=>void):Prom
     const body=await response.json() as {code?:string;deviceId?:string;
       sellerAccountId?:string;sellerProfileId?:string};
     if(!response.ok||body.deviceId!==identity.deviceId){
-      write(body.code??'PAIRING_FAILED');return 1;
+      write(boundedCliCode(body.code,'PAIRING_FAILED'));return 1;
     }
     rememberPairedSeller(directory,body);
     write(`Worker paired: ${identity.deviceId}. Start the Worker control connection to report health.`);
     return 0;
   }catch(error){
-    write(error instanceof Error&&'code' in error&&typeof error.code==='string'?
-      error.code:error instanceof Error?error.message:'PAIRING_FAILED');return 1;
+    const code=error instanceof Error&&'code' in error?
+      boundedCliCode(error.code,'PAIRING_FAILED'):'PAIRING_FAILED';
+    const known=error instanceof Error&&[
+      'CLOUD_URL_NOT_CONFIGURED','PAIRING_REQUIRES_HTTPS',
+      'DEVICE_IDENTITY_INVALID','WORKER_IDENTITY_NOT_UNLOCKED',
+      'INSECURE_PASSPHRASE_FILE'].includes(error.message)?error.message:code;
+    write(known);return 1;
   }
 }
 
@@ -220,6 +230,19 @@ async function importCommand(args:readonly string[],write:(line:string)=>void):P
       write(`Local selection recorded. Revision ${next.revision}. This does not grant runtime access or publish a capability.`);
       return 0;
     }
+    if(args[0]==='declare'&&args.length===5&&
+      ['database','api','file','directory'].includes(args[2]!)){
+      const draft=store.getDraft(args[1]!,owner.sellerAccountId);
+      const next=store.declareResource({actionId:randomUUID(),draftId:draft.id,
+        sellerAccountId:owner.sellerAccountId,expectedRevision:draft.revision,
+        actedAt:new Date().toISOString(),resourceId:args[3]!,name:args[4]!,
+        type:({database:'DATABASE',api:'PRIVATE_API',file:'LOCAL_FILE',
+          directory:'LOCAL_DIRECTORY'} as const)[args[2] as 'database'|'api'|'file'|'directory']});
+      write(JSON.stringify({draftId:next.id,revision:next.revision,
+        resourceId:args[3],selected:false,
+        next:'Review and select this declaration explicitly, then bind its exact policy and a local vault credential in the private package. Declaration itself grants nothing.'}));
+      return 0;
+    }
     if(args[0]==='inference'&&args.length===6&&
       (args[2]==='remote'||args[2]==='local')){
       const draft=store.getDraft(args[1]!,owner.sellerAccountId);
@@ -266,8 +289,9 @@ async function importCommand(args:readonly string[],write:(line:string)=>void):P
     }
     write(help());return 2;
   }catch(error){
-    write(error instanceof Error&&'code' in error&&typeof error.code==='string'?
-      error.code:error instanceof Error&&error.message==='PAIRING_OWNER_CHANGED'?
+    write(error instanceof Error&&'code' in error?
+      boundedCliCode(error.code,'IMPORT_UNAVAILABLE_OR_AMBIGUOUS'):
+      error instanceof Error&&error.message==='PAIRING_OWNER_CHANGED'?
         error.message:'IMPORT_UNAVAILABLE_OR_AMBIGUOUS');
     return 1;
   }finally{store.close();}

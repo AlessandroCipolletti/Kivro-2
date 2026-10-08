@@ -1,11 +1,12 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import type { Pool, PoolClient } from 'pg';
+import type { Pool, PoolClient, QueryResult } from 'pg';
 import { z } from 'zod';
 import { JobContractSnapshotSchema, PublishedCapabilityVersionSchema,
   type JobContractSnapshot } from '../../contracts/src/capability-version.js';
 import { JobTransitionSchema, type JobStatus, type JobTransition } from '../../contracts/src/job-lifecycle.js';
 import { applyJobTransition } from '../../domain/src/job-lifecycle.js';
 import { createJobContractSnapshot } from '../../domain/src/capability-version.js';
+import { hasRequiredExecutionHealth } from '../../domain/src/worker-operational-health.js';
 import { canonicalJson, hashCanonicalJson } from '../../contracts/src/canonical-json.js';
 import { validateInputPayload, validateOutputPayload } from '../../contracts/src/contract-values.js';
 import { verifyStoredObject } from '../../application/src/object-integrity.js';
@@ -19,6 +20,7 @@ import { AvailabilityError } from './availability.js';
 import { newPrivateAssetKey } from '../../contracts/src/assets.js';
 import type { MalwareScannerPort } from '../../infrastructure/contracts/src/malware-ports.js';
 import { verifyResultFileType } from '../../application/src/result-file-safety.js';
+import type { PublicResearchPolicy } from '../../contracts/src/internet-policy.js';
 
 const uuid = z.uuid();
 const controlPlane = z.string().min(1).max(160);
@@ -46,7 +48,7 @@ export interface JobAvailabilityVerifier {
 export class JobExecutionError extends Error {
   constructor(readonly code: 'NOT_FOUND' | 'CONFLICT' | 'PAYMENT_NOT_SECURED' | 'NOT_ELIGIBLE' |
     'LEASE_EXPIRED' | 'WRONG_WORKER' | 'WRONG_CONTROL_PLANE' | 'INVALID_LEASE' |
-    'SCAN_UNAVAILABLE' | 'ABUSE_DENIED') {
+    'SCAN_UNAVAILABLE' | 'ABUSE_DENIED' | 'PAUSE_PENDING') {
     super(code); this.name = 'JobExecutionError';
   }
 }
@@ -184,6 +186,57 @@ export class PostgresJobExecutionRepository {
     private readonly leaseIssuer: LeaseTokenIssuer,
     private readonly availability?: JobAvailabilityVerifier,
     private readonly malwareScanner?: MalwareScannerPort) {}
+
+  private assertActiveIssuingPlane(planeId:string):void{
+    const configured=process.env.KIVRO_CONTROL_PLANE_ID;
+    const state=process.env.KIVRO_CONTROL_PLANE_STATE;
+    if(process.env.NODE_ENV==='production'||configured!==undefined||state!==undefined){
+      if(configured!==planeId||state!=='ACTIVE')
+        throw new JobExecutionError('NOT_ELIGIBLE');
+    }
+  }
+
+  /** A broker invocation is a fresh Core authorization, not a Worker claim.
+   * The immutable published policy is read by the cloud, never supplied by the caller. */
+  async authorizeResearchOperation(input:{jobId:string;executionId:string;attemptId:string;
+    workerDeviceId:string;controlPlaneId:string;leaseToken:string}):
+    Promise<{capabilityVersionId:string;policy:PublicResearchPolicy|null}>{
+    uuid.parse(input.jobId);uuid.parse(input.executionId);uuid.parse(input.attemptId);
+    uuid.parse(input.workerDeviceId);controlPlane.parse(input.controlPlaneId);
+    if(typeof input.leaseToken!=='string'||input.leaseToken.length<32||
+      input.leaseToken.length>512)throw new JobExecutionError('INVALID_LEASE');
+    return this.transaction(async(client)=>{
+      const candidate=await client.query<Pick<ExecutionRow,'job_id'>>(
+        'SELECT job_id FROM job_executions WHERE id=$1',[input.executionId]);
+      if(candidate.rows[0]?.job_id!==input.jobId)
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const job=await this.lockJob(client,input.jobId,false);
+      const executionResult=await client.query<ExecutionRow>(
+        'SELECT * FROM job_executions WHERE id=$1 FOR SHARE',[input.executionId]);
+      const execution=executionResult.rows[0];
+      if(!execution||execution.job_id!==input.jobId||
+        execution.attempt_id!==input.attemptId||!execution.accepted_at||
+        execution.completed_at||execution.worker_device_id!==input.workerDeviceId||
+        execution.control_plane_id!==input.controlPlaneId||
+        execution.lease_expires_at.getTime()<=Date.now()||
+        !equalDigest(execution.lease_token_hash,digest(input.leaseToken)))
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      if(!job.payment_reservation_id||
+        !await this.payment.isSecured(client,job.id,job.payment_reservation_id))
+        throw new JobExecutionError('PAYMENT_NOT_SECURED');
+      if(['PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED'].includes(job.status))
+        throw new JobExecutionError('PAUSE_PENDING');
+      if(!['STARTING','RUNNING'].includes(job.status))
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      const versionResult=await client.query<{version_snapshot:unknown}>(
+        'SELECT version_snapshot FROM capability_versions WHERE id=$1 FOR SHARE',
+        [job.capability_version_id]);
+      const version=PublishedCapabilityVersionSchema.parse(versionResult.rows[0]?.version_snapshot);
+      if(version.workerDeviceId!==input.workerDeviceId||version.id!==job.capability_version_id)
+        throw new JobExecutionError('NOT_ELIGIBLE');
+      return {capabilityVersionId:version.id,policy:version.publicResearchPolicy};
+    });
+  }
 
   private async mustBeEligible(client: PoolClient, jobId: string,
     stage: 'OFFER' | 'ACCEPT' | 'START'): Promise<void> {
@@ -327,8 +380,9 @@ export class PostgresJobExecutionRepository {
         }
         const grantExpiresAt=minimumRetention && minimumRetention>asset.retain_until?
           minimumRetention:asset.retain_until;
-        await client.query(`INSERT INTO asset_read_grants(id,asset_id,target_job_id,expires_at)
-          VALUES($1,$2,$3,$4) ON CONFLICT(asset_id,target_job_id) DO UPDATE
+        await client.query(`INSERT INTO asset_read_grants(id,asset_id,target_job_id,
+          permission,expires_at)
+          VALUES($1,$2,$3,'READ',$4) ON CONFLICT(asset_id,target_job_id) DO UPDATE
           SET expires_at=GREATEST(asset_read_grants.expires_at,EXCLUDED.expires_at)`,
         [randomUUID(), id, jobId, grantExpiresAt]);
       }
@@ -441,8 +495,10 @@ export class PostgresJobExecutionRepository {
     inputTotalBytes: number; inputFileCount: number;
   }> {
     uuid.parse(jobId); uuid.parse(workerDeviceId); controlPlane.parse(planeId);
+    this.assertActiveIssuingPlane(planeId);
     if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds < 5 || ttlSeconds > 3600) throw new RangeError('Invalid offer TTL');
     return this.transaction(async (client) => {
+      this.assertActiveIssuingPlane(planeId);
       await this.mustBeEligible(client, jobId, 'OFFER');
       const job = await this.lockJob(client, jobId);
       if (job.status !== 'QUEUED' || job.worker_device_id !== workerDeviceId) throw new JobExecutionError('NOT_ELIGIBLE');
@@ -472,12 +528,14 @@ export class PostgresJobExecutionRepository {
       if (!manifest) throw new JobExecutionError('NOT_ELIGIBLE');
       const worker = await client.query<{ status: string }>('SELECT status FROM worker_devices WHERE id=$1 FOR UPDATE', [workerDeviceId]);
       if (worker.rows[0]?.status !== 'ONLINE') throw new JobExecutionError('NOT_ELIGIBLE');
-      const heartbeat = await client.query<{ reported_status: string; running_jobs: number; capacity: number }>(
-        `SELECT reported_status,running_jobs,capacity FROM worker_heartbeats
+      const heartbeat = await client.query<{ reported_status: string; running_jobs: number;
+        capacity: number; operational_checks: {code:string;state:string}[]|null }>(
+        `SELECT reported_status,running_jobs,capacity,operational_checks FROM worker_heartbeats
          WHERE worker_device_id=$1 AND control_plane_id=$2 AND observed_at > now()-interval '30 seconds'`,
         [workerDeviceId, planeId]);
       const health = heartbeat.rows[0];
-      if (!health || health.reported_status !== 'ONLINE' || health.capacity < 1) {
+      if (!health || health.reported_status !== 'ONLINE' || health.capacity < 1 ||
+        !hasRequiredExecutionHealth(health.operational_checks)) {
         throw new JobExecutionError('NOT_ELIGIBLE');
       }
       const assigned = await client.query<{ count: number }>(
@@ -555,8 +613,50 @@ export class PostgresJobExecutionRepository {
     });
   }
 
+  /** Durable, deterministic queue drain. Every actual lease still passes through
+   * offer() and its payment, scheduling, Worker and cutover transaction gates. */
+  async dispatchEligible(planeId:string,limit=100,ttlSeconds=60):Promise<{
+    examined:number;offered:number;ineligible:number}>{
+    controlPlane.parse(planeId);
+    if(!Number.isSafeInteger(limit)||limit<1||limit>500)
+      throw new RangeError('Invalid dispatch limit');
+    this.assertActiveIssuingPlane(planeId);
+    let offered=0,ineligible=0,examined=0;
+    let cursor:{next_eligible_at:Date;created_at:Date;id:string}|null=null;
+    while(offered<limit){
+      const candidates:QueryResult<{id:string;worker_device_id:string;
+        next_eligible_at:Date;created_at:Date}>=await this.pool.query(`
+        SELECT j.id,j.worker_device_id,p.next_eligible_at,p.created_at
+        FROM jobs j JOIN job_schedule_plans p ON p.job_id=j.id
+        WHERE j.status='QUEUED' AND p.next_eligible_at<=now()
+          AND p.latest_start_at>now()
+          AND ($1::timestamptz IS NULL OR
+            (p.next_eligible_at,p.created_at,j.id)>($1::timestamptz,$2::timestamptz,$3::uuid))
+        ORDER BY p.next_eligible_at,p.created_at,j.id LIMIT 100`,
+      [cursor?.next_eligible_at??null,cursor?.created_at??null,cursor?.id??null]);
+      if(candidates.rows.length===0)break;
+      for(const row of candidates.rows){
+        cursor={next_eligible_at:row.next_eligible_at,created_at:row.created_at,id:row.id};
+        examined++;
+        try{await this.offer(row.id,row.worker_device_id,planeId,ttlSeconds);offered++;}
+        catch(error){
+          if(error instanceof JobExecutionError&&
+            ['NOT_ELIGIBLE','CONFLICT','PAYMENT_NOT_SECURED'].includes(error.code)){
+            ineligible++;continue;
+          }
+          throw error;
+        }
+        if(offered>=limit)break;
+      }
+      if(candidates.rows.length<100)break;
+    }
+    return {examined,offered,ineligible};
+  }
+
   async pendingOffers(workerDeviceId: string, planeId: string, limit = 16): Promise<readonly JobOffer[]> {
     uuid.parse(workerDeviceId); controlPlane.parse(planeId);
+    try{this.assertActiveIssuingPlane(planeId);}
+    catch{return [];}
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 64) throw new RangeError('Invalid poll limit');
     const pending = await this.pool.query<{ id: string }>(`SELECT e.id FROM job_executions e
       JOIN jobs j ON j.id=e.job_id WHERE e.worker_device_id=$1 AND e.control_plane_id=$2
@@ -631,6 +731,7 @@ export class PostgresJobExecutionRepository {
       const candidate = await client.query<ExecutionRow>('SELECT * FROM job_executions WHERE id=$1', [executionId]);
       if (!candidate.rows[0]) throw new JobExecutionError('NOT_FOUND');
       if (!candidate.rows[0].accepted_at) {
+        this.assertActiveIssuingPlane(planeId);
         await this.mustBeEligible(client, candidate.rows[0].job_id, 'ACCEPT');
       }
       const job = await this.lockJob(client, candidate.rows[0].job_id);
@@ -714,7 +815,8 @@ export class PostgresJobExecutionRepository {
             [id]);
           const asset = assetResult.rows[0];
           const grant = await client.query<{ expires_at: Date }>(
-            'SELECT expires_at FROM asset_read_grants WHERE asset_id=$1 AND target_job_id=$2', [id, job.id]);
+            `SELECT expires_at FROM asset_read_grants WHERE asset_id=$1 AND target_job_id=$2
+             AND revoked_at IS NULL`, [id, job.id]);
           const sizeBytes = Number(asset?.size_bytes);
           const type = SUPPORTED_FILE_TYPES.find((item) => item.mime === asset?.detected_mime_type);
           const extension = type?.extensions.find((candidate) => field.constraints.allowedExtensions.includes(candidate));
@@ -747,7 +849,11 @@ export class PostgresJobExecutionRepository {
       binding: file.binding, signedGetUrl: await storage.presignPrivateDownload(file.objectKey, 300),
       expectedSha256: file.sha256,
     })));
-    return { ...selected, downloads,
+    // Object keys and checksum staging details stay cloud-private. The Worker
+    // receives only its explicit bindings and short-lived signed GET grants.
+    const {files: _cloudOnlyFiles,...accepted}=selected;
+    void _cloudOnlyFiles;
+    return { ...accepted, downloads,
       outputRetainUntil: new Date(Date.now() + outputRetentionSeconds * 1000).toISOString() };
   }
 
@@ -1119,7 +1225,7 @@ export class PostgresJobExecutionRepository {
           'PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED','SECURITY_PAUSED'].includes(job.status))
         throw new JobExecutionError('NOT_ELIGIBLE');
       if(command.action==='RESUME'){
-        const security=await client.query(`SELECT 1 FROM worker_devices d
+        const security=await client.query<{operational_checks:{code:string;state:string}[]|null}>(`SELECT h.operational_checks FROM worker_devices d
           LEFT JOIN worker_security_blocks b ON b.worker_device_id=d.id
           LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=d.id
           JOIN capability_readiness r ON r.capability_version_id=$2
@@ -1131,7 +1237,9 @@ export class PostgresJobExecutionRepository {
           AND r.worker_device_id=d.id AND r.sandbox_verified
           AND r.required_secrets_ready AND r.runtime_healthy LIMIT 1`,
         [job.worker_device_id,job.capability_version_id]);
-        if(!security.rowCount)throw new JobExecutionError('NOT_ELIGIBLE');
+        if(!security.rowCount||
+          !hasRequiredExecutionHealth(security.rows[0]?.operational_checks))
+          throw new JobExecutionError('NOT_ELIGIBLE');
         const pause=await client.query<{seller_paused:boolean;global_paused:boolean|null}>(`SELECT
           s.seller_paused,l.global_paused FROM worker_availability_schedules s
           LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=s.worker_device_id
@@ -1339,6 +1447,39 @@ export class PostgresJobExecutionRepository {
           correlationId:row.execution_id,paymentReservationId:null,resultManifestId:null}));
       }
       return due.rows.length;
+    });
+  }
+
+  /** An accepted attempt with an expired lease cannot resume or finalize.
+   * Serialize against renewal/completion and release its reservation exactly once. */
+  async expireLostWorkerExecutions(limit=100):Promise<number>{
+    if(!Number.isSafeInteger(limit)||limit<1||limit>500)
+      throw new JobExecutionError('NOT_ELIGIBLE');
+    return this.transaction(async(client)=>{
+      const due=await client.query<{id:string;status:JobStatus;attempt_id:string;
+        execution_id:string}>(`SELECT j.id,j.status,e.attempt_id,e.id AS execution_id
+        FROM jobs j JOIN job_executions e ON e.job_id=j.id
+        WHERE e.accepted_at IS NOT NULL AND e.completed_at IS NULL
+        AND e.lease_expires_at<=now() AND j.status IN
+        ('ACCEPTED','STARTING','RUNNING','UPLOADING_RESULT','PAUSE_REQUESTED',
+          'PAUSED','RESUME_REQUESTED','SECURITY_PAUSED','CANCEL_REQUESTED')
+        ORDER BY e.lease_expires_at,j.id LIMIT $1 FOR UPDATE OF j SKIP LOCKED`,[limit]);
+      let expired=0;
+      for(const row of due.rows){
+        const execution=await client.query<{lease_expires_at:Date;completed_at:Date|null}>(
+          'SELECT lease_expires_at,completed_at FROM job_executions WHERE id=$1 FOR UPDATE',
+          [row.execution_id]);
+        if(!execution.rows[0]||execution.rows[0].completed_at||
+          execution.rows[0].lease_expires_at.getTime()>Date.now())continue;
+        await this.transitionLocked(client,JobTransitionSchema.parse({id:randomUUID(),
+          jobId:row.id,from:row.status,
+          to:row.status==='ACCEPTED'?'WORKER_OFFLINE':'TIMED_OUT',
+          at:new Date().toISOString(),actor:'CLOUD',reason:'WORKER_LEASE_EXPIRED',
+          attemptId:row.attempt_id,correlationId:row.execution_id,
+          paymentReservationId:null,resultManifestId:null}));
+        expired++;
+      }
+      return expired;
     });
   }
 }

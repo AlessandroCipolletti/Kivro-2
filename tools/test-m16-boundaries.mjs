@@ -9,15 +9,19 @@ const allSteps = [
   ['typecheck', ['typecheck']],
   ['lint-and-architecture', ['lint']],
   ['unit-and-boundary', ['test']],
+  ['worker-background-service', ['test:worker:service']],
   ['web-build', ['--filter', '@kivro/web', 'build']],
   ...['m01', 'm02', 'm03', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 'm13', 'm15']
     .map((name) => [`postgres-${name}`, [`test:postgres:${name}`]]),
+  ['postgres-m14-publication', ['test:postgres:m14-publication']],
   ['docker-sandbox', ['test:sandbox:docker']],
   ['docker-output', ['test:sandbox:output']],
   ['docker-control', ['test:sandbox:job-control']],
   ['output-storage', ['test:output:storage']],
   ['openclaw-execution', ['test:openclaw:execution']],
+  ['private-database-openclaw', ['test:resource:e2e']],
   ['core-worker-slice', ['test:core-worker:m16']],
+  ['installed-worker-development-e2e', ['test:e2e:local']],
   ['object-storage', ['test:storage:seaweedfs']],
   ['object-storage-minio', ['test:storage:minio']],
   ...['m10', 'm12', 'm13'].map((name) => [`browser-${name}`, [`test:browser:${name}`]]),
@@ -45,7 +49,8 @@ for (const [name, args] of steps) {
     completedAt: new Date().toISOString(), ...outcome });
 }
 const report = { schemaVersion: 1, evidenceClass: 'COMPONENT_ONLY',
-  warning: 'Passing this suite does not prove paid two-user E2E, Stripe test-mode purchase, production Worker composition or both-provider conformance.',
+  scannerMode:process.env.KIVRO_M16_LIVE_CLAMAV_SOCKET?'LIVE_LOCAL_CLAMAV':'PROTOCOL_FIXTURE',
+  warning: 'The installed Worker step uses deterministic development credits. Passing this suite does not prove a real Stripe test-mode purchase, external security review or both-provider deployed conformance.',
   results };
 const path = resolve(process.env.KIVRO_M16_EVIDENCE_PATH ?? '/tmp/kivro-m16-boundaries.json');
 mkdirSync(dirname(path), { recursive: true });

@@ -33,12 +33,13 @@ async function boundedJson(request:Request):Promise<unknown> {
 
 /** Browser requests never stage Worker test evidence or choose their own seller identity. */
 export async function handleSellerPublicationRequest(request:Request,action:string,
-  auth:AuthService):Promise<Response> {
+  auth:AuthService,expectedCapabilityId?:string):Promise<Response> {
   if(['reviews','versions'].includes(action)&&request.method!=='GET'||
+    action==='capabilities'&&!['GET','POST'].includes(request.method)||
     action==='grants'&&!['GET','POST'].includes(request.method)||
     ['publish','rollback','visibility','revoke-grant'].includes(action)&&request.method!=='POST')
     return json({code:'METHOD_NOT_ALLOWED'},405);
-  if(!['reviews','versions','publish','rollback','visibility','grants',
+  if(!['reviews','versions','capabilities','publish','rollback','visibility','grants',
     'revoke-grant'].includes(action))return json({code:'NOT_FOUND'},404);
   if(request.method==='POST'){
     const origin=process.env.APP_ORIGIN;
@@ -53,6 +54,10 @@ export async function handleSellerPublicationRequest(request:Request,action:stri
       (status='ACTIVE' AND auth_email_verified) AS ok FROM accounts WHERE id=$1`,[sellerId]);
     if(!verified.rows[0]?.ok)return json({code:'ACCOUNT_NOT_VERIFIED'},403);
     const repository=new PostgresSellerPublicationRepository(auth.database);
+    if(action==='capabilities')return request.method==='GET'?
+      json({capabilities:await repository.listCapabilitySummariesForSeller(sellerId)}):
+      json(await repository.createDraftFromReview(sellerId,
+        await boundedJson(request)),201);
     if(action==='reviews')return json({reviews:await repository.listForSeller(sellerId)});
     if(action==='versions')return json({capabilities:await repository.listVersionHistoryForSeller(sellerId)});
     if(action==='grants'&&request.method==='GET'){
@@ -79,7 +84,8 @@ export async function handleSellerPublicationRequest(request:Request,action:stri
       await repository.revokePrivateAccess(sellerId,input.capabilityId,input.grantId);
       return json({revoked:true});
     }
-    return json(await repository.publish(sellerId,await boundedJson(request)),201);
+    return json(await repository.publish(sellerId,await boundedJson(request),
+      expectedCapabilityId),201);
   }catch(error){
     if(error instanceof z.ZodError||error instanceof TypeError||error instanceof SyntaxError)
       return json({code:'INVALID_INPUT'},400);

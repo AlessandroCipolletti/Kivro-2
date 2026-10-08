@@ -20,6 +20,12 @@ import { MalwareScanError } from '../../../../packages/infrastructure/adapters/s
 import { WorkerCapabilityReviewSchema } from '../../../../packages/contracts/src/seller-publication.js';
 import { PostgresSellerPublicationRepository, SellerPublicationError } from
   '../../../../packages/persistence/src/seller-publication.js';
+import { ResearchBroker } from '../../../../packages/application/src/research-broker.js';
+import { NetworkPolicyError } from '../../../../packages/policy-engine/src/public-destination.js';
+import { PostgresResearchUsage } from '../../../../packages/persistence/src/research-usage.js';
+import { BraveWebSearchProvider } from '../../../../packages/infrastructure/http/src/brave-search.js';
+import { NodePinnedPublicHttpTransport, SystemDnsResolver } from
+  '../../../../packages/infrastructure/http/src/pinned-http.js';
 
 const signedBody=z.strictObject({envelope:z.unknown(),body:z.unknown()});
 function json(value:unknown,status=200):Response{return Response.json(value,{status,
@@ -43,9 +49,10 @@ async function boundedJson(request:Request):Promise<unknown>{
 }
 function plane():{id:string;state:'ACTIVE'|'DRAINING'}{
   const id=process.env.KIVRO_CONTROL_PLANE_ID;
-  const state=process.env.KIVRO_CONTROL_PLANE_STATE??'ACTIVE';
+  const state=process.env.KIVRO_CONTROL_PLANE_STATE;
   if(!id||!z.string().min(1).max(160).safeParse(id).success||
-    !['ACTIVE','DRAINING'].includes(state))throw new Error('CONTROL_PLANE_NOT_CONFIGURED');
+    (state!=='ACTIVE'&&state!=='DRAINING'))
+    throw new Error('CONTROL_PLANE_NOT_CONFIGURED');
   return {id,state:state as 'ACTIVE'|'DRAINING'};
 }
 
@@ -131,7 +138,22 @@ const outputIntent=binding.extend({assetId:uuid,fieldKey:z.string().min(1).max(1
   sha256:z.string().regex(/^sha256:[a-f0-9]{64}$/),
   detectedMimeType:z.string().min(3).max(120)});
 export type WorkerJobRpcKind='ACCEPT'|'ACCEPTED_INPUT'|'TRANSITION'|'RENEW_LEASE'|
-  'PREPARE_RESULT_ASSET'|'FINALIZE_RESULT';
+  'PREPARE_RESULT_ASSET'|'FINALIZE_RESULT'|'RESEARCH_SEARCH'|'RESEARCH_FETCH'|
+  'RESEARCH_DOWNLOAD'|'PRIVATE_RESOURCE_READ';
+const researchSearch=z.strictObject({requestId:uuid,query:z.string().min(2).max(256),
+  maxResults:z.number().int().min(1).max(20)});
+const researchUrl=z.strictObject({requestId:uuid,url:z.url().max(2048)});
+const privateRead=z.strictObject({requestId:uuid});
+
+function cloudResearchBroker(pool:ReturnType<typeof getMarketplaceService>['pool']){
+  const resolver=new SystemDnsResolver();
+  const transport=new NodePinnedPublicHttpTransport();
+  const token=process.env.KIVRO_BRAVE_SEARCH_TOKEN;
+  const search=token?new BraveWebSearchProvider(token,resolver,transport):{
+    async search():Promise<never>{throw new Error('RESEARCH_PROVIDER_UNAVAILABLE');}
+  };
+  return new ResearchBroker(search,resolver,transport,new PostgresResearchUsage(pool));
+}
 
 /** Fixed signed Worker RPCs call the same paid execution and ledger state machines as UI/API. */
 export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):Promise<Response>{
@@ -143,6 +165,10 @@ export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):
     const schema=kind==='ACCEPT'?binding.extend({messageId:uuid}):
       kind==='TRANSITION'?binding.extend({event:transition}):
       kind==='RENEW_LEASE'?binding.extend({ttlSeconds:z.number().int().min(5).max(3600)}):
+      kind==='RESEARCH_SEARCH'?binding.extend({research:researchSearch}):
+      kind==='RESEARCH_FETCH'||kind==='RESEARCH_DOWNLOAD'?
+        binding.extend({research:researchUrl}):
+      kind==='PRIVATE_RESOURCE_READ'?binding.extend({read:privateRead}):
       kind==='PREPARE_RESULT_ASSET'?outputIntent:
       kind==='FINALIZE_RESULT'?binding.extend({resultManifestId:uuid,
         retainUntil:z.iso.datetime({offset:true}),payload:z.unknown(),
@@ -154,6 +180,35 @@ export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):
       .verify(input.envelope,body);
     if(identity.workerDeviceId!==body.workerDeviceId)return json({code:'WRONG_WORKER'},403);
     const jobs=app.getJobs();
+    if(kind==='RESEARCH_SEARCH'||kind==='RESEARCH_FETCH'||
+      kind==='RESEARCH_DOWNLOAD'||kind==='PRIVATE_RESOURCE_READ'){
+      const authorized=await jobs.authorizeResearchOperation(body);
+      if(!authorized.policy)return json({code:'NOT_ELIGIBLE'},403);
+      const usage=new PostgresResearchUsage(app.pool);
+      if(kind==='PRIVATE_RESOURCE_READ'){
+        const data=binding.extend({read:privateRead}).parse(body);
+        await usage.markPrivateResourceRead(data.jobId,authorized.capabilityVersionId);
+        return json({ok:true});
+      }
+      const broker=cloudResearchBroker(app.pool);
+      const researchBinding={jobId:body.jobId,
+        capabilityVersionId:authorized.capabilityVersionId,
+        internetPolicy:authorized.policy};
+      if(kind==='RESEARCH_SEARCH'){
+        const data=binding.extend({research:researchSearch}).parse(body);
+        return json({results:await broker.search(researchBinding,data.research)});
+      }
+      if(kind==='RESEARCH_FETCH'){
+        const data=binding.extend({research:researchUrl}).parse(body);
+        return json(await broker.fetch(researchBinding,data.research));
+      }
+      const data=binding.extend({research:researchUrl}).parse(body);
+      const downloaded=await broker.download(researchBinding,data.research);
+      if(downloaded.bytes.byteLength>1_000_000)
+        return json({code:'NETWORK_BUDGET_EXCEEDED'},413);
+      return json({...downloaded,bytesBase64:Buffer.from(downloaded.bytes).toString('base64'),
+        bytes:undefined});
+    }
     if(kind==='ACCEPT'){
       const data=binding.extend({messageId:uuid}).parse(body);
       await jobs.accept(data.executionId,identity.workerDeviceId,identity.controlPlaneId,
@@ -213,6 +268,10 @@ export async function handleWorkerJobRpc(request:Request,kind:WorkerJobRpcKind):
 }
 
 function workerError(error:unknown):Response{
+  if(error instanceof NetworkPolicyError)return json({code:error.code},
+    error.code==='SOURCE_UNAVAILABLE'?502:
+      error.code==='BROKER_UNAVAILABLE'?503:
+        error.code==='NETWORK_BUDGET_EXCEEDED'?429:403);
   if(error instanceof z.ZodError||error instanceof TypeError||error instanceof SyntaxError)
     return json({code:'INVALID_INPUT'},400);
   if(error instanceof WorkerAuthenticationError)return json({code:error.code},403);

@@ -30,7 +30,7 @@ function profile(row: SellerProfileRow): SellerProfile {
 }
 
 export class SellerProfileError extends Error {
-  constructor(readonly code: 'ACCOUNT_NOT_ELIGIBLE', message: string) {
+  constructor(readonly code: 'ACCOUNT_NOT_ELIGIBLE' | 'SELLER_INVITE_REQUIRED', message: string) {
     super(message); this.name = 'SellerProfileError';
   }
 }
@@ -52,6 +52,17 @@ export async function createSellerProfile(
       account.rows[0].auth_email_verified !== true) {
       throw new SellerProfileError('ACCOUNT_NOT_ELIGIBLE', 'A verified active account is required');
     }
+    const prior = await client.query<{id:string}>(
+      'SELECT id FROM seller_profiles WHERE account_id=$1 FOR UPDATE',[id]);
+    let consumeInvite=false;
+    if(process.env.NODE_ENV==='production' && prior.rowCount===0){
+      const invite=await client.query<{account_id:string}>(`SELECT account_id
+        FROM seller_onboarding_invites WHERE account_id=$1 AND revoked_at IS NULL
+          AND consumed_at IS NULL AND expires_at>now() FOR UPDATE`,[id]);
+      if(invite.rowCount!==1)throw new SellerProfileError('SELLER_INVITE_REQUIRED',
+        'Private-alpha seller invitation required');
+      consumeInvite=true;
+    }
     await client.query(
       `INSERT INTO seller_profiles(id,account_id,display_name,status,payout_status)
        VALUES ($1,$2,$3,'DRAFT','NOT_STARTED') ON CONFLICT (account_id) DO NOTHING`,
@@ -64,6 +75,14 @@ export async function createSellerProfile(
     if (result.rowCount !== 1 || !result.rows[0]) throw new Error('Seller profile was not persisted');
     await client.query(`INSERT INTO seller_execution_model_acknowledgements(seller_profile_id,statement_version)
       VALUES ($1,1) ON CONFLICT DO NOTHING`, [result.rows[0].id]);
+    if(consumeInvite){
+      await client.query(`UPDATE seller_onboarding_invites SET consumed_at=now()
+        WHERE account_id=$1 AND revoked_at IS NULL AND consumed_at IS NULL`,[id]);
+      await client.query(`INSERT INTO platform_audit_events(id,actor_account_id,
+        actor_kind,event_code,subject_kind,subject_id,reason_code)
+        VALUES($1,$2,'SELLER','SELLER_INVITE_CONSUMED','ACCOUNT',$2,'PRIVATE_ALPHA_INVITE')`,
+      [randomUUID(),id]);
+    }
     await client.query('COMMIT');
     return profile({ ...result.rows[0], execution_model_acknowledged: true });
   } catch (error) {

@@ -40,3 +40,45 @@ test('runtime envelope rejects fabricated or mismatched staged assets', () => {
     { assetId, extension: '.pdf', detectedMimeType: 'application/pdf', sizeBytes: 100 },
   ] }), { code: 'UNSUPPORTED_FILE' });
 });
+
+test('Worker envelope applies the published condition and rejects hidden assets', () => {
+  const conditional = { schemaVersion: 1, fields: [
+    { key: 'mode', label: 'Output format', order: 0, required: true,
+      type: 'SELECT', constraints: { allowedValues: ['image', 'video'] },
+      defaultValue: 'video' },
+    { ...input.fields[1], visibleWhen: { fieldKey: 'mode', equals: 'video' },
+      order: 1 },
+  ] };
+  const assetId = randomUUID();
+  const staged = { scene: [{ assetId, extension: '.blend',
+    detectedMimeType: 'application/x-blender', sizeBytes: 100 }] };
+  assert.throws(() => buildJobInstructionEnvelope(conditional, output,
+    {values:{},assets:{}},{}),{code:'MISSING_FIELD',field:'scene'},
+  'the default video choice makes the conditional required file visible');
+  assert.throws(() => buildJobInstructionEnvelope(conditional, output,
+    {values:{mode:'image'},assets:{scene:[assetId]}},staged),
+    {code:'HIDDEN_FIELD',field:'scene'},
+  'buyer/API tampering cannot force a hidden file into Worker input');
+  const image=buildJobInstructionEnvelope(conditional,output,
+    {values:{mode:'image'},assets:{}},{});
+  assert.equal(image.buyerValues.mode,'image');
+  assert.equal(image.files.length,0);
+  const video=buildJobInstructionEnvelope(conditional,output,
+    {values:{mode:'video'},assets:{scene:[assetId]}},staged);
+  assert.equal(video.files.length,1);
+});
+
+test('Worker receives only safe published scalar defaults', () => {
+  const scalar={schemaVersion:1,fields:[
+    {key:'instructions',label:'Instructions',order:0,required:true,
+      type:'SHORT_TEXT'},
+    {key:'resolution',label:'Resolution',order:1,required:true,
+      type:'SELECT',constraints:{allowedValues:['1080p','4K']},
+      defaultValue:'1080p'},
+  ]};
+  const envelope=buildJobInstructionEnvelope(scalar,output,
+    {values:{instructions:'Render'},assets:{}},{});
+  assert.equal(envelope.buyerValues.resolution,'1080p');
+  assert.equal(envelope.buyerValues.instructions,'Render');
+  assert.equal(envelope.files.length,0);
+});

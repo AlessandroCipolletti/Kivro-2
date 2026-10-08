@@ -1,50 +1,10 @@
 /* global AbortController */
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import {randomUUID} from 'node:crypto';
 import test from 'node:test';
 import { WorkerBrokerRouter } from '../dist/apps/worker/src/broker-router.js';
 
-function pkg(toolNames = []) {
-  const capabilityVersionId = randomUUID();
-  return { packageVersion: 1, capabilityId: randomUUID(), capabilityVersionId,
-    workerDeviceId: randomUUID(), workerManifest: { manifestVersion: 1,
-      workerId: randomUUID(), capabilityVersionId,
-      runtime: { type: 'openclaw', supportedVersionRange: '>=2026.8.2 <2026.9.0' },
-      skills: [], tools: { allow: toolNames, deny: ['exec', 'browser', 'gateway'] },
-      resources: [], network: { default: 'deny', allow: [] },
-      limits: { timeoutSeconds: 60, memoryMb: 1024, cpu: 1, maxPids: 128,
-        maxInputBytes: 1000, maxOutputBytes: 65536 } },
-    dependencyGraph: { graphVersion: 1, rootId: 'skill', inference: null, alternatives: [],
-      nodes: [{ id: 'skill', type: 'SKILL', name: 'Skill', requirement: 'REQUIRED',
-        sensitivity: 'LOW', discoveredFrom: ['SKILL_METADATA'], dependsOn: [],
-        marketplaceSupport: 'UNDETERMINED', confidence: 'CONFIRMED', selected: false,
-        health: 'UNKNOWN' }] },
-    permissionPolicy: { policyVersion: 1, aiInference: 'SELLER', providerBudget: {
-      providerId: 'synthetic', modelId: 'broker', credentialRef: 'seller:provider',
-      maxRequestsPerJob: 3, maxInputTokensPerRequest: 8192, maxOutputTokensPerRequest: 1024,
-      maxEstimatedSpendMicroUsdPerJob: 100_000,
-      inputPriceMicroUsdPerMillionTokens: 1_000_000,
-      outputPriceMicroUsdPerMillionTokens: 1_000_000 },
-      publicInternet: 'PUBLIC_RESEARCH_BROKER', internet: { version: 1,
-        mode: 'PUBLIC_WEB_RESEARCH', domains: { mode: 'ANY_PUBLIC_DOMAIN' },
-        search: { enabled: true, maxQueriesPerJob: 3, maxResults: 5 },
-        fetch: { enabled: false, maxPagesPerJob: 1, maxResponseBytes: 100_000,
-          maxRedirects: 0, timeoutMs: 1000, allowedContentTypes: ['text/plain'] },
-        download: { enabled: false, maxDownloadsPerJob: 1, maxFileBytes: 100_000,
-          maxBytesPerJob: 100_000, allowedMimeTypes: [] },
-        limits: { maxNetworkBytesPerJob: 2_000_000, maxDurationMs: 10_000,
-          maxConcurrentRequests: 1, maxRequestsPerHost: 3 } },
-      browser: false, proprietaryDatabase: 'NONE', privateApi: 'NONE',
-      selectedFileResourceIds: [], selectedDirectoryResourceIds: [], localSoftware: false,
-      shell: false, externalSideEffects: false, buyerFileAccess: false,
-      sellerCredentialRefs: ['seller:provider'] }, sellerInferenceConfigHash: `sha256:${'a'.repeat(64)}`,
-    ioContract: { contractVersion: 1, input: { schemaVersion: 1, fields: [{
-      key: 'question', label: 'Question', order: 0, required: true, type: 'SHORT_TEXT' }] },
-      output: { schemaVersion: 1, fields: [{ key: 'answer', label: 'Answer', order: 0,
-        required: true, type: 'SHORT_TEXT' }] } }, priceTier: 'USD_999',
-    dependencySnapshot: [], concurrencyLimit: 1, pauseSupport: 'FULL_RESUME',
-    exampleRefs: [], testRefs: [] };
-}
+import {pkg} from './fixtures/worker-package.mjs';
 
 test('seller-selected research tool reaches only its M06 broker and policy', async () => {
   const selected = pkg(['kivro_research_search']);
@@ -57,11 +17,13 @@ test('seller-selected research tool reaches only its M06 broker and policy', asy
       return { results: [] }; } },
   });
   assert.deepEqual(router.allowedToolNames, ['kivro_research_search', 'kivro_submit_result']);
-  await router.dispatch({ type: 'REQUEST', id: randomUUID(), kind: 'RESEARCH_SEARCH',
+  const requestId=randomUUID();
+  await router.dispatch({ type: 'REQUEST', id: requestId, kind: 'RESEARCH_SEARCH',
     payload: { query: 'company research', maxResults: 2 } }, new AbortController().signal);
   assert.equal(calls.length, 1);
   assert.equal(calls[0][1].jobId, jobId);
-  assert.deepEqual(calls[0][2], { query: 'company research', maxResults: 2 });
+  assert.deepEqual(calls[0][2], { query: 'company research', maxResults: 2,
+    requestId });
   await assert.rejects(router.dispatch({ type: 'REQUEST', id: randomUUID(),
     kind: 'RESEARCH_FETCH', payload: { url: 'https://example.com' } },
   new AbortController().signal), { code: 'UNDECLARED_TOOL' });
@@ -79,6 +41,47 @@ test('discovery, unsupported tools and missing brokers never create consent', ()
     { completion: {} }), { code: 'BROKER_UNAVAILABLE' });
   assert.throws(() => new WorkerBrokerRouter(pkg(['exec']), randomUUID(),
     { completion: {} }), { code: 'POLICY_MISMATCH' });
+  const browserClaim=pkg();browserClaim.permissionPolicy.browser=true;
+  assert.throws(() => new WorkerBrokerRouter(browserClaim, randomUUID(),
+    { completion: {} }), { code: 'POLICY_MISMATCH' },
+  'an unsupported browser declaration cannot pass seller review or job admission');
+  assert.throws(() => new WorkerBrokerRouter(pkg(['browser']), randomUUID(),
+    { completion: {} }), { code: 'POLICY_MISMATCH' });
   assert.throws(() => new WorkerBrokerRouter(discoveredOnly, randomUUID(),
     { completion: {} }, { inputFiles: true, outputFiles: false }), { code: 'POLICY_MISMATCH' });
+});
+
+test('named resource and declared API ports must be bound before a job is admitted',()=>{
+  const resource=pkg(['kivro_resource_read']);
+  const operation={id:'company_get',schema:'seller_public',table:'company',
+    columns:['id'],lookupColumn:'id',maxRows:1};
+  resource.permissionPolicy.proprietaryDatabase='READ_ONLY';
+  resource.permissionPolicy.localResources=[{resourceId:'company_db',
+    statementTimeoutMs:1000,operations:[operation]}];
+  resource.permissionPolicy.sellerCredentialRefs.push('seller:company-readonly');
+  resource.workerManifest.resources=[{id:'company_db',type:'local-resource-broker',
+    permissions:['company_get'],credentialRef:'seller:company-readonly'}];
+  resource.dependencyGraph.nodes.push({...resource.dependencyGraph.nodes[0],
+    id:'company_db',type:'DATABASE',name:'Company database',selected:true});
+  assert.throws(()=>new WorkerBrokerRouter(resource,randomUUID(),{
+    completion:{},localResources:new Map()}),{code:'BROKER_UNAVAILABLE'});
+  assert.doesNotThrow(()=>new WorkerBrokerRouter(resource,randomUUID(),{
+    completion:{},localResources:new Map([['company_db',{}]])}));
+
+  const api=pkg(['kivro_declared_api']);
+  const connector={id:'company-api',host:'api.example.com',method:'GET',path:'/lookup',
+    maxRequestsPerJob:2,maxRequestBytes:1000,maxResponseBytes:1000};
+  api.permissionPolicy.publicInternet='DECLARED_DOMAINS';
+  api.permissionPolicy.privateApi='READ_ONLY';
+  api.permissionPolicy.internet={version:1,mode:'DECLARED_API_ACCESS',
+    connectors:[connector]};
+  api.workerManifest.resources=[{id:'company-api',type:'declared-api',permissions:['GET']}];
+  api.dependencyGraph.nodes.push({...api.dependencyGraph.nodes[0],
+    id:'company-api',type:'PRIVATE_API',name:'Company API',selected:true});
+  assert.throws(()=>new WorkerBrokerRouter(api,randomUUID(),{
+    completion:{},declaredApi:{hasDeclaredConnector(){return false;}}}),
+  {code:'BROKER_UNAVAILABLE'});
+  assert.doesNotThrow(()=>new WorkerBrokerRouter(api,randomUUID(),{
+    completion:{},declaredApi:{hasDeclaredConnector(value){
+      return value.id==='company-api'&&value.host==='api.example.com';}}}));
 });

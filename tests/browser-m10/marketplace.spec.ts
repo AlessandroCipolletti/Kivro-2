@@ -1,4 +1,5 @@
 import { expect,test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { getAuthService } from '../../dist/apps/web/src/auth/server.js';
@@ -11,6 +12,11 @@ import { getMarketplaceService } from '../../dist/apps/web/src/marketplace/serve
 import { MarketplaceAgentRepository } from '../../dist/packages/persistence/src/marketplace-agent.js';
 import { MarketplaceAgentPlanner } from '../../dist/packages/application/src/marketplace-agent-planner.js';
 import type { PlatformInferenceRouter } from '../../dist/packages/application/src/platform-inference-router.js';
+
+const healthyWorkerChecks=[{code:'DEVICE_IDENTITY',state:'HEALTHY'},
+  {code:'DOCKER_DAEMON',state:'HEALTHY'},
+  {code:'APPROVED_SANDBOX_IMAGE',state:'HEALTHY'},
+  {code:'SANDBOX_SELF_TEST',state:'HEALTHY'}] as const;
 
 async function verificationLink(email:string):Promise<string>{
   const list=await fetch('http://127.0.0.1:18025/api/v1/messages').then((r)=>r.json()) as {
@@ -73,6 +79,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
       'href',`/ai-request?capabilityId=${capability.id}`);
     await page.goto('/privacy');
     await expect(page.getByRole('heading',{name:'Know where your request goes.'})).toBeVisible();
+    await expect(page.getByText(/seller controls the physical computer/)).toBeVisible();
     await expect(page.getByText(/It does not send your private file bytes/)).toBeVisible();
     await page.goto(`/capabilities/${capability.slug}`);
     await expect(page.getByText('Excellent result')).toBeVisible();
@@ -105,7 +112,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     const heartbeat=new PostgresWorkerHeartbeatRepository(pool);
     const latest=(await pool.query<{at:Date}>(`SELECT latest_heartbeat_reported_at AS at
       FROM worker_devices WHERE id=$1`,[capability.worker_device_id])).rows[0]?.at;
-    await heartbeat.observe({type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+    await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
       messageId:randomUUID(),controlPlaneId:'m10-test-plane',
       workerDeviceId:capability.worker_device_id,workerRelease:'test',
       sentAt:new Date(Math.max(Date.now(),(latest?.getTime()??0)+1000)).toISOString(),
@@ -123,7 +130,7 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     const report=async(runningJobs:number,ready:boolean)=>{
       const previous=(await pool.query<{at:Date}>(`SELECT latest_heartbeat_reported_at AS at
         FROM worker_devices WHERE id=$1`,[capability.worker_device_id])).rows[0]!.at;
-      await heartbeat.observe({type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+      await heartbeat.observe({type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
         messageId:randomUUID(),controlPlaneId:'m10-test-plane',
         workerDeviceId:capability.worker_device_id,workerRelease:'test',
         sentAt:new Date(Math.max(Date.now(),previous.getTime()+1000)).toISOString(),
@@ -172,10 +179,29 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await page.getByRole('radio',{name:/Earliest eligible window/}).check();
     await page.getByRole('button',{name:'Check price & availability'}).click();
     await expect(page.getByText('CURRENT EXECUTION QUOTE')).toBeVisible();
+    const quoteAudit=await new AxeBuilder({page}).withTags(
+      ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+    expect(quoteAudit.violations.map((violation)=>({id:violation.id,
+      nodes:violation.nodes.map((node)=>node.target)})),
+    'buyer quote at mobile viewport').toEqual([]);
     await expect(page.getByText(/Start time is not guaranteed/)).toBeVisible();
     await expect(page.getByText(/credits will be reserved now/)).toBeVisible();
     await page.screenshot({path:'test-results/m14-quote-mobile.png',fullPage:true,
       animations:'disabled'});
+    await pool.query(`UPDATE capability_availability_policies SET schedule_override=NULL
+      WHERE capability_id=$1`,[capability.id]);
+    await page.getByRole('button',{name:'Confirm purchase & reserve credits'}).click();
+    await expect(page.locator('.run-panel .notice.error')).toContainText(
+      'Price or availability changed. Check the current terms again.');
+    expect((await pool.query<{n:number}>(`SELECT count(*)::int AS n FROM payment_reservations r
+      JOIN jobs j ON j.id=r.job_id WHERE j.buyer_account_id=$1`,[buyer])).rows[0]?.n)
+      .toBe(0,'a stale scheduled quote cannot reserve buyer credits');
+    await pool.query(`UPDATE capability_availability_policies SET schedule_override=$2
+      WHERE capability_id=$1`,[capability.id,{mode:'CUSTOM_SCHEDULE',timezone:'UTC',
+        weeklyWindows:[{dayOfWeek:tomorrow.getUTCDay()||7,
+          startLocalTime:'00:00',endLocalTime:'23:59'}]}]);
+    await page.getByRole('button',{name:'Check price & availability'}).click();
+    await expect(page.getByText('CURRENT EXECUTION QUOTE')).toBeVisible();
     await page.getByRole('button',{name:'Confirm purchase & reserve credits'}).click();
     await expect(page.locator('.job-hero-status strong')).toHaveText('Waiting for schedule');
     await page.getByRole('button',{name:'Cancel this job'}).click();
@@ -270,6 +296,11 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     await expect(page).toHaveURL(/\/buyer\/jobs\/[a-f0-9-]+/);
     const jobId=page.url().split('/').at(-1)!;
     await expect(page.getByText('Payment: RESERVED')).toBeVisible();
+    const reservedAudit=await new AxeBuilder({page}).withTags(
+      ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+    expect(reservedAudit.violations.map((violation)=>({id:violation.id,
+      nodes:violation.nodes.map((node)=>node.target)})),
+    'reserved buyer job at mobile viewport').toEqual([]);
     await page.screenshot({path:'test-results/m10-job-mobile.png',fullPage:true,
       animations:'disabled'});
     expect((await fetch(`http://localhost:3336/api/marketplace/job/${jobId}`)).status).toBe(401);
@@ -283,6 +314,11 @@ test('buyer discovers, favorites, preflights, purchases, cancels and returns to 
     ]);
     expect(cancelResponse.status()).toBe(200);
     await expect(page.locator('.job-hero-status strong')).toHaveText('Cancelled');
+    const cancelledAudit=await new AxeBuilder({page}).withTags(
+      ['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+    expect(cancelledAudit.violations.map((violation)=>({id:violation.id,
+      nodes:violation.nodes.map((node)=>node.target)})),
+    'cancelled buyer job at mobile viewport').toEqual([]);
     await page.getByRole('button',{name:'Send safety report'}).click();
     await expect(page.getByRole('status')).toHaveText('Your safety report was recorded for review.');
     const safetyReport=await pool.query<{category:string;reporter_account_id:string}>(

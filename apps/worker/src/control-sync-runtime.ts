@@ -9,8 +9,11 @@ import { localHealth } from './health.js';
 import { WorkerControlSync } from './control-sync.js';
 import { WorkerJobControl } from './job-control.js';
 import { DockerJobControlAdapter } from '../../../packages/sandbox-adapter/src/docker.js';
-import { discoverWorkerControlPlanes, HttpsPollingWorkerTransport } from
+import { discoverWorkerControlPlanes, HttpsPollingWorkerTransport,
+  selectWorkerTransport } from
   '../../../packages/infrastructure/netsons/src/https-polling.js';
+import {WebSocketWorkerTransport} from
+  '../../../packages/infrastructure/adapters/src/websocket-worker.js';
 
 function privatePassphrase(path:string):string{
   if(constants.O_NOFOLLOW===undefined)throw new Error('PRIVATE_PASSPHRASE_UNAVAILABLE');
@@ -35,8 +38,8 @@ export async function unlockIdentity(directory:string):Promise<DeviceIdentitySig
   return new EncryptedDeviceIdentityStore(directory).unlock(privatePassphrase(file));
 }
 
-/** Host-native composition for the M12 control channel. Paid capacity stays zero
- * until the M13 authenticated job RPC composition is available. */
+/** Host-native control-only composition. Paid capacity stays zero here; the
+ * separate Worker execution runtime owns authenticated job RPC and dispatch. */
 export async function runWorkerControlSync(signal:AbortSignal):Promise<void>{
   const directory=process.env.KIVRO_WORKER_STATE_DIR??
     join(homedir(),'.kivro','worker','state');
@@ -64,8 +67,11 @@ export async function runWorkerControlSync(signal:AbortSignal):Promise<void>{
     const active=planes.filter((plane)=>plane.state==='ACTIVE');
     if(planes.length!==1||active.length!==1||!active[0])
       throw new Error('CONTROL_ONLY_REQUIRES_SINGLE_ACTIVE_PLANE');
-    const transport=new HttpsPollingWorkerTransport(active[0].id,active[0].endpoint,
-      signer,{allowLocalHttp});
+    const selected=selectWorkerTransport(active[0],{allowLocalHttp});
+    const transport=selected.type==='WEBSOCKET'?new WebSocketWorkerTransport(
+      active[0].id,selected.endpoint,signer,{allowLocalHttp}):
+      new HttpsPollingWorkerTransport(active[0].id,selected.endpoint,
+        signer,{allowLocalHttp});
     const sync=new WorkerControlSync(transport,signer.deviceId,local,
       ()=>localHealth(directory,local.snapshot(),'METADATA_PRESENT',0,false,signer.deviceId),
       process.env.KIVRO_WORKER_RELEASE??'0.0.0-dev',jobControl);

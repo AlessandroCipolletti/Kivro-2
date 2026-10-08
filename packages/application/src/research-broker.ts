@@ -63,6 +63,58 @@ function matchesDownloadType(bytes: Uint8Array, type: string): boolean {
   return false;
 }
 
+function robotsAllows(body: Uint8Array, pathname: string): boolean {
+  let contents: string;
+  try { contents = new TextDecoder('utf-8', { fatal: true }).decode(body); }
+  catch { return false; }
+  if (contents.includes('\0')) return false;
+  const groups: { agents: string[]; rules: { allow: boolean; path: string }[] }[] = [];
+  let agents: string[] = [], rules: { allow: boolean; path: string }[] = [];
+  const flush = () => {
+    if (agents.length) groups.push({ agents, rules });
+    agents = []; rules = [];
+  };
+  for (const raw of contents.split(/\r?\n/)) {
+    const line = raw.split('#', 1)[0]?.trim() ?? '';
+    if (!line) continue;
+    const separator = line.indexOf(':');
+    if (separator < 0) continue;
+    const field = line.slice(0, separator).trim().toLowerCase();
+    const value = line.slice(separator + 1).trim();
+    if (field === 'user-agent') {
+      if (rules.length) flush();
+      agents.push(value.toLowerCase());
+    } else if (agents.length && (field === 'allow' || field === 'disallow') && value.startsWith('/')) {
+      if (value.length > 512) return false;
+      rules.push({ allow: field === 'allow', path: value });
+    }
+  }
+  flush();
+  const exact = groups.filter((group) => group.agents.includes('kivroresearch'));
+  const applicable = exact.length ? exact : groups.filter((group) => group.agents.includes('*'));
+  const target = pathname || '/';
+  if (target.length > 2048) return false;
+  const matching = applicable.flatMap((group) => group.rules).filter((rule) => {
+    const anchored = rule.path.endsWith('$');
+    const path = anchored ? rule.path.slice(0, -1) : rule.path;
+    let patternIndex = 0, targetIndex = 0, starIndex = -1, retryIndex = 0;
+    while (targetIndex < target.length) {
+      if (patternIndex === path.length && !anchored) return true;
+      if (path[patternIndex] === target[targetIndex]) {
+        patternIndex += 1; targetIndex += 1;
+      } else if (path[patternIndex] === '*') {
+        starIndex = patternIndex++; retryIndex = targetIndex;
+      } else if (starIndex >= 0) {
+        patternIndex = starIndex + 1; targetIndex = ++retryIndex;
+      } else return false;
+    }
+    while (path[patternIndex] === '*') patternIndex += 1;
+    return patternIndex === path.length;
+  });
+  matching.sort((a, b) => b.path.replaceAll('*', '').length - a.path.replaceAll('*', '').length || Number(b.allow) - Number(a.allow));
+  return matching[0]?.allow ?? true;
+}
+
 export class ResearchBroker {
   constructor(private readonly searchProvider: WebSearchProvider, private readonly resolver: DnsResolver,
     private readonly transport: PinnedPublicHttpTransport, private readonly usage: ResearchUsagePort) {}
@@ -138,7 +190,8 @@ export class ResearchBroker {
     }
     const initial = parseResearchUrl(rawUrl); ensureDomain(policy, initial);
     const maxBytes = operation === 'FETCH' ? policy.fetch.maxResponseBytes : policy.download.maxFileBytes;
-    const reservation = maxBytes + policy.fetch.maxRedirects * 65_536;
+    const robotsLimit = 16_384;
+    const reservation = maxBytes + policy.fetch.maxRedirects * 65_536 + (policy.fetch.maxRedirects + 1) * robotsLimit;
     await this.usage.begin(this.budget(binding, policy, operation, requestId, initial.hostname, reservation));
     let bytes = 0, status: number | null = null, type: string | null = null, reason: string | null = null;
     try {
@@ -151,6 +204,18 @@ export class ResearchBroker {
         const addresses = await this.resolver.lookupAll(host);
         if (!addresses.length || addresses.some((address) => !isPublicInternetAddress(address))) {
           throw new NetworkPolicyError('PRIVATE_DESTINATION_DENIED');
+        }
+        const robotsUrl = new URL('/robots.txt', url.origin);
+        const robots = await this.transport.request({ url: robotsUrl, pinnedAddress: addresses[0]!, method: 'GET',
+          maxBytes: robotsLimit, timeoutMs: policy.fetch.timeoutMs });
+        bytes += robots.body.byteLength;
+        if (robots.body.byteLength > robotsLimit) throw new NetworkPolicyError('NETWORK_BUDGET_EXCEEDED');
+        if (robots.status !== 404 && robots.status !== 410) {
+          const robotsType = contentType(robots.headers);
+          if (robots.status !== 200 || (robotsType && robotsType !== 'text/plain') ||
+            !robotsAllows(robots.body, `${url.pathname}${url.search}`)) {
+            throw new NetworkPolicyError('SOURCE_UNAVAILABLE');
+          }
         }
         const remaining = Math.min(maxBytes, reservation - bytes);
         const response = await this.transport.request({ url, pinnedAddress: addresses[0]!, method, maxBytes: remaining,

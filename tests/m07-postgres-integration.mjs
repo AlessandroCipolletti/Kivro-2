@@ -20,12 +20,13 @@ if (!process.env.M07_DATABASE_URL) {
   const buyer = randomUUID(), sellerAccount = randomUUID(), seller = randomUUID();
   const worker = randomUUID(), capability = randomUUID(), version = randomUUID();
   const job = randomUUID(), reservation = randomUUID(), plane = 'kivro-test-plane';
-  let secured = false;
+  let secured = false, released = 0;
   const leaseIssuer = new HmacLeaseTokenIssuer({ v1: Buffer.alloc(32, 7) }, 'v1');
   const repo = new PostgresJobExecutionRepository(pool, {
     async isSecured(_client, jobId, reservationId) {
       return secured && jobId === job && reservationId === reservation;
     },
+    async releaseFailedJobInTransaction(){released++;},
   }, leaseIssuer, { async assertEligible() {} });
   const event = (from, to, actor, attemptId = null, extra = {}) => ({
     id: randomUUID(), jobId: job, from, to, actor, reason: `M07_${to}`,
@@ -58,6 +59,17 @@ if (!process.env.M07_DATABASE_URL) {
   });
 
   test('competing offers produce exactly one active execution and durable transition', async () => {
+    await assert.rejects(repo.offer(job,worker,plane,60),{code:'NOT_ELIGIBLE'},
+      'an ONLINE heartbeat without signed Docker, image and identity checks cannot dispatch paid work');
+    await new PostgresWorkerHeartbeatRepository(pool).observe({type:'WORKER_HEARTBEAT',
+      protocolVersion:WORKER_PROTOCOL_VERSION,
+      messageId:randomUUID(),controlPlaneId:plane,workerDeviceId:worker,
+      workerRelease:'0.0.0-dev',openClawVersion:null,status:'ONLINE',runningJobs:0,
+      capacity:1,policyVersion:1,localRevision:0,
+      operationalChecks:[{code:'DEVICE_IDENTITY',state:'HEALTHY'},
+        {code:'DOCKER_DAEMON',state:'HEALTHY'},
+        {code:'APPROVED_SANDBOX_IMAGE',state:'HEALTHY'},
+        {code:'SANDBOX_SELF_TEST',state:'HEALTHY'}]},worker,plane);
     await pool.query('UPDATE accounts SET email_verified_at=now() WHERE id=$1',[sellerAccount]);
     await pool.query(`INSERT INTO operator_grants(account_id,granted_by) VALUES($1,'TEST_DB_ADMIN')`,
       [sellerAccount]);
@@ -224,6 +236,24 @@ if (!process.env.M07_DATABASE_URL) {
       globalThis.offer.attemptId), globalThis.offer.executionId, worker, plane, globalThis.offer.leaseToken),
       { code: 'PAYMENT_NOT_SECURED' });
     assert.equal((await repo.load(job)).status, 'RUNNING');
-    await pool.end();
+  });
+
+  test('expired accepted Worker lease terminates once after a restart-safe sweep',async()=>{
+    try{
+      await pool.query(`UPDATE job_executions SET
+        created_at=now()-interval '3 minutes',
+        lease_expires_at=now()-interval '1 second' WHERE id=$1`,
+      [globalThis.offer.executionId]);
+      const outcomes=await Promise.all(Array.from({length:4},()=>
+        repo.expireLostWorkerExecutions()));
+      assert.equal(outcomes.reduce((sum,count)=>sum+count,0),1);
+      assert.equal((await repo.load(job)).status,'TIMED_OUT');
+      assert.equal(released,1,'one terminal transition releases the payment once');
+      assert.equal(await repo.expireLostWorkerExecutions(),0);
+      assert.equal((await pool.query(`SELECT count(*)::int AS n FROM job_transitions
+        WHERE job_id=$1 AND reason='WORKER_LEASE_EXPIRED'`,[job])).rows[0].n,1);
+      assert.equal((await pool.query(`SELECT completed_at FROM job_executions
+        WHERE id=$1`,[globalThis.offer.executionId])).rows[0].completed_at!==null,true);
+    }finally{await pool.end();}
   });
 }

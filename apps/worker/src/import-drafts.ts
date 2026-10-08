@@ -25,6 +25,12 @@ const inferenceAction = z.discriminatedUnion('mode', [
     mode: z.literal('LOCAL'), provider: reference, model: z.string().min(1).max(160),
     endpointRef: reference }),
 ]);
+const resourceAction = z.strictObject({
+  actionId: uuid, draftId: uuid, sellerAccountId: uuid,
+  expectedRevision: z.number().int().nonnegative(), actedAt: z.iso.datetime(),
+  resourceId: reference, name: z.string().trim().min(1).max(160),
+  type: z.enum(['DATABASE', 'PRIVATE_API', 'LOCAL_FILE', 'LOCAL_DIRECTORY','TOOL']),
+});
 
 const schema = `
 CREATE TABLE IF NOT EXISTS import_drafts (
@@ -65,6 +71,20 @@ CREATE TRIGGER IF NOT EXISTS import_inference_no_update BEFORE UPDATE ON import_
   BEGIN SELECT RAISE(ABORT, 'inference choice is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS import_inference_no_delete BEFORE DELETE ON import_inference_actions
   BEGIN SELECT RAISE(ABORT, 'inference choice is append-only'); END;
+CREATE TABLE IF NOT EXISTS import_resource_actions (
+  action_id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES import_drafts(id) ON DELETE RESTRICT,
+  seller_account_id TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  resulting_graph_json TEXT NOT NULL,
+  resulting_revision INTEGER NOT NULL CHECK (resulting_revision > 0),
+  resulting_updated_at TEXT NOT NULL,
+  acted_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS import_resource_no_update BEFORE UPDATE ON import_resource_actions
+  BEGIN SELECT RAISE(ABORT, 'resource declaration is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS import_resource_no_delete BEFORE DELETE ON import_resource_actions
+  BEGIN SELECT RAISE(ABORT, 'resource declaration is append-only'); END;
 CREATE TABLE IF NOT EXISTS import_permission_consents (
   id TEXT PRIMARY KEY,
   seller_account_id TEXT NOT NULL,
@@ -278,6 +298,53 @@ export class SellerImportDraftStore {
       this.db.exec('COMMIT');
       return toDraft({ ...current, graph_json: graphJson, graph_hash: graphHash, revision, updated_at: now });
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+  }
+
+  /** A seller declaration is only a candidate. Selection and exact broker policy
+   * are separate actions, so declaration alone never grants resource access. */
+  declareResource(rawAction: unknown): Readonly<ImportDraft> {
+    const action=resourceAction.parse(rawAction);
+    const requestHash=hashCanonicalJson(action);
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const prior=this.db.prepare('SELECT * FROM import_resource_actions WHERE action_id=?')
+        .get(action.actionId) as ActionRow|undefined;
+      const current=this.db.prepare('SELECT * FROM import_drafts WHERE id=? AND seller_account_id=?')
+        .get(action.draftId,action.sellerAccountId) as DraftRow|undefined;
+      if(!current)throw new ImportDraftError('NOT_FOUND','Draft not found');
+      if(prior){
+        if(prior.request_hash!==requestHash)
+          throw new ImportDraftError('CONFLICT','Resource action identifier was reused');
+        this.db.exec('COMMIT');
+        return toDraft({...current,graph_json:prior.resulting_graph_json,
+          graph_hash:hashCanonicalJson(JSON.parse(prior.resulting_graph_json)),
+          revision:prior.resulting_revision,updated_at:prior.resulting_updated_at});
+      }
+      if(current.revision!==action.expectedRevision)
+        throw new ImportDraftError('CONFLICT','Draft revision changed');
+      const graph=DependencyGraphSchema.parse(JSON.parse(current.graph_json));
+      if(graph.nodes.some((node)=>node.id===action.resourceId)||graph.nodes.length>=128)
+        throw new ImportDraftError('CONFLICT','Resource ID already exists or graph is full');
+      const next=DependencyGraphSchema.parse({...graph,nodes:graph.nodes.map((node)=>
+        node.id===graph.rootId?{...node,dependsOn:[...node.dependsOn,action.resourceId]}:node).concat({
+          id:action.resourceId,type:action.type,name:action.name,
+          requirement:'REQUIRED',sensitivity:'HIGH',
+          discoveredFrom:['SELLER_DECLARATION'],dependsOn:[],
+          marketplaceSupport:'UNDETERMINED',confidence:'CONFIRMED',
+          selected:false,health:'UNKNOWN',
+        })});
+      const graphJson=canonicalJson(next),graphHash=hashCanonicalJson(next);
+      const revision=current.revision+1,now=new Date().toISOString();
+      this.db.prepare(`UPDATE import_drafts SET graph_json=?,graph_hash=?,revision=?,updated_at=?
+        WHERE id=?`).run(graphJson,graphHash,revision,now,action.draftId);
+      this.db.prepare(`INSERT INTO import_resource_actions(action_id,draft_id,seller_account_id,
+        request_hash,resulting_graph_json,resulting_revision,resulting_updated_at,acted_at)
+        VALUES(?,?,?,?,?,?,?,?)`).run(action.actionId,action.draftId,action.sellerAccountId,
+          requestHash,graphJson,revision,now,action.actedAt);
+      this.db.exec('COMMIT');
+      return toDraft({...current,graph_json:graphJson,graph_hash:graphHash,
+        revision,updated_at:now});
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
   }
 
   recordConsent(id: string, sellerAccountId: string, rawConsent: unknown): Readonly<PermissionConsent> {

@@ -91,12 +91,21 @@ export class PostgresResearchUsage implements ResearchUsagePort {
   }
 
   async markPrivateResourceRead(jobId: string, capabilityVersionId: string): Promise<void> {
-    const result = await this.pool.query(`INSERT INTO research_job_usage(job_id,capability_version_id,private_resource_read)
-      SELECT id,capability_version_id,true FROM jobs WHERE id=$1 AND capability_version_id=$2
-        AND status IN ('PAYMENT_RESERVED','QUEUED','WAITING_FOR_WORKER','DISPATCHED','ACCEPTED','STARTING','RUNNING')
-      ON CONFLICT (job_id) DO UPDATE SET private_resource_read=true
-        WHERE research_job_usage.capability_version_id=EXCLUDED.capability_version_id`, [jobId, capabilityVersionId]);
-    if (result.rowCount !== 1) throw new NetworkPolicyError('NETWORK_POLICY_DENIED');
+    await tx(this.pool,async(client)=>{
+      await client.query(`INSERT INTO research_job_usage(job_id,capability_version_id,private_resource_read)
+        SELECT id,capability_version_id,false FROM jobs WHERE id=$1 AND capability_version_id=$2
+          AND status IN ('STARTING','RUNNING') ON CONFLICT (job_id) DO NOTHING`,
+      [jobId,capabilityVersionId]);
+      const row=await client.query<{capability_version_id:string}>(
+        'SELECT capability_version_id FROM research_job_usage WHERE job_id=$1 FOR UPDATE',[jobId]);
+      if(row.rows[0]?.capability_version_id!==capabilityVersionId)
+        throw new NetworkPolicyError('NETWORK_POLICY_DENIED');
+      const active=await client.query<{n:string}>(`SELECT count(*)::text AS n FROM research_requests
+        WHERE job_id=$1 AND completed_at IS NULL AND started_at>now()-interval '5 minutes'`,[jobId]);
+      if(Number(active.rows[0]?.n)!==0)throw new NetworkPolicyError('NETWORK_POLICY_DENIED');
+      await client.query(`UPDATE research_job_usage SET private_resource_read=true
+        WHERE job_id=$1 AND capability_version_id=$2`,[jobId,capabilityVersionId]);
+    });
   }
 
   async deny(input: Parameters<ResearchUsagePort['deny']>[0]): Promise<void> {

@@ -50,12 +50,22 @@ capability/version UUID, exact input and output contracts, one catalog price
 tier, provider request/token/spend ceilings, runtime limits, concurrency and
 pause behavior. The Worker derives its identity from the paired device and
 copies the selected skill bytes read-only into its private import store; it
-does not accept a Worker identity from the file. Other dependency types and
-local inference remain blocked at package authoring until their broker and
-health contracts are implemented. This command does not install the package,
+does not accept a Worker identity from the file. The advanced package file
+can bind named read-only database operations, declared read-only APIs, local
+inference and selected local files or directories. First declare and select
+each local candidate with `kivro-worker import declare <draft-id> file|directory
+<resource-id> <label>` and `import select`. Then set `selectedLocalPaths` in
+the private package JSON to
+`[{"resourceId":"...","absolutePath":"/canonical/seller/path"}]` for exactly
+those selections. The Worker pins bounded regular files and their hashes to
+the immutable version. It rejects symlinks, special files, path changes and
+personal configuration directories. Seller paths remain on the Worker; the
+buyer sees only `Selected only`. OpenClaw reads approved bytes solely through
+`kivro_selected_file_read` with an opaque file ID, never a host mount. Changed
+contents require a new review/version. This command does not install the package,
 send data to cloud, generate test evidence or make paid execution eligible.
 
-For the supported remote-provider package, prepare a private review file with
+For a supported package, prepare a private review file with
 `versionNumber`, an authoritative catalog `selectedPrice` snapshot,
 `externalProcessors`, `providerEndpoint` and representative `sampleInput`
 (`values` and `assets`). Set `KIVRO_OPENCLAW_APPROVED_IMAGE`,
@@ -96,3 +106,18 @@ readiness, followed by cloud-side lease and secured-payment verification. A
 missing prerequisite stops startup or reports the capability as NOT_READY;
 there is no host execution fallback. The older `worker:sync-controls` command
 is for zero-capacity control synchronization only.
+
+For the macOS private alpha, install the host-native supervisor as a user
+LaunchAgent after `pnpm install`, `pnpm build`, pairing, and completing the
+reviewed package/image setup above. Keep `.env.local` private (`chmod 600
+.env.local`); the LaunchAgent references this file by path and does not embed
+its values. Run `pnpm worker:service install` and then
+`pnpm worker:service start`. `pnpm worker:service status`, `logs`, `stop`, and
+`uninstall` manage this user service. It restarts after login and after a
+process exit, with launchd throttling. Logs are private files under
+`~/.kivro/worker/logs`; the Worker writes structured error codes rather than
+secret values. The service runs the same fail-closed supervisor as
+`pnpm worker:run`, and never substitutes host execution for Docker. It is tied
+to this checkout: after moving or replacing the checkout, stop and reinstall
+the agent. The signed public-update/rollback channel remains a separate
+pre-public-launch requirement; do not use a Git pull as an automatic update.

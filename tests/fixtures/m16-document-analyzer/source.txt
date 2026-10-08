@@ -1,0 +1,5 @@
+Kivro field report — 2026-09-30
+
+The seller completed 18 document reviews during the pilot. Median runtime was
+42 seconds. Two runs were retried after a Worker disconnect and both produced
+one final result. The pilot used buyer-provided documents only.

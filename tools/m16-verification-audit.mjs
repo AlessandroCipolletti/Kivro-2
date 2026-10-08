@@ -24,7 +24,7 @@ export function auditVerification(coverageText, backlogText) {
     if (seen.has(id)) throw new Error(`DUPLICATE_BACKLOG:${id}`);
     seen.add(id);
     const entry = covered.get(id);
-    if (!entry || !['DEFERRED_VERIFICATION', 'OPEN_IMPLEMENTATION'].includes(entry.status) ||
+    if (!entry || !['DEFERRED_VERIFICATION', 'OPEN_IMPLEMENTATION', 'TESTED'].includes(entry.status) ||
       entry.section !== null && entry.section !== Number(sectionText))
       throw new Error(`BACKLOG_COVERAGE_MISMATCH:${id}`);
     if (why.trim().length < 20 || dependency.trim().length < 8 ||
@@ -35,22 +35,25 @@ export function auditVerification(coverageText, backlogText) {
     const priorMilestones = milestones.filter((number) => number < 16);
     const mentionsM16 = /\bM16\b/.test(dependency);
     const external = /\bexternal\b|credential|professional review|real OS|physical device|deployed OS|Google OAuth|Google OIDC|Google callback/i.test(dependency);
+    const historical = /\bhistorical\b/i.test(dependency);
     rows.push({ id, section: Number(sectionText), status: entry.status,
       why: why.trim(), dependency: dependency.trim(), closingEvidence: closingEvidence.trim(),
       reviewBucket: laterMilestones.length ? 'LATER_MILESTONE' :
         priorMilestones.length ? 'PREVIOUS_IMPLEMENTATION' :
-          external ? 'EXTERNAL' : mentionsM16 ? 'M16_CANDIDATE' : 'UNSCOPED',
+          historical ? 'HISTORICAL' : external ? 'EXTERNAL' :
+            mentionsM16 ? 'M16_CANDIDATE' : 'UNSCOPED',
       laterMilestones, priorMilestones, external });
   }
   const openRows = [...covered].filter(([, entry]) =>
-    ['DEFERRED_VERIFICATION', 'OPEN_IMPLEMENTATION'].includes(entry.status));
+    ['DEFERRED_VERIFICATION', 'OPEN_IMPLEMENTATION', 'TESTED'].includes(entry.status));
   for (const [id] of openRows) if (!seen.has(id)) throw new Error(`BACKLOG_ROW_MISSING:${id}`);
   const counts = Object.fromEntries(['M16_CANDIDATE', 'PREVIOUS_IMPLEMENTATION',
-    'LATER_MILESTONE', 'EXTERNAL', 'UNSCOPED'].map((name) =>
+    'LATER_MILESTONE', 'EXTERNAL', 'HISTORICAL', 'UNSCOPED'].map((name) =>
     [name, rows.filter((row) => row.reviewBucket === name).length]));
   return { totalCoverage: covered.size,
     deferred: rows.filter((row) => row.status === 'DEFERRED_VERIFICATION').length,
     openImplementation: rows.filter((row) => row.status === 'OPEN_IMPLEMENTATION').length,
+    testedNotVerified: rows.filter((row) => row.status === 'TESTED').length,
     openRows: rows.length, counts, rows };
 }
 
@@ -122,6 +125,7 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename
     if (process.argv[3] === '--json') process.stdout.write(`${JSON.stringify(audit, null, 2)}\n`);
     else process.stdout.write(`${JSON.stringify({ totalCoverage: audit.totalCoverage,
       deferred: audit.deferred, openImplementation: audit.openImplementation,
+      testedNotVerified: audit.testedNotVerified,
       openRows: audit.openRows, counts: audit.counts }, null, 2)}\n`);
   } else if (command === 'release-gate') {
     const argument = process.argv[3];

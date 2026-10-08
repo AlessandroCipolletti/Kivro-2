@@ -35,7 +35,7 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
   operational_checks:z.array(z.object({code:z.string(),state:z.string()})).nullable(),
   openclaw_compatibility:z.string().nullable(),
   warnings:z.array(z.object({severity:z.string(),code:z.string(),scope:z.string(),
-    blocking:z.boolean(),title:z.string(),description:z.string(),
+    affected:z.string(),blocking:z.boolean(),title:z.string(),description:z.string(),
     detectedAt:z.string().nullable(),action:z.string()}))})),capabilities:z.array(z.object({id:z.string(),slug:z.string(),
   name:z.string(),status:z.string(),worker_device_id:z.string().nullable(),
   price:z.object({buyerAmountMinor:z.number(),platformFeeMinor:z.number(),
@@ -78,7 +78,8 @@ const dashboardSchema=z.object({profile:z.object({display_name:z.string(),status
     averageRuntimeSeconds:z.number().nullable(),providerCosts:z.object({
       measuredMicroUsd:z.number(),estimatedMicroUsd:z.number(),measuredCalls:z.number(),
       estimatedCalls:z.number(),unknownJobs:z.number(),currency:z.literal('USD')})}),
-  history:z.array(z.object({worker_device_id:z.string(),capability_id:z.string().nullable(),
+  history:z.array(z.object({worker_device_id:z.string(),worker_name:z.string(),
+    capability_id:z.string().nullable(),capability_name:z.string().nullable(),
     kind:z.string(),code:z.string(),created_at:z.string()}))});
 type Dashboard=z.infer<typeof dashboardSchema>;
 type Capability=Dashboard['capabilities'][number];
@@ -235,14 +236,19 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
             <small>Docker {worker.operational_checks?.find((check)=>check.code==='DOCKER_DAEMON')?.state??'Unknown'}
               {' · '}approved sandbox {worker.operational_checks?.find((check)=>
                 check.code==='APPROVED_SANDBOX_IMAGE')?.state??'Unknown'}</small>
+            <small>Last sandbox self-test {worker.operational_checks?.some((check)=>
+              check.code==='SANDBOX_SELF_TEST')?stamp(worker.lastHeartbeatAt):'Unknown'}
+              {' · '}Isolation test {worker.operational_checks?.some((check)=>
+                check.code==='SANDBOX_SELF_TEST'&&check.state==='HEALTHY')?'Passed':'Not verified'}</small>
             </details>
             <small>Last heartbeat {stamp(worker.lastHeartbeatAt)}
               {' · '}{worker.running_jobs??'—'} running / {worker.capacity??'—'} capacity
               {' · '}{worker.pending_jobs} pending</small>
             {worker.cloudSyncPending&&<small role="status">Pause change awaiting Worker acknowledgement; new jobs blocked.</small>}
             {worker.maintenanceUntil&&<small>Maintenance scheduled to end {stamp(worker.maintenanceUntil)}; readiness must pass before jobs resume.</small>}
-            {worker.warnings.map((warning)=><p className="ops-warning" role="alert" key={warning.code}>
-              {warning.severity}: {warning.title}. {warning.description} {warning.action}
+            {worker.warnings.map((warning)=><p className="ops-warning" role="alert"
+              key={`${warning.scope}:${warning.affected}:${warning.code}`}>
+              {warning.severity} · {warning.blocking?'Blocking':'Advisory'} · {warning.affected}: {warning.title}. {warning.description} {warning.action}
               {warning.detectedAt?` · Detected ${stamp(warning.detectedAt)}`:''}</p>)}</div>
           <div className="ops-row-actions">
             <button type="button" className={!worker.web_paused?'ops-safety-action':undefined} disabled={busy!==null} onClick={()=>void action(worker.id,
@@ -399,7 +405,8 @@ export default function OperationsDashboard({supportedOpenClawVersion}:{supporte
       <section className="ops-panel ops-history"><div className="ops-panel-head"><h3>Recent health and controls</h3>
         <small>Sanitized operational history</small></div>{data.history.length?data.history.map((event,index)=><p
           key={`${event.worker_device_id}-${event.created_at}-${index}`}><time>{stamp(event.created_at)}</time>
-          <strong>{event.kind.replaceAll('_',' ')}</strong><span>{event.code.replaceAll('_',' ')}</span></p>):
+          <strong>{event.capability_name??event.worker_name}</strong>
+          <span>{event.kind.replaceAll('_',' ')} · {event.code.replaceAll('_',' ')}</span></p>):
           <p className="ops-empty">No recent operational events.</p>}</section>
     </>}
   </section>;

@@ -6,6 +6,7 @@ import { AvailabilityScheduleSchema, AvailabilityPolicySchema } from
 import type { PostgresAvailabilityRepository } from './availability.js';
 import type { PostgresFinanceRepository } from './finance.js';
 import { workerVersionStatus } from '../../domain/src/worker-version.js';
+import { hasRequiredExecutionHealth } from '../../domain/src/worker-operational-health.js';
 import { isInsideSchedule, nextScheduleWindow } from '../../domain/src/availability-schedule.js';
 import { PostgresSellerEconomics } from './seller-economics.js';
 import { PostgresAvailabilityMetrics } from './availability-metrics.js';
@@ -148,10 +149,8 @@ export class PostgresSellerOperations {
         process.env.KIVRO_LATEST_WORKER_RELEASE??null);
       if(version==='SECURITY_UPDATE_REQUIRED'||process.env.NODE_ENV==='production'&&
         version==='UNKNOWN')throw new SellerOperationsError('SECURITY_BLOCK');
-      for(const code of ['DEVICE_IDENTITY','DOCKER_DAEMON','APPROVED_SANDBOX_IMAGE']){
-        if(!current.operational_checks?.some((item)=>item.code===code&&item.state==='HEALTHY'))
-          throw new SellerOperationsError('NOT_READY');
-      }
+      if(!hasRequiredExecutionHealth(current.operational_checks))
+        throw new SellerOperationsError('NOT_READY');
       const unsafe=await client.query(`SELECT 1 FROM capabilities c
         JOIN capability_versions v ON v.id=c.current_version_id
         LEFT JOIN capability_readiness r ON r.capability_version_id=v.id
@@ -204,11 +203,14 @@ export class PostgresSellerOperations {
     });
   }
 
-  private async assertWorkerResumeReady(client:PoolClient,workerId:string):Promise<void>{
+  private async assertWorkerResumeReady(client:PoolClient,workerId:string,
+    capabilityId:string|null=null):Promise<void>{
     const snapshot=await client.query<{worker_version:string;revoked_at:Date|null;
       blocked:boolean|null;local_security:boolean|null;reported_status:string|null;
-      observed_at:Date|null;capacity:number|null}>(`SELECT d.worker_version,d.revoked_at,
-      b.blocked,l.security_paused AS local_security,h.reported_status,h.observed_at,h.capacity
+      observed_at:Date|null;capacity:number|null;
+      operational_checks:{code:string;state:string}[]|null}>(`SELECT d.worker_version,d.revoked_at,
+      b.blocked,l.security_paused AS local_security,h.reported_status,h.observed_at,h.capacity,
+      h.operational_checks
       FROM worker_devices d
       LEFT JOIN worker_security_blocks b ON b.worker_device_id=d.id
       LEFT JOIN worker_local_pause_reports l ON l.worker_device_id=d.id
@@ -218,7 +220,8 @@ export class PostgresSellerOperations {
     if(!row||row.revoked_at||row.blocked||row.local_security)
       throw new SellerOperationsError('SECURITY_BLOCK');
     if(!row.observed_at||Date.now()-row.observed_at.getTime()>30_000||
-      !['ONLINE','PAUSED'].includes(row.reported_status??'')||!row.capacity)
+      !['ONLINE','PAUSED'].includes(row.reported_status??'')||!row.capacity||
+      !hasRequiredExecutionHealth(row.operational_checks))
       throw new SellerOperationsError('NOT_READY');
     if(process.env.NODE_ENV==='production'){
       const status=workerVersionStatus(row.worker_version,
@@ -231,12 +234,13 @@ export class PostgresSellerOperations {
       JOIN capability_versions v ON v.id=c.current_version_id
       LEFT JOIN capability_readiness r ON r.capability_version_id=v.id
       WHERE c.status='PUBLISHED' AND v.version_snapshot->>'workerDeviceId'=$1
+      AND ($2::uuid IS NULL OR c.id=$2::uuid)
       AND (r.observed_at IS NULL OR r.observed_at<now()-interval '30 seconds' OR
         r.sandbox_verified IS DISTINCT FROM true OR
         r.required_secrets_ready IS DISTINCT FROM true OR
         r.runtime_healthy IS DISTINCT FROM true OR
         r.worker_device_id IS DISTINCT FROM $1::uuid)
-      LIMIT 1`,[workerId]);
+      LIMIT 1`,[workerId,capabilityId]);
     if(unready.rowCount)throw new SellerOperationsError('NOT_READY');
   }
 
@@ -257,11 +261,14 @@ export class PostgresSellerOperations {
       if(row.seller_paused===paused&&
         (row.maintenance_until?.getTime()??null)===(until?.getTime()??null))return;
       if(!paused){
-        await this.assertWorkerResumeReady(client,row.worker_device_id);
+        await this.assertWorkerResumeReady(client,row.worker_device_id,capabilityId);
         const check=await client.query(`SELECT 1 FROM capabilities c
           JOIN capability_versions v ON v.id=c.current_version_id
           JOIN capability_readiness r ON r.capability_version_id=v.id
-          WHERE c.id=$1 AND r.worker_device_id=$2 AND r.state='READY'
+          -- A cloud pause makes the Worker report NOT_READY even when its
+          -- independent security, secret and runtime checks remain healthy.
+          WHERE c.id=$1 AND r.worker_device_id=$2
+          AND r.state IN ('READY','NOT_READY')
           AND r.observed_at>=now()-interval '30 seconds'
           AND r.sandbox_verified AND r.required_secrets_ready AND r.runtime_healthy`,
         [capabilityId,row.worker_device_id]);
@@ -462,11 +469,14 @@ export class PostgresSellerOperations {
         await this.availability.publicStatus(item.id):null,operations:scheduleView,
         availabilityMetrics:await availabilityMetrics.sellerCapability(item.id,sellerId)};
     }));
-    const history=await this.pool.query<{worker_device_id:string;capability_id:string|null;
-      kind:string;code:string;created_at:Date}>(`SELECT worker_device_id,capability_id,kind,code,created_at
-      FROM worker_operational_events WHERE worker_device_id IN
-      (SELECT id FROM worker_devices WHERE seller_profile_id=$1)
-      ORDER BY created_at DESC LIMIT 100`,[profile.id]);
+    const history=await this.pool.query<{worker_device_id:string;worker_name:string;
+      capability_id:string|null;capability_name:string|null;kind:string;code:string;
+      created_at:Date}>(`SELECT e.worker_device_id,d.name AS worker_name,
+      e.capability_id,c.name AS capability_name,e.kind,e.code,e.created_at
+      FROM worker_operational_events e JOIN worker_devices d ON d.id=e.worker_device_id
+      LEFT JOIN capabilities c ON c.id=e.capability_id AND c.seller_profile_id=$1
+      WHERE d.seller_profile_id=$1 ORDER BY e.created_at DESC,e.id DESC LIMIT 100`,
+      [profile.id]);
     return {profile,workers:workers.rows.map((row)=>{
       const fresh=!!row.observed_at&&Date.now()-row.observed_at.getTime()<=30_000;
       const versionStatus=workerVersionStatus(row.worker_version,
@@ -479,31 +489,41 @@ export class PostgresSellerOperations {
       const paused=!!row.web_paused||!!row.global_paused||cloudSyncPending;
       const ownCaps=capabilityViews.filter((item)=>item.worker_device_id===row.id&&
         item.status==='PUBLISHED');
-      const unready=ownCaps.some((item)=>!item.readinessFresh||
+      const unreadyCaps=ownCaps.filter((item)=>item.readiness_state!=='READY'||!item.readinessFresh||
         item.sandbox_verified!==true||item.required_secrets_ready!==true||
         item.runtime_healthy!==true);
+      const unready=unreadyCaps.length>0;
       const healthStatus=security?'SECURITY_WARNING':
         !fresh||row.reported_status==='OFFLINE'?'OFFLINE':paused?'PAUSED':
-        !row.capacity||unready||row.operational_checks?.some((check)=>
+        !row.capacity||unready||!hasRequiredExecutionHealth(row.operational_checks)||
+          row.operational_checks?.some((check)=>
           ['DOCKER_DAEMON','APPROVED_SANDBOX_IMAGE','DEVICE_IDENTITY'].includes(check.code)&&
           check.state!=='HEALTHY')?'NOT_READY':row.reported_status==='PAUSED'?'PAUSED':
         row.failure_rate!==null&&row.failure_rate>=0.1?'DEGRADED':'HEALTHY';
       const warnings=[...(security?[{severity:'CRITICAL',code:row.security_code??
         (versionStatus==='SECURITY_UPDATE_REQUIRED'?'WORKER_SECURITY_UPDATE_REQUIRED':
-          'SECURITY_PAUSE'),scope:'WORKER',blocking:true,
+          'SECURITY_PAUSE'),scope:'WORKER',affected:row.name,blocking:true,
         title:'Worker security block',description:'New work is blocked by a critical security condition.',
         detectedAt:row.security_detected_at?.toISOString()??row.observed_at?.toISOString()??null,
         action:'Resolve the security condition before accepting jobs'}]:[]),
-        ...(unready?[{severity:'WARNING',code:'CAPABILITY_NOT_READY',scope:'CAPABILITY',
-          blocking:true,title:'Capability needs attention',
-          description:'At least one published capability has stale or failing readiness.',
-          detectedAt:row.observed_at?.toISOString()??null,
-          action:'Inspect sandbox, secrets and runtime readiness for each capability'}]:[]),
+        ...unreadyCaps.map((capability)=>({severity:'WARNING',
+          code:capability.readiness_state==='DEPENDENCY_BLOCKED'?
+            'CAPABILITY_REVALIDATION_REQUIRED':'CAPABILITY_NOT_READY',scope:'CAPABILITY',
+          affected:capability.name,
+          blocking:true,title:capability.readiness_state==='DEPENDENCY_BLOCKED'?
+            'Capability requires revalidation':'Capability needs attention',
+          description:capability.readiness_state==='DEPENDENCY_BLOCKED'?
+            'A reviewed dependency or runtime no longer matches the published version.':
+            'This published capability has stale or failing readiness.',
+          detectedAt:capability.readinessAt??row.observed_at?.toISOString()??null,
+          action:capability.readiness_state==='DEPENDENCY_BLOCKED'?
+            'Review the changed dependency, rerun readiness tests and approve a new version':
+            'Inspect sandbox, secrets and runtime readiness for this capability'})),
         ...(row.operational_checks??[]).filter((check)=>check.state!=='HEALTHY'&&
           !['CLOUD_CONNECTION','SELLER_PAUSE'].includes(check.code)).map((check)=>({
           severity:check.code==='APPROVED_SANDBOX_IMAGE'&&check.state==='BLOCKING'?
             'CRITICAL':check.state==='BLOCKING'?'WARNING':'INFO',code:check.code,
-          scope:'WORKER',blocking:check.state==='BLOCKING',
+          scope:'WORKER',affected:row.name,blocking:check.state==='BLOCKING',
           title:check.code.replaceAll('_',' ').toLowerCase(),
           description:check.state==='BLOCKING'?'This local prerequisite is blocking new jobs.':
             'The Worker could not verify this prerequisite.',

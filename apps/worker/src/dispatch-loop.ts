@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { z } from 'zod';
-import { WORKER_PROTOCOL_VERSION, WorkerJobControlCommandSchema,
+import { WORKER_PROTOCOL_VERSION, WorkerHeartbeatSchema, WorkerJobControlCommandSchema,
   WorkerWelcomeSchema, JobOfferSchema, type JobOffer } from
   '../../../packages/worker-protocol/src/messages.js';
 import { WorkerTransportRouter } from '../../../packages/worker-protocol/src/transport.js';
@@ -11,6 +11,7 @@ import { WorkerJobControl } from './job-control.js';
 import { WorkerLocalState } from './local-state.js';
 import type { WorkerAvailabilityReporter } from './availability-reporter.js';
 import { flushLocalJobControls } from './local-control-outbox.js';
+import type { WorkerDispatchCapacity } from './dispatch-capacity.js';
 
 export interface WorkerInboundPollingPort {
   readonly controlPlaneId: string;
@@ -28,11 +29,21 @@ export class WorkerDispatchError extends Error {
     'NOT_READY') { super(code); this.name = 'WorkerDispatchError'; }
 }
 
+/** Spread reconnect attempts without extending the 30-second transport cap. */
+export function workerRetryDelayMs(backoffMs:number,randomFraction=Math.random()):number{
+  if(!Number.isSafeInteger(backoffMs)||backoffMs<100||backoffMs>30_000||
+    !Number.isFinite(randomFraction)||randomFraction<0||randomFraction>=1)
+    throw new RangeError('Invalid retry delay');
+  return Math.min(30_000,Math.max(100,
+    Math.floor(backoffMs*(0.8+randomFraction*0.4))));
+}
+
 /** Provider-neutral orchestration; callers compose a transport and a real job supervisor. */
 export class WorkerDispatchLoop {
   private readonly router = new WorkerTransportRouter();
   private readonly active = new Map<string, Promise<void>>();
   private state: 'ACTIVE' | 'DRAINING' | 'RETIRED' = 'ACTIVE';
+  private discoveryDraining=false;
   private started = false;
   private pauseSynchronized = false;
   private readyVersions=new Set<string>();
@@ -41,22 +52,31 @@ export class WorkerDispatchLoop {
     private readonly deviceId: string, private readonly packages: WorkerCapabilityPackageStore,
     private readonly localState: WorkerLocalState, private readonly jobControl: WorkerJobControl,
     private readonly supervisor: WorkerExecutionSupervisor,
-    private readonly onExecutionError: (offer: JobOffer, error: unknown) => void,
+  private readonly onExecutionError: (offer: JobOffer, error: unknown) => void,
     private readonly availabilityReporting?: { reporter: WorkerAvailabilityReporter;
       capacity: number; workerRelease: string; openClawVersion: string | null;
-      policyVersion: number }) {
+      policyVersion: number; coordinator?: WorkerDispatchCapacity;
+      operationalChecks?:()=>Promise<NonNullable<z.infer<typeof WorkerHeartbeatSchema>['operationalChecks']>> }) {
     z.uuid().parse(deviceId);
     this.router.connect(transport, 'ACTIVE');
   }
 
   /** Startup reconciliation never reruns an accepted paid job from a duplicate offer. */
-  async startup(): Promise<void> {
+  async startup(skipOrphanSweep=false): Promise<void> {
     if (this.started) return;
-    await this.jobControl.stopOrphanedAtStartup();
+    if(!skipOrphanSweep)await this.jobControl.stopOrphanedAtStartup();
     await this.jobControl.expireLeases();
     await this.jobControl.expireOverdue();
     await flushLocalJobControls(this.jobControl,this.transport,this.deviceId);
     this.started = true;
+  }
+
+  setDiscoveryState(state:'ACTIVE'|'DRAINING'):void{
+    this.discoveryDraining=state==='DRAINING';
+    if(this.discoveryDraining){
+      this.state='DRAINING';
+      this.router.markDraining(this.transport.controlPlaneId);
+    }else this.router.connect(this.transport,'ACTIVE');
   }
 
   async pollOnce(): Promise<void> {
@@ -67,18 +87,27 @@ export class WorkerDispatchLoop {
     await this.jobControl.expireOverdue();
     await flushLocalJobControls(this.jobControl,this.transport,this.deviceId);
     if (this.availabilityReporting) {
+      // Refresh security prerequisites on every signed heartbeat. An omitted
+      // report would overwrite the initial health observation in Cloud.
+      const operationalChecks=await this.availabilityReporting.operationalChecks?.();
       const beat=await this.availabilityReporting.reporter.heartbeat({
         controlPlaneId:this.transport.controlPlaneId,
         workerRelease:this.availabilityReporting.workerRelease,
         openClawVersion:this.availabilityReporting.openClawVersion,
-        runningJobs:this.active.size,capacity:this.availabilityReporting.capacity,
-        policyVersion:this.availabilityReporting.policyVersion });
+        runningJobs:this.availabilityReporting.coordinator?.activeCount(
+          this.jobControl.snapshots())??this.active.size,
+        capacity:this.discoveryDraining?0:this.availabilityReporting.capacity,
+        policyVersion:this.availabilityReporting.policyVersion,
+        ...(operationalChecks?{operationalChecks}:{}) });
       await this.transport.send(beat);
       this.readyVersions=new Set((beat.capabilityReadiness??[])
         .filter((item)=>item.state==='READY').map((item)=>item.capabilityVersionId));
       // HTTP success means the signed report was durably accepted by cloud. If it
       // times out, keep the revision pending; the retry is replay-safe.
-      this.localState.acknowledgeCloudRevision(beat.localRevision);
+      if(this.localState.acknowledgeCloudRevisionForPlane)
+        this.localState.acknowledgeCloudRevisionForPlane(this.transport.controlPlaneId,
+          beat.localRevision);
+      else this.localState.acknowledgeCloudRevision(beat.localRevision);
     }
     const messages = await this.transport.poll({ type: 'WORKER_HELLO', messageId: randomUUID(),
       workerDeviceId: this.deviceId, controlPlaneId: this.transport.controlPlaneId,
@@ -93,12 +122,15 @@ export class WorkerDispatchLoop {
         throw new WorkerDispatchError('WRONG_CONTROL_PLANE');
       }
       if (message.type === 'WORKER_WELCOME') {
-        this.state = message.controlPlaneState;
+        this.state = this.discoveryDraining?'DRAINING':message.controlPlaneState;
         if (message.pauseDirective) {
-          this.localState.applyCloudDirective(message.pauseDirective);
+          if(this.localState.applyCloudDirectiveForPlane)
+            this.localState.applyCloudDirectiveForPlane(this.transport.controlPlaneId,
+              message.pauseDirective);
+          else this.localState.applyCloudDirective(message.pauseDirective);
           this.pauseSynchronized = true;
           this.localState.recordCloudContact(this.availabilityReporting?.capacity??0);
-          if(message.pauseDirective.securityPaused)
+          if(this.localState.snapshot().securityPaused)
             await this.jobControl.enforceSecurityPause();
         } else {
           this.pauseSynchronized = false;
@@ -108,38 +140,56 @@ export class WorkerDispatchLoop {
       }
       if (message.type === 'JOB_OFFER') {
         if (message.workerDeviceId !== this.deviceId) throw new WorkerDispatchError('WRONG_WORKER');
-        if (this.state !== 'ACTIVE') throw new WorkerDispatchError('DRAINING');
-        if (!this.pauseSynchronized) throw new WorkerDispatchError('PAUSE_UNSYNCHRONIZED');
+        if (this.state !== 'ACTIVE') {
+          this.onExecutionError(message,new WorkerDispatchError('DRAINING'));
+          continue;
+        }
+        if (!this.pauseSynchronized) {
+          this.onExecutionError(message,new WorkerDispatchError('PAUSE_UNSYNCHRONIZED'));
+          continue;
+        }
         if(!this.availabilityReporting||this.availabilityReporting.capacity<1||
           !this.readyVersions.has(message.capabilityVersionId)||
-          !this.localState.isUnpausedForNewJobOffer(message.capabilityId))
-          throw new WorkerDispatchError('NOT_READY');
-        if (this.active.has(message.executionId) || this.jobControl.snapshots().some((item) =>
-          item.executionId === message.executionId)) continue;
+          !this.localState.isUnpausedForNewJobOffer(message.capabilityId)){
+          this.onExecutionError(message,new WorkerDispatchError('NOT_READY'));
+          continue;
+        }
+        const existing=this.jobControl.snapshots().find((item)=>
+          item.executionId===message.executionId);
+        if(existing&&existing.controlPlaneId!==this.transport.controlPlaneId)
+          throw new WorkerDispatchError('WRONG_CONTROL_PLANE');
+        if (this.active.has(message.executionId) || existing) continue;
         if (this.availabilityReporting && this.active.size >= this.availabilityReporting.capacity) {
           this.onExecutionError(message,new WorkerDispatchError('CAPACITY_FULL')); continue;
         }
-        this.router.ownExecution(message.executionId, this.transport.controlPlaneId);
         let pkg;
         let reviewedSkills;
         try {
           pkg = this.packages.load(message.capabilityVersionId);
           reviewedSkills = this.packages.loadReviewedSkills(message.capabilityVersionId);
         }
-        catch (error) { this.router.releaseExecution(message.executionId); this.onExecutionError(message, error); continue; }
-        const occupied=this.jobControl.snapshots().filter((item)=>
+        catch (error) { this.onExecutionError(message, error); continue; }
+        const snapshots=this.jobControl.snapshots();
+        const reserved=this.availabilityReporting?.coordinator?.reserve(message,
+          pkg.concurrencyLimit,snapshots);
+        const occupied=snapshots.filter((item)=>
           item.capabilityVersionId===pkg.capabilityVersionId&&
           !['STOPPED','CANCELLED','TIMED_OUT'].includes(item.status)).length;
-        if(occupied>=pkg.concurrencyLimit){
-          this.router.releaseExecution(message.executionId);
-          this.onExecutionError(message,new WorkerDispatchError('CAPACITY_FULL'));
+        if(reserved&&reserved!=='ACQUIRED'||!reserved&&occupied>=pkg.concurrencyLimit){
+          this.onExecutionError(message,new WorkerDispatchError(
+            reserved==='WRONG_CONTROL_PLANE'?'WRONG_CONTROL_PLANE':'CAPACITY_FULL'));
           continue;
         }
+        try{this.router.ownExecution(message.executionId,this.transport.controlPlaneId);}
+        catch(error){this.availabilityReporting?.coordinator?.release(message.executionId,
+          this.transport.controlPlaneId);throw error;}
         const task = this.supervisor.execute(message, pkg, reviewedSkills).catch((error: unknown) => {
           this.onExecutionError(message, error);
         }).finally(() => {
           this.active.delete(message.executionId);
           this.router.releaseExecution(message.executionId);
+          this.availabilityReporting?.coordinator?.release(message.executionId,
+            this.transport.controlPlaneId);
         });
         this.active.set(message.executionId, task);
         continue;
@@ -196,7 +246,8 @@ export class WorkerDispatchLoop {
         if (!['TRANSPORT_FAILED', 'DISCOVERY_FAILED'].includes(code)) throw error;
         retryMs = Math.min(retryMs * 2, 30_000);
       }
-      await delay(retryMs, undefined, { signal }).catch(() => undefined);
+      await delay(retryMs===pollIntervalMs?retryMs:workerRetryDelayMs(retryMs),
+        undefined, { signal }).catch(() => undefined);
     }
     await Promise.allSettled([...this.active.values()]);
     await this.transport.close();

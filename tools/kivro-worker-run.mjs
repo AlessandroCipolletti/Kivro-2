@@ -10,6 +10,7 @@ catch(error){
     error.code:error instanceof Error&&
       /^WORKER_[A-Z0-9_]{1,79}$/.test(error.message)?
       error.message:'WORKER_RUNTIME_UNAVAILABLE';
-  process.stderr.write(`${code}\n`);
+  process.stderr.write(`${JSON.stringify({event:'worker_runtime_unavailable',
+    at:new Date().toISOString(),code})}\n`);
   process.exitCode=1;
 }

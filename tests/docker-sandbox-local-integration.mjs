@@ -13,9 +13,13 @@ const plan = Object.freeze({ planVersion: 1, image, networkMode: 'none', readOnl
   capDrop: ['ALL'], noNewPrivileges: true, seccomp: 'builtin', runAs: '65532:65532',
   maxRuntimeSeconds: 5, memoryMb: 128, cpu: 1, maxPids: 32, maxOutputBytes: 4096 });
 
-function containers() {
-  return execFileSync(docker, ['ps', '-a', '--filter', 'name=kivro-sbx-', '--format', '{{.ID}}'],
-    { encoding: 'utf8' }).trim().split('\n').filter(Boolean).sort();
+function containersForAttempt(attemptId) {
+  const ids=execFileSync(docker,['ps','-a','--filter','name=kivro-sbx-',
+    '--format','{{.ID}}'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+  return ids.filter((id)=>{
+    const details=JSON.parse(execFileSync(docker,['inspect',id],{encoding:'utf8'}))[0];
+    return details.Mounts?.some((mount)=>mount.Source?.includes(attemptId));
+  }).sort();
 }
 
 test('real Docker sandbox enforces offline isolation and cleans up', async () => {
@@ -25,7 +29,6 @@ test('real Docker sandbox enforces offline isolation and cleans up', async () =>
   mkdirSync(input, { recursive: true, mode: 0o700 });
   const hostSentinel = join(root, 'personal-secret');
   writeFileSync(hostSentinel, 'PRIVATE HOST SENTINEL', { mode: 0o600 });
-  const before = containers();
   try {
     const adapter = new DockerSandboxAdapter({ dockerExecutable: docker, approvedImage: image, attemptRoot: root });
     const result = await adapter.run(plan, attemptId, ['/bin/sh', '-c',
@@ -33,6 +36,8 @@ test('real Docker sandbox enforces offline isolation and cleans up', async () =>
       'test ! -e /root/.openclaw && echo NO_PERSONAL_OPENCLAW; ' +
       'if touch /etc/kivro-escape 2>/dev/null; then echo ROOT_WRITABLE; else echo ROOT_READONLY; fi; ' +
       'if touch /job/input/escape 2>/dev/null; then echo INPUT_WRITABLE; else echo INPUT_READONLY; fi; ' +
+      'if test -e /job/metadata; then echo METADATA_VISIBLE; else echo METADATA_HIDDEN; fi; ' +
+      'touch /job/work/ephemeral && echo WORK_WRITABLE; ' +
       `if test -e ${hostSentinel}; then echo HOST_VISIBLE; else echo HOST_HIDDEN; fi; ` +
       "grep '^CapEff:[[:space:]]*0000000000000000' /proc/self/status >/dev/null && echo NO_CAPABILITIES; " +
       "grep '^NoNewPrivs:[[:space:]]*1' /proc/self/status >/dev/null && echo NO_NEW_PRIVILEGES; " +
@@ -42,7 +47,8 @@ test('real Docker sandbox enforces offline isolation and cleans up', async () =>
       'touch /job/output/created && echo OUTPUT_WRITABLE']);
     assert.equal(result.exitCode, 0, result.stderr);
     for (const marker of ['65532\n65532', 'NO_SOCKET', 'NO_PERSONAL_OPENCLAW', 'ROOT_READONLY',
-      'INPUT_READONLY', 'HOST_HIDDEN', 'NO_CAPABILITIES', 'NO_NEW_PRIVILEGES',
+      'INPUT_READONLY', 'METADATA_HIDDEN', 'WORK_WRITABLE', 'HOST_HIDDEN',
+      'NO_CAPABILITIES', 'NO_NEW_PRIVILEGES',
       'NETWORK_BLOCKED_1.1.1.1', 'NETWORK_BLOCKED_127.0.0.1',
       'NETWORK_BLOCKED_192.168.1.1', 'NETWORK_BLOCKED_169.254.169.254',
       'OUTPUT_WRITABLE']) {
@@ -61,7 +67,8 @@ test('real Docker sandbox enforces offline isolation and cleans up', async () =>
     const noDocker = new DockerSandboxAdapter({ dockerExecutable: '/does/not/exist/docker',
       approvedImage: image, attemptRoot: root });
     await assert.rejects(noDocker.run(plan, attemptId, ['/bin/true']), { code: 'DOCKER_UNAVAILABLE' });
-    assert.deepEqual(containers(), before);
+    assert.deepEqual(containersForAttempt(attemptId), [],
+      'this attempt must leave no sandbox container even when other tests run');
     const unsafeAttempt = randomUUID();
     symlinkSync(input, join(root, unsafeAttempt));
     await assert.rejects(adapter.run(plan, unsafeAttempt, ['/bin/true']), { code: 'INSECURE_INPUT' });

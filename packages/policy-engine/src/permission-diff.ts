@@ -47,10 +47,15 @@ export function securitySurfaceExpansion(previous: SecuritySurface, next: Securi
   if (canonicalJson(nextPolicy.internet ?? null) !== canonicalJson(priorPolicy.internet ?? null)) {
     add('POLICY_FIELD', 'internet');
   }
-  const previousConnectors = new Map(priorPolicy.internet?.mode === 'DECLARED_API_ACCESS'
-    ? priorPolicy.internet.connectors.map((connector) => [connector.id, canonicalJson(connector)]) : []);
-  if (nextPolicy.internet?.mode === 'DECLARED_API_ACCESS') {
-    for (const connector of nextPolicy.internet.connectors) {
+  if(canonicalJson(nextPolicy.declaredApiPolicy??null)!==
+    canonicalJson(priorPolicy.declaredApiPolicy??null))
+    add('POLICY_FIELD','declaredApiPolicy');
+  const oldApi=priorPolicy.declaredApiPolicy??priorPolicy.internet;
+  const newApi=nextPolicy.declaredApiPolicy??nextPolicy.internet;
+  const previousConnectors = new Map(oldApi?.mode === 'DECLARED_API_ACCESS'
+    ? oldApi.connectors.map((connector) => [connector.id, canonicalJson(connector)]) : []);
+  if (newApi?.mode === 'DECLARED_API_ACCESS') {
+    for (const connector of newApi.connectors) {
       if (previousConnectors.get(connector.id) !== canonicalJson(connector)) {
         add('NETWORK_DESTINATION', `connector:${connector.id}:${connector.host}${connector.path}`);
       }

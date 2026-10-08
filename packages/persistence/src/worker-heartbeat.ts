@@ -69,6 +69,8 @@ export class PostgresWorkerHeartbeatRepository {
         'WORKER_SECURITY_UPDATE_REQUIRED':null;
       if(beat.capabilityReadiness?.some((report)=>report.checks?.sandboxVerified===false))
         securityCode='SANDBOX_ISOLATION_FAILED';
+      if(beat.operationalChecks?.some((check)=>check.code==='SANDBOX_SELF_TEST'&&
+        check.state==='BLOCKING'))securityCode='SANDBOX_ISOLATION_FAILED';
       if(beat.operationalChecks?.some((check)=>check.code==='APPROVED_SANDBOX_IMAGE'&&
         check.state==='BLOCKING'))securityCode='SANDBOX_IMAGE_NOT_APPROVED';
       if(securityCode){
@@ -121,8 +123,6 @@ export class PostgresWorkerHeartbeatRepository {
         latest_heartbeat_message_id=$6,latest_heartbeat_hash=$7 WHERE id=$1`,
       [beat.workerDeviceId, beat.workerRelease, beat.openClawVersion, status,
         beat.sentAt??null,beat.sentAt?beat.messageId:null,beat.sentAt?bodyHash:null]);
-      if (beat.sentAt) await client.query(`UPDATE capability_readiness
-        SET state='NOT_READY',observed_at=now() WHERE worker_device_id=$1`,[beat.workerDeviceId]);
       const seen = new Set<string>();
       for (const report of beat.capabilityReadiness ?? []) {
         if (seen.has(report.capabilityVersionId)) throw new Error('DUPLICATE_READINESS');
@@ -173,6 +173,22 @@ export class PostgresWorkerHeartbeatRepository {
             capability_id,actor_kind,actor_id,kind,code)
             VALUES($1,$2,$3,'WORKER',$5,'HEALTH_CHANGED',$4)`,
           [randomUUID(),beat.workerDeviceId,row.capability_id,code,beat.workerDeviceId]);
+        }
+      }
+      if(beat.sentAt){
+        const omitted=await client.query<{capability_id:string;capability_version_id:string;
+          state:string}>(`SELECT capability_id,capability_version_id,state
+          FROM capability_readiness WHERE worker_device_id=$1
+          AND NOT(capability_version_id=ANY($2::uuid[])) FOR UPDATE`,
+        [beat.workerDeviceId,[...seen]]);
+        for(const row of omitted.rows){
+          await client.query(`UPDATE capability_readiness SET state='NOT_READY',
+            observed_at=now(),sandbox_verified=false,required_secrets_ready=false,
+            runtime_healthy=false WHERE capability_version_id=$1`,[row.capability_version_id]);
+          if(row.state!=='NOT_READY')await client.query(`INSERT INTO worker_operational_events(
+            id,worker_device_id,capability_id,actor_kind,actor_id,kind,code)
+            VALUES($1,$2,$3,'WORKER',($2::uuid)::text,'HEALTH_CHANGED','READINESS_REPORT_MISSING')`,
+          [randomUUID(),beat.workerDeviceId,row.capability_id]);
         }
       }
       await client.query('COMMIT');

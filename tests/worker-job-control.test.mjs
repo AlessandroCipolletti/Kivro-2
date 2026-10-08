@@ -70,6 +70,21 @@ test('pause is not acknowledged when process-tree control fails', async () => {
   } finally { rmSync(f.dir, { recursive: true, force: true }); }
 });
 
+test('an in-flight broker call that exceeds pause wait stays RUNNING without freezing Docker',
+  { timeout: 15_000 }, async () => {
+    const f = fixture();
+    try {
+      const requestId = uuid();
+      f.control.beginBrokerOperation(f.jobId, requestId);
+      const state = await f.control.pause(newLocalJobCommand(f.jobId, 'local:1000', 'CLI'));
+      assert.equal(state.status, 'RUNNING');
+      assert.equal(f.state.pauseCalls, 0);
+      assert.equal(f.control.commandHistory(f.jobId)[0].resulting_state, 'RUNNING');
+      f.control.endBrokerOperation(f.jobId, requestId);
+      assert.equal(f.control.activeBrokerOperations(f.jobId), 0);
+    } finally { f.cleanup(); }
+  });
+
 test('pause racing container exit becomes STOPPED instead of a stale pause request', async () => {
   const f = fixture();
   try {

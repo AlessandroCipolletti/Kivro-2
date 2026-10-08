@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -11,6 +11,7 @@ import { prepareSelectedPackage, WorkerUnreviewedPackageStore } from
 import { runRepresentativePackageTest } from
   '../dist/apps/worker/src/import-review-runner.js';
 import { hashCanonicalJson } from '../dist/packages/contracts/src/canonical-json.js';
+import { buildVersionCandidate } from '../dist/packages/domain/src/capability-version.js';
 
 test('seller selection creates only a local unreviewed package with exact skill bytes', async () => {
   const root=mkdtempSync(join(tmpdir(),'kivro-import-package-'));
@@ -92,5 +93,115 @@ test('seller selection creates only a local unreviewed package with exact skill 
     {code:'CORRUPT'});
     assert.equal(packages.load(authored.capabilityVersionId,sellerAccountId)
       .reviewedSkills[0].files[0].bytesBase64,skill.files[0].bytesBase64);
+    draft=drafts.declareResource({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      resourceId:'company_db',name:'Company records',type:'DATABASE'});
+    draft=drafts.declareResource({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      resourceId:'customer-api',name:'Customer status API',type:'PRIVATE_API'});
+    for(const dependencyId of ['company_db','customer-api']){
+      draft=drafts.applySelection({actionId:randomUUID(),draftId:draft.id,
+        sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+        dependencyId,selected:true});
+    }
+    const localResources=[{resourceId:'company_db',statementTimeoutMs:500,
+      operations:[{id:'lookup',schema:'public',table:'companies',
+        columns:['id','name'],lookupColumn:'id',maxRows:1}]}];
+    const declaredApis={version:1,mode:'DECLARED_API_ACCESS',connectors:[{
+      id:'customer-api',host:'api.example.com',method:'GET',path:'/v1/status',
+      maxRequestsPerJob:2,maxRequestBytes:1024,maxResponseBytes:4096}]};
+    const resourceAuthored={...authored,capabilityVersionId:randomUUID(),
+      localResources,declaredApis,
+      databaseCredentialRefs:{company_db:'seller:company-readonly'},
+      apiCredentialRefs:{'customer-api':'seller:customer-api'}};
+    await assert.rejects(prepareSelectedPackage(draft,{...resourceAuthored,
+      databaseCredentialRefs:{}},context,discovery),{code:'DEPENDENCY_UNSUPPORTED'});
+    await assert.rejects(prepareSelectedPackage(draft,{...resourceAuthored,
+      declaredApis:{...declaredApis,connectors:[{...declaredApis.connectors[0],
+        method:'POST'}]}},context,discovery),{code:'DEPENDENCY_UNSUPPORTED'});
+    const withResources=await prepareSelectedPackage(draft,resourceAuthored,context,discovery);
+    assert.deepEqual(withResources.localPackage.workerManifest.tools.allow,
+      ['kivro_resource_read','kivro_declared_api']);
+    assert.deepEqual(withResources.localPackage.workerManifest.resources.map((item)=>item.id),
+      ['company_db','customer-api']);
+    assert.equal(withResources.localPackage.permissionPolicy.proprietaryDatabase,'READ_ONLY');
+    assert.equal(withResources.localPackage.permissionPolicy.privateApi,'READ_ONLY');
+    assert.equal(withResources.localPackage.permissionPolicy.internet.connectors[0].host,
+      'api.example.com');
+    assert.equal(packages.stage(draft,withResources).capabilityVersionId,
+      resourceAuthored.capabilityVersionId);
+    draft=drafts.declareResource({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      resourceId:'selected-dataset',name:'Company dataset',type:'LOCAL_FILE'});
+    draft=drafts.applySelection({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      dependencyId:'selected-dataset',selected:true});
+    const dataset=join(root,'selected.txt');
+    writeFileSync(dataset,'Company-only data');
+    const withFile=await prepareSelectedPackage(draft,{...resourceAuthored,
+      capabilityVersionId:randomUUID(),selectedLocalPaths:[{
+        resourceId:'selected-dataset',absolutePath:realpathSync(dataset)}]},
+    context,discovery);
+    assert.deepEqual(withFile.localPackage.permissionPolicy.selectedFileResourceIds,
+      ['selected-dataset']);
+    assert.ok(withFile.localPackage.workerManifest.tools.allow.includes(
+      'kivro_selected_file_read'));
+    assert.equal(withFile.localPackage.selectedLocalBindings[0].absolutePath,
+      realpathSync(dataset));
+    assert.equal(withFile.localPackage.workerManifest.resources.at(-1).type,
+      'selected-file');
+    assert.equal(packages.stage(draft,withFile).capabilityVersionId,
+      withFile.localPackage.capabilityVersionId);
+    const publicCandidate=buildVersionCandidate({id:withFile.localPackage.capabilityVersionId,
+      capabilityId:withFile.localPackage.capabilityId,versionNumber:1,
+      workerDeviceId,requestedAt:new Date().toISOString(),
+      localPackage:withFile.localPackage,externalProcessors:['example'],
+      selectedPrice:{tier:'USD_999',currency:'USD',buyerAmountMinor:999,
+        platformFeeMinor:199,sellerEarningMinor:800}});
+    assert.equal(JSON.stringify(publicCandidate).includes(realpathSync(dataset)),false,
+      'the cloud and buyer projection must never contain a seller host path');
+    assert.equal(publicCandidate.publicPermissionManifest.entries.find((entry)=>
+      entry.category==='LOCAL_FILES').state,'SELECTED_ONLY');
+    draft=drafts.declareResource({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      resourceId:'kivro_research_fetch',name:'kivro_research_fetch',type:'TOOL'});
+    draft=drafts.applySelection({actionId:randomUUID(),draftId:draft.id,
+      sellerAccountId,expectedRevision:draft.revision,actedAt:new Date().toISOString(),
+      dependencyId:'kivro_research_fetch',selected:true});
+    const publicResearch={version:1,mode:'PUBLIC_WEB_RESEARCH',
+      domains:{mode:'ANY_PUBLIC_DOMAIN'},
+      search:{enabled:false,maxQueriesPerJob:1,maxResults:3},
+      fetch:{enabled:true,maxPagesPerJob:2,maxResponseBytes:4096,maxRedirects:1,
+        timeoutMs:2000,allowedContentTypes:['text/html']},
+      download:{enabled:false,maxDownloadsPerJob:1,maxFileBytes:4096,
+        maxBytesPerJob:100_000,allowedMimeTypes:[]},
+      limits:{maxNetworkBytesPerJob:100_000,maxDurationMs:60_000,
+        maxConcurrentRequests:1,maxRequestsPerHost:2}};
+    const researched=await prepareSelectedPackage(draft,{...resourceAuthored,
+      capabilityVersionId:randomUUID(),
+      publicResearch,selectedLocalPaths:[{resourceId:'selected-dataset',
+        absolutePath:realpathSync(dataset)}]},context,discovery);
+    assert.equal(researched.localPackage.permissionPolicy.publicInternet,
+      'PUBLIC_RESEARCH_BROKER');
+    assert.deepEqual(researched.localPackage.workerManifest.tools.allow,
+      ['kivro_research_fetch','kivro_resource_read','kivro_declared_api',
+        'kivro_selected_file_read']);
+    assert.equal(researched.localPackage.permissionPolicy.declaredApiPolicy.mode,
+      'DECLARED_API_ACCESS');
+    const researchCandidate=buildVersionCandidate({
+      id:researched.localPackage.capabilityVersionId,
+      capabilityId:researched.localPackage.capabilityId,versionNumber:1,
+      workerDeviceId,requestedAt:new Date().toISOString(),
+      localPackage:researched.localPackage,externalProcessors:['example'],
+      selectedPrice:{tier:'USD_999',currency:'USD',buyerAmountMinor:999,
+        platformFeeMinor:199,sellerEarningMinor:800}});
+    assert.equal(researchCandidate.publicPermissionManifest.entries.find((entry)=>
+      entry.category==='PUBLIC_INTERNET').state,'PUBLIC_RESEARCH_ONLY');
+    assert.equal(JSON.stringify(researchCandidate).includes(realpathSync(dataset)),false);
+    await assert.rejects(prepareSelectedPackage(draft,{...resourceAuthored,
+      capabilityVersionId:randomUUID(),
+      publicResearch:{...publicResearch,fetch:{...publicResearch.fetch,enabled:false}},
+      selectedLocalPaths:[{resourceId:'selected-dataset',absolutePath:realpathSync(dataset)}]},
+    context,discovery),{code:'DEPENDENCY_UNSUPPORTED'});
   }finally{packages.close();drafts.close();rmSync(root,{recursive:true,force:true});}
 });

@@ -45,7 +45,8 @@ function construct(){
         secretAccessKey:process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY}:{}),
     allowInsecureLoopback:process.env.NODE_ENV!=='production',
   });
-  const getAssets=()=>assets??=new MarketplaceAssetRepository(pool,getStorage());
+  const getAssets=()=>assets??=new MarketplaceAssetRepository(pool,getStorage(),
+    new ClamAvSocketScanner(required('KIVRO_CLAMAV_SOCKET')));
   return {pool,finance,availability,catalog,social,getBuyer,getJobs,getStorage,getAssets};
 }
 export function getMarketplaceService(){return shared??=construct();}

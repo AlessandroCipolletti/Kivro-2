@@ -13,8 +13,12 @@ import { S3PrivateObjectStorage } from '../dist/packages/infrastructure/s3/src/s
 const url=process.env.DATABASE_URL;
 const mode=process.env.KIVRO_STRIPE_MODE;
 const interval=Number(process.env.KIVRO_SCHEDULER_INTERVAL_MS ?? 5000);
+const planeId=process.env.KIVRO_CONTROL_PLANE_ID;
+const planeState=process.env.KIVRO_CONTROL_PLANE_STATE;
 const maxPauseSeconds=Number(process.env.KIVRO_MAX_PAUSE_DURATION_SECONDS??14400);
-if (!url || (mode!=='test'&&mode!=='live') || !Number.isSafeInteger(interval) ||
+if (!url || (mode!=='test'&&mode!=='live') || !planeId ||
+  !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(planeId) ||
+  !['ACTIVE','DRAINING'].includes(planeState) || !Number.isSafeInteger(interval) ||
   interval<100 || interval>300_000||!Number.isSafeInteger(maxPauseSeconds)||
   maxPauseSeconds<60||maxPauseSeconds>604800)
   throw new Error('INVALID_SCHEDULER_CONFIGURATION');
@@ -43,9 +47,12 @@ const maintenance=async(limit)=>{
   const maintenanceResumed=await sellerOperations.expireMaintenance(limit);
   const timedOut=await jobs.expireOverduePausedJobs(maxPauseSeconds,limit);
   const staleWorkers=await health.recordStaleWorkers(limit);
+  const lostExecutions=await jobs.expireLostWorkerExecutions(limit);
   const financeResult=await finance.reconcileTerminalJobs(limit);
+  const dispatch=planeState==='ACTIVE'?await jobs.dispatchEligible(planeId,limit):
+    {examined:0,offered:0,ineligible:0};
   const outputStagingRemoved=storage?await jobs.reconcileOutputStaging(storage,limit):null;
-  return {availabilitySamples,maintenanceResumed,timedOut,staleWorkers,
+  return {availabilitySamples,maintenanceResumed,timedOut,staleWorkers,lostExecutions,dispatch,
     outputStagingRemoved,...financeResult};
 };
 const abort=new globalThis.AbortController();
@@ -61,7 +68,8 @@ try {
     await runAvailabilityScheduler({repository,signal:abort.signal,intervalMs:interval,
       maintenance,
       onError:(error)=>process.stderr.write(`${JSON.stringify({event:'schedule_error',
-        message:error instanceof Error?error.message:'UNKNOWN_ERROR'})}\n`)});
+        code:typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{0,79}$/.test(error.code)?
+          error.code:'SCHEDULER_ERROR'})}\n`)});
   }
 } finally {
   await database.end();

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import test from 'node:test';
 
-test('all 106 M06 requirements remain traceable and open until their real closing evidence exists', () => {
+test('all 106 M06 requirements remain traceable as evidence closes their gates', () => {
   const requirements = readFileSync(new URL('../spec/REQUIREMENTS.md', import.meta.url), 'utf8');
   const coverage = readFileSync(new URL('../spec/COVERAGE.md', import.meta.url), 'utf8');
   const backlog = readFileSync(new URL('../docs/verification-backlog.md', import.meta.url), 'utf8');
@@ -12,8 +12,13 @@ test('all 106 M06 requirements remain traceable and open until their real closin
     .map((match) => match[1]);
   assert.equal(ids.length, 106);
   for (const id of ids) {
-    const line = coverage.split('\n').find((item) => item.includes(`\`${id}\``));
-    assert.ok(line && /`(?:DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION)`/.test(line), id);
-    assert.ok(backlog.includes(`| \`${id}\` (§`), `missing per-ID closing gate: ${id}`);
+    const line = coverage.split('\n').find((item) =>
+      item.trimStart().startsWith(`\`${id}\` `));
+    assert.ok(line,`missing coverage row: ${id}`);
+    const status=/`(VERIFIED|DEFERRED_VERIFICATION|OPEN_IMPLEMENTATION|TESTED)`/.exec(line)?.[1];
+    assert.ok(status,`unexplained status: ${id}`);
+    const hasBacklog=backlog.includes(`| \`${id}\` (§`);
+    assert.equal(hasBacklog,status!=='VERIFIED',
+      `backlog must match current evidence status: ${id}`);
   }
 });

@@ -77,7 +77,7 @@ export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,ch
         try{JSON.parse(rawJson[field.key]!);}catch{throw new Error(`${field.label}: enter valid JSON`);}
       }}
       const assets:Assets=Object.fromEntries(Object.entries(ownedAssets)
-        .filter(([,ids])=>ids.length>0));
+        .filter(([key,ids])=>ids.length>0&&current.some((field)=>field.key===key)));
       for(const field of current){
         if(field.type!=='FILE'&&field.type!=='FILES')continue;
         const selected=files[field.key]??[];
@@ -156,6 +156,8 @@ export function RunForm({detail,initialValues={},initialAssets={},sourceLabel,ch
     {sourceLabel&&<p className="notice success">{sourceLabel}. This is a new purchase using the current version and current price.</p>}
     {changeWarning&&<p className="notice error" role="alert">{changeWarning}</p>}
     <p className="run-helper">Your inputs are processed on the seller’s machine in an isolated job. Only the declared inputs reach the Worker. Review the permission summary above before uploading sensitive material.</p>
+    <p className="run-sensitive-warning" role="note"><strong>Before sharing sensitive information</strong>
+      <span>Your inputs will be processed on the seller’s computer in an isolated job. Check the declared processors and permissions above, and share only material you are authorized to provide. This is not confidential computing.</span></p>
     <div className="run-fields">{current.map((field,index)=><Fragment key={field.key}>{field.group&&
       (index===0||current[index-1]?.group!==field.group)&&
       <h3 className="run-group-title">{field.group}</h3>}<label className="run-field"><span>{field.label}{field.required?' *':''}</span>{field.description&&<small>{field.description}</small>}

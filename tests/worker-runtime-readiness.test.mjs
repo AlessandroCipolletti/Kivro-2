@@ -50,6 +50,12 @@ test('paid Worker readiness requires the exact sent review, credential and appro
       assert.equal(ready.ready,true);
       assert.equal(ready.sandboxVerified,true);
       assert.ok(ready.policyValidationHash);
+      const changedRuntime=await new WorkerRuntimeReadiness({...deps,
+        imageApproval:{async assertApprovedImage(){return {openClawVersion:'2026.8.3'};}}})
+        .check(pkg.capabilityVersionId);
+      assert.equal(changedRuntime.ready,false);
+      assert.equal(changedRuntime.revalidationRequired,true,
+        'a changed reviewed runtime needs a new seller review before admission');
       assert.equal((await new WorkerRuntimeReadiness({...deps,
         collectorImage:`kivro-output-collector@sha256:${'b'.repeat(64)}`})
         .check(pkg.capabilityVersionId)).ready,false,
@@ -61,8 +67,11 @@ test('paid Worker readiness requires the exact sent review, credential and appro
       imageAvailable=true;providerPublic=false;
       assert.equal((await readiness.check(pkg.capabilityVersionId)).ready,false);
       providerPublic=true;occupied=true;
-      assert.equal((await readiness.check(pkg.capabilityVersionId)).ready,false,
-        'a capability at its concurrency ceiling cannot admit a second job');
+      const busy=await readiness.check(pkg.capabilityVersionId);
+      assert.equal(busy.ready,true,
+        'a healthy capability with a full slot remains ready for queueing');
+      assert.equal(busy.capacityAvailable,false,
+        'the Worker must still deny another local admission');
       occupied=false;
       local.pauseAll('local:seller','LOCAL_CLI','emergency');
       assert.equal((await readiness.check(pkg.capabilityVersionId)).ready,false,

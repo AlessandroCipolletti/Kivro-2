@@ -2,6 +2,8 @@ import { defineConfig } from '@playwright/test';
 import process from 'node:process';
 process.loadEnvFile('.env.local');
 if(!process.env.M10_DATABASE_URL)throw new Error('M10_DATABASE_URL is required');
+if(!process.env.KIVRO_CLAMAV_SOCKET)throw new Error(
+  'KIVRO_CLAMAV_SOCKET is required for buyer file-finalization browser tests');
 const origin='http://localhost:3336';
 process.env.APP_ORIGIN=origin;
 process.env.DATABASE_URL=process.env.M10_DATABASE_URL;
@@ -20,6 +22,7 @@ export default defineConfig({testDir:'./tests/browser-m10',workers:1,retries:0,t
       OBJECT_STORAGE_REGION:process.env.OBJECT_STORAGE_REGION,
       OBJECT_STORAGE_ACCESS_KEY_ID:process.env.OBJECT_STORAGE_ACCESS_KEY_ID,
       OBJECT_STORAGE_SECRET_ACCESS_KEY:process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY,
+      KIVRO_CLAMAV_SOCKET:process.env.KIVRO_CLAMAV_SOCKET,
       KIVRO_LEASE_KEY_VERSION:'m10',
       KIVRO_LEASE_KEY_BASE64:Buffer.alloc(32,17).toString('base64')}},
 });

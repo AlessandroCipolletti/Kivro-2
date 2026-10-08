@@ -318,6 +318,20 @@ export class WorkerJobControl {
     const row = this.row(input.jobId);
     try {
       await this.waitBrokerQuiescent(input.jobId);
+    } catch (error) {
+      if (!(error instanceof WorkerJobControlError && error.code === 'CONTROL_FAILED')) {
+        throw error;
+      }
+      // An in-flight provider operation that cannot finish within the bounded
+      // wait makes resumable suspension unavailable for this attempt. Report
+      // the verified RUNNING state instead of claiming a pause or aborting a
+      // paid call whose result would fail after resume.
+      if (await this.docker.status(row.container_id, row.job_id, row.attempt_id) === 'running') {
+        return this.confirm(input, 'RUNNING');
+      }
+      throw new WorkerJobControlError('CONTROL_FAILED');
+    }
+    try {
       await this.docker.pause(row.container_id, row.job_id, row.attempt_id);
     } catch {
       try {

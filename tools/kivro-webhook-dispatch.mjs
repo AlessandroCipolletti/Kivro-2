@@ -30,7 +30,8 @@ try{
       process.stdout.write(`${JSON.stringify({event:'webhook_dispatch',attempted})}\n`);
     }catch(error){
       process.stderr.write(`${JSON.stringify({event:'webhook_dispatch_error',
-        code:error instanceof Error?error.name:'UNKNOWN'})}\n`);
+        code:typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{0,79}$/.test(error.code)?
+          error.code:'WEBHOOK_DISPATCH_ERROR'})}\n`);
       if(process.argv.includes('--once'))throw error;
     }
     if(process.argv.includes('--once'))break;

@@ -58,12 +58,48 @@ test('Worker admission binds immutable package, seller pause and fresh runtime p
       requiredSecretsReady: true, runtimeHealthy: true, capacityAvailable: true }; } } };
   try {
     assert.equal((await assessJobOffer(offer, pkg, context)).jobId, offer.jobId);
+    await assert.rejects(assessJobOffer(offer,pkg,{...context,
+      readiness:{async check(){return {...await context.readiness.check(),
+        capacityAvailable:false};}}}),{code:'RUNTIME_NOT_READY'});
+    await assert.rejects(assessJobOffer(offer,pkg,{...context,
+      readiness:{async check(){return {...await context.readiness.check(),
+        requiredSecretsReady:false};}}}),{code:'RUNTIME_NOT_READY'},
+    'a present payment reservation never overrides a missing seller secret');
+    for(const [cause,change] of [
+      ['sandbox', {sandboxVerified:false}],
+      ['inference or local service', {runtimeHealthy:false}],
+      ['dependency or selected resource', {ready:false}],
+      ['stale readiness', {checkedAt:new Date(Date.now()-31_000).toISOString()}],
+      ['future-dated readiness', {checkedAt:new Date(Date.now()+31_000).toISOString()}],
+    ]){
+      await assert.rejects(assessJobOffer(offer,pkg,{...context,
+        readiness:{async check(){return {...await context.readiness.check(),...change};}}}),
+      {code:'RUNTIME_NOT_READY'},`${cause} must block a financially secured offer`);
+    }
+    await assert.rejects(assessJobOffer(offer,pkg,{...context,
+      readiness:{async check(){return {...await context.readiness.check(),
+        policyValidationHash:`sha256:${'c'.repeat(64)}`};}}}),
+    {code:'POLICY_MISMATCH'},'a current local check cannot authorize an older policy');
+    await assert.rejects(assessJobOffer({...offer,workerDeviceId:randomUUID()},
+      pkg,context),{code:'WRONG_WORKER'});
+    await assert.rejects(assessJobOffer({...offer,expiresAt:new Date(
+      Date.now()-1000).toISOString()},pkg,context),{code:'OFFER_EXPIRED'});
+    await assert.rejects(assessJobOffer({...offer,capabilityVersionId:randomUUID()},
+      pkg,context),{code:'VERSION_MISMATCH'});
+    await assert.rejects(assessJobOffer({...offer,paymentSecured:false},
+      pkg,context));
+    await assert.rejects(assessJobOffer({...offer,protocolVersion:'kivro-worker/2'},
+      pkg,context));
     await assert.rejects(assessJobOffer({ ...offer, controlPlaneId: 'other' }, pkg, context),
       { code: 'WRONG_CONTROL_PLANE' });
     await assert.rejects(assessJobOffer({ ...offer, inputTotalBytes: 1001 }, pkg, context),
       { code: 'INPUT_LIMIT' });
     await assert.rejects(assessJobOffer({ ...offer, localPackageHash: `sha256:${'0'.repeat(64)}` }, pkg, context),
       { code: 'VERSION_MISMATCH' });
+    await assert.rejects(assessJobOffer({ ...offer,
+      workerManifestHash: `sha256:${'0'.repeat(64)}` }, pkg, context),
+    { code: 'VERSION_MISMATCH' },
+    'an offer for different approved sandbox/tool bytes is rejected before acceptance');
     local.pauseCapability(capability, 'local:1000');
     await assert.rejects(assessJobOffer(offer, pkg, context), { code: 'SELLER_PAUSED' });
   } finally { local.close(); rmSync(dir, { recursive: true, force: true }); }

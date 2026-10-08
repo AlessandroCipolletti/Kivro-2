@@ -55,6 +55,20 @@ test('doctor shows critical failures and does not print local paths or secrets',
   }
 });
 
+test('pairing CLI returns a bounded code for malformed private cloud settings',()=>{
+  const directory=mkdtempSync(join(tmpdir(),'kivro-pair-redaction-'));
+  try{
+    const result=spawnSync(process.execPath,[command,'pair',
+      'AAAAAAAA-BBBBBBBB-CCCCCCCC-DDDDDDDD'],{encoding:'utf8',
+      env:{...process.env,KIVRO_WORKER_STATE_DIR:directory,
+        KIVRO_CLOUD_URL:'private-cloud-setting-sentinel'}});
+    assert.equal(result.status,1);
+    assert.equal(result.stdout.trim(),'ERR_INVALID_URL');
+    assert.doesNotMatch(result.stdout+result.stderr,
+      /private-cloud-setting-sentinel|kivro-pair-redaction-/);
+  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
 test('seller discovery command reads metadata locally without consent or state mutation', () => {
   const home=mkdtempSync(join(realpathSync(tmpdir()),'kivro-worker-discover-'));
   const state=join(home,'.openclaw');

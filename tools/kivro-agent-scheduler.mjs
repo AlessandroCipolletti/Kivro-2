@@ -44,6 +44,7 @@ if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
   }else{
     await runAgentScheduler(config,abort.signal,globalThis.fetch,(error)=>
       process.stderr.write(`${JSON.stringify({event:'agent_reconcile_error',
-        code:error instanceof Error?error.message:'UNKNOWN_ERROR'})}\n`));
+        code:typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{0,79}$/.test(error.code)?
+          error.code:'AGENT_RECONCILE_ERROR'})}\n`));
   }
 }

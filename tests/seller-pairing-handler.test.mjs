@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
 import process from 'node:process';
-import { handleSellerPairingRequest } from
+import {handleSellerPairingRequest,handleSellerWorkerRevokeRequest} from
   '../dist/apps/web/src/seller/pairing-handler.js';
 
 const priorOrigin=process.env.APP_ORIGIN;
@@ -21,6 +21,8 @@ function fixture(authenticated=true,acknowledged=true){
       if(sql.includes('JOIN accounts'))
         return {rows:[{id:profileId}],rowCount:1};
       if(sql.includes('INSERT INTO worker_pairing_codes'))return {rows:[],rowCount:1};
+      if(sql.includes("UPDATE worker_devices d SET status='REVOKED'"))
+        return {rows:[],rowCount:acknowledged?1:0};
       throw new Error(`Unexpected SQL: ${sql}`);
     },
   };
@@ -73,4 +75,36 @@ test('pairing route rejects unrelated methods and malformed redemption',async()=
     'http://localhost:3000/api/seller/pairing/redeem',{method:'POST',
       headers:{'content-type':'application/json'},body:'{}'}),'redeem',service);
   assert.equal(response.status,400);
+});
+
+test('seller Worker revocation is same-origin, owner-bound and replay safe',async()=>{
+  const deviceId=randomUUID();
+  const request=(origin='http://localhost:3000',body='{}')=>
+    new globalThis.Request(`http://localhost:3000/api/seller/worker-devices/${deviceId}/revoke`,{
+      method:'POST',headers:{origin,'content-type':'application/json'},body});
+  const denied=fixture(false);
+  assert.equal((await handleSellerWorkerRevokeRequest(request(),deviceId,
+    denied.service)).status,401);
+  assert.equal(denied.calls.length,0);
+  const crossOrigin=fixture();
+  assert.equal((await handleSellerWorkerRevokeRequest(request('https://evil.example'),
+    deviceId,crossOrigin.service)).status,403);
+  assert.equal(crossOrigin.calls.length,0);
+  const foreign=fixture(true,false);
+  assert.equal((await handleSellerWorkerRevokeRequest(request(),deviceId,
+    foreign.service)).status,403);
+  assert.equal((await handleSellerWorkerRevokeRequest(request(),randomUUID(),
+    foreign.service)).status,403);
+  const owner=fixture();
+  for(let replay=0;replay<2;replay++){
+    const response=await handleSellerWorkerRevokeRequest(request(),deviceId,
+      owner.service);
+    assert.equal(response.status,200);
+    assert.deepEqual(await response.json(),{deviceId,revoked:true});
+  }
+  assert.equal(owner.calls.length,2);
+  assert.deepEqual(owner.calls[0].values,[deviceId,accountId]);
+  assert.equal((await handleSellerWorkerRevokeRequest(request(undefined,
+    '{"accountId":"forged"}'),deviceId,owner.service)).status,400);
+  assert.equal(owner.calls.length,2);
 });

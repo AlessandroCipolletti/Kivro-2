@@ -1,3 +1,4 @@
+import { healthyWorkerChecks } from './fixtures/healthy-worker-checks.mjs';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -93,7 +94,7 @@ if (!process.env.M07_DATABASE_URL) {
       await pool.query("INSERT INTO seller_profiles(id,account_id,display_name,status,payout_status) VALUES($1,$2,'Seller','ACTIVE','NOT_STARTED')", [seller, sellerAccount]);
       await pool.query("INSERT INTO worker_devices(id,seller_profile_id,public_key,name,platform,worker_version,status) VALUES($1,$2,'test-key','Worker','LINUX','test','ONLINE')", [worker, seller]);
       await new PostgresWorkerHeartbeatRepository(pool).observe({
-        type: 'WORKER_HEARTBEAT', protocolVersion: WORKER_PROTOCOL_VERSION,
+        type: 'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks, protocolVersion: WORKER_PROTOCOL_VERSION,
         messageId: randomUUID(), controlPlaneId: 'plane-a', workerDeviceId: worker,
         workerRelease: '0.0.0-dev', openClawVersion: null, status: 'ONLINE',
         runningJobs: 0, capacity: 1, policyVersion: 1, localRevision: 0,
@@ -182,7 +183,7 @@ if (!process.env.M07_DATABASE_URL) {
       assert.equal((await repo.acknowledgeJobControl(pausedAck, worker, 'plane-a')).status, 'PAUSED');
       assert.equal((await repo.acknowledgeJobControl(pausedAck, worker, 'plane-a')).status, 'PAUSED');
       await new PostgresWorkerHeartbeatRepository(pool).observe({
-        type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+        type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
         messageId:randomUUID(),controlPlaneId:'plane-a',workerDeviceId:worker,
         workerRelease:'0.0.0-dev',openClawVersion:null,status:'ONLINE',
         sentAt:new Date().toISOString(),runningJobs:1,capacity:1,
@@ -192,6 +193,12 @@ if (!process.env.M07_DATABASE_URL) {
       worker,'plane-a');
       const resume = { ...pause, commandId: randomUUID(), action: 'RESUME', reason: null,
         requestedAt: new Date().toISOString() };
+      await pool.query(`UPDATE worker_heartbeats SET operational_checks='[]'::jsonb
+        WHERE worker_device_id=$1`,[worker]);
+      await assert.rejects(repo.requestJobControl(resume,sellerAccount),
+        {code:'NOT_ELIGIBLE'},'Cloud cannot resume paid execution with missing Docker proof');
+      await pool.query(`UPDATE worker_heartbeats SET operational_checks=$2::jsonb
+        WHERE worker_device_id=$1`,[worker,JSON.stringify(healthyWorkerChecks)]);
       assert.equal((await repo.requestJobControl(resume, sellerAccount)).status, 'RESUME_REQUESTED');
       assert.equal((await repo.acknowledgeJobControl({ ...pausedAck, commandId: resume.commandId,
         status: 'RESUME_NOT_READY', localRevision: 5, confirmedAt: null }, worker, 'plane-a')).status,
@@ -304,7 +311,7 @@ if (!process.env.M07_DATABASE_URL) {
       const rejectedJob=randomUUID(),rejectedReservation=randomUUID();
       securedJobs.set(rejectedJob,rejectedReservation);
       await new PostgresWorkerHeartbeatRepository(pool).observe({
-        type:'WORKER_HEARTBEAT',protocolVersion:WORKER_PROTOCOL_VERSION,
+        type:'WORKER_HEARTBEAT',operationalChecks:healthyWorkerChecks,protocolVersion:WORKER_PROTOCOL_VERSION,
         messageId:randomUUID(),controlPlaneId:'plane-a',workerDeviceId:worker,
         workerRelease:'0.0.0-dev',openClawVersion:null,status:'ONLINE',
         sentAt:new Date(Date.now()+1000).toISOString(),runningJobs:0,capacity:1,

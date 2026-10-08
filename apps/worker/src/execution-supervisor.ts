@@ -63,7 +63,8 @@ export interface WorkerSupervisorDependencies {
   readonly sandbox: DockerSandboxAdapter;
   readonly docker: DockerJobControlAdapter;
   readonly dockerExecutable: string;
-  readonly brokerPorts: JobBrokerPorts | ((pkg: ReturnType<typeof LocalCapabilityPackageSchema.parse>) => JobBrokerPorts);
+  readonly brokerPorts: JobBrokerPorts | ((pkg: ReturnType<typeof LocalCapabilityPackageSchema.parse>,
+    offer:JobOffer) => JobBrokerPorts);
   readonly storage: ObjectStoragePort | null;
   readonly attemptRoot: string;
   readonly storageOrigin: string;
@@ -131,7 +132,7 @@ export class WorkerExecutionSupervisor {
     const fileOutput = envelope.contractData.output.fields.some((field) =>
       field.type === 'FILE' || field.type === 'FILES');
     const brokerPorts=typeof this.deps.brokerPorts==='function'?
-      this.deps.brokerPorts(pkg):this.deps.brokerPorts;
+      this.deps.brokerPorts(pkg,offer):this.deps.brokerPorts;
     const router = new WorkerBrokerRouter(pkg, offer.jobId, brokerPorts,
       { inputFiles: envelope.files.length > 0, outputFiles: fileOutput });
     const limits = pkg.workerManifest.limits;
@@ -168,10 +169,23 @@ export class WorkerExecutionSupervisor {
           state.status !== 'RUNNING' || Date.parse(state.leaseExpiresAt) <= Date.now() ||
           this.deps.localState.snapshot().securityPaused) throw new WorkerExecutionError('NOT_READY');
       };
+      const authorizeInFlightCompletion = async (): Promise<void> => {
+        const state = this.deps.jobControl.snapshot(offer.jobId);
+        if (state.executionId !== offer.executionId || state.attemptId !== offer.attemptId ||
+          !['RUNNING', 'PAUSE_REQUESTED'].includes(state.status) ||
+          Date.parse(state.leaseExpiresAt) <= Date.now() ||
+          this.deps.localState.snapshot().securityPaused) throw new WorkerExecutionError('NOT_READY');
+      };
       const sidecar = new BrokerSidecar(this.deps.dockerExecutable, this.deps.docker,
         offer.jobId, offer.attemptId, authorize, (request, signal) => router.dispatch(request, signal),
         { begin: (id) => this.deps.jobControl.beginBrokerOperation(offer.jobId, id),
-          end: (id) => this.deps.jobControl.endBrokerOperation(offer.jobId, id) });
+          end: (id) => this.deps.jobControl.endBrokerOperation(offer.jobId, id) },
+        { deferNewRequest: () => {
+          const state = this.deps.jobControl.snapshot(offer.jobId);
+          return ['PAUSE_REQUESTED', 'PAUSED', 'RESUME_REQUESTED'].includes(state.status) &&
+            Date.parse(state.leaseExpiresAt) > Date.now() &&
+            !this.deps.localState.snapshot().securityPaused;
+        }, authorizeInFlightCompletion });
       let lastRenewAttempt = 0;
       try {
         await this.deps.sandbox.runWithOutputControlled(plan, offer.attemptId, ['run-job'],
@@ -211,7 +225,7 @@ export class WorkerExecutionSupervisor {
                 if(changed.some((item)=>item.jobId===offer.jobId&&item.status==='CANCELLED'))
                   throw new WorkerExecutionError('NOT_READY');
               }
-              if (['PAUSE_REQUESTED', 'CANCEL_REQUESTED'].includes(before.status) ||
+              if (before.status === 'CANCEL_REQUESTED' ||
                 Date.parse(before.leaseExpiresAt) <= Date.now() ||
                 (before.pauseExpiresAt && Date.parse(before.pauseExpiresAt) <= Date.now())) {
                 await sidecar.quiesce();
@@ -219,7 +233,11 @@ export class WorkerExecutionSupervisor {
               await this.deps.jobControl.expireLeases();
               await this.deps.jobControl.expireOverdue();
               const state = this.deps.jobControl.snapshot(offer.jobId);
-              if (state.status === 'RUNNING' && Date.parse(state.leaseExpiresAt) - Date.now() < 15_000 &&
+              // A bounded pause keeps the buyer reservation and ownership lease.
+              // In-flight broker calls may take time to quiesce before Docker freezes.
+              if (['RUNNING','PAUSE_REQUESTED','PAUSED','RESUME_REQUESTED',
+                'SECURITY_PAUSED'].includes(state.status) &&
+                Date.parse(state.leaseExpiresAt) - Date.now() < 15_000 &&
                 Date.now() - lastRenewAttempt > 2_000) {
                 lastRenewAttempt = Date.now();
                 try {

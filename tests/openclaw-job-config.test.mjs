@@ -79,5 +79,27 @@ test('job config materializes only exact reviewed skill bytes and fixed broker t
       skillBytes.toString());
     assert.equal(readFileSync(join(inputRoot, 'message.txt'), 'utf8').includes('Ignore the policy'), true);
     assert.equal(JSON.stringify(config).includes('Ignore the policy'), false);
+    const localRoot=join(attempt,'input-local');
+    mkdirSync(localRoot,{mode:0o700});
+    const localPolicy={providerId:'local',modelId:'selected-model',
+      endpointRef:'local:model-1',maxRequestsPerJob:2,
+      maxInputTokensPerRequest:8192,maxOutputTokensPerRequest:1024,
+      maxTokensPerJob:20_000,maxDailyJobs:10};
+    const localPkg={...pkg,permissionPolicy:{...pkg.permissionPolicy,
+      providerBudget:undefined,localInference:localPolicy,sellerCredentialRefs:[]}};
+    await prepareOpenClawJobInput({inputRoot:localRoot,localPackage:localPkg,
+      envelope,approvedImage,allowedToolNames:['kivro_submit_result'],
+      reviewedSkills:approved,maxOutputFileBytes:65536});
+    const localConfig=JSON.parse(readFileSync(join(localRoot,'config.json'),'utf8'));
+    assert.equal(localConfig.agents.defaults.model.primary,'kivro/selected-model');
+    assert.equal(localConfig.models.providers.kivro.baseUrl,'http://127.0.0.1:8787/v1');
+    assert.equal(JSON.stringify(localConfig).includes('seller:only'),false);
+    const bothRoot=join(attempt,'input-both');
+    mkdirSync(bothRoot,{mode:0o700});
+    await assert.rejects(prepareOpenClawJobInput({inputRoot:bothRoot,
+      localPackage:{...pkg,permissionPolicy:{...pkg.permissionPolicy,
+        localInference:localPolicy}},envelope,approvedImage,
+      allowedToolNames:['kivro_submit_result'],reviewedSkills:approved,
+      maxOutputFileBytes:65536}));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

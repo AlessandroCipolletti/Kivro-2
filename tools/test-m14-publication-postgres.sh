@@ -21,4 +21,6 @@ for migration in "$repo_root"/packages/persistence/migrations/00[0-9][0-9]_*.sql
 done
 mapped_port=$(docker port "$container_name" 5432/tcp | sed -n 's/.*://p' | head -1)
 M14_DATABASE_URL="postgres://postgres@127.0.0.1:$mapped_port/postgres" \
-  node --test "$repo_root/tests/m14-publication-postgres-integration.mjs"
+  node --test "$repo_root/tests/m14-publication-postgres-integration.mjs" \
+    "$repo_root/tests/m16-input-contract-postgres-integration.mjs" \
+    "$repo_root/tests/m16-seller-onboarding-postgres-integration.mjs"

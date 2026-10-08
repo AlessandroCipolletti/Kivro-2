@@ -1,0 +1,2 @@
+# PDF cross-reference records contain a mandatory space before each line ending.
+tests/fixtures/m16-media/*.pdf -diff

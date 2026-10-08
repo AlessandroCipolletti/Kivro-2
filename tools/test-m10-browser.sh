@@ -2,6 +2,13 @@
 set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
+cd "$repo_root"
+export KIVRO_CLAMAV_SOCKET="${KIVRO_CLAMAV_SOCKET:-${KIVRO_M16_LIVE_CLAMAV_SOCKET:-tcp://127.0.0.1:13310}}"
+if ! node --input-type=module -e 'import {ClamAvSocketScanner} from "./dist/packages/infrastructure/adapters/src/clamav-scanner.js";
+  await new ClamAvSocketScanner(process.env.KIVRO_CLAMAV_SOCKET).ping();' >/dev/null 2>&1; then
+  echo 'Local ClamAV is required for buyer file tests. Start the malware-scanner service with pnpm local:up.' >&2
+  exit 1
+fi
 container_name="kivro-m10-browser-postgres-$$"
 s3_container="kivro-m10-browser-storage-$$"
 s3_config=$(mktemp /tmp/kivro-m10-s3.XXXXXX)

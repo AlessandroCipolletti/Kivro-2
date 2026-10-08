@@ -123,6 +123,35 @@ test('local inference requires an explicit endpoint candidate, never an inferred
   } finally { f.cleanup(); }
 });
 
+test('seller resource declaration persists as an unselected, replay-safe local candidate',()=>{
+  const f=state();
+  try{
+    let store=new SellerImportDraftStore(f.dir);
+    store.createDraft(draftId,seller,graph());
+    const action={actionId:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',draftId,
+      sellerAccountId:seller,expectedRevision:0,
+      actedAt:'2026-10-06T00:00:00.000Z',resourceId:'customer_api',
+      name:'Customer read API',type:'PRIVATE_API'};
+    const declared=store.declareResource(action);
+    assert.equal(declared.revision,1);
+    assert.equal(declared.graph.nodes.find((node)=>node.id==='customer_api').selected,false);
+    assert.ok(declared.graph.nodes.find((node)=>node.id==='research')
+      .dependsOn.includes('customer_api'));
+    assert.deepEqual(store.declareResource(action),declared);
+    assert.throws(()=>store.declareResource({...action,name:'changed'}),{code:'CONFLICT'});
+    assert.throws(()=>store.declareResource({...action,actionId:'ffffffff-ffff-4fff-8fff-ffffffffffff'}),
+      {code:'CONFLICT'});
+    store.close();store=new SellerImportDraftStore(f.dir);
+    assert.deepEqual(store.getDraft(draftId,seller),declared);
+    assert.throws(()=>store.getDraft(draftId,otherSeller),{code:'NOT_FOUND'});
+    store.close();
+    const db=new DatabaseSync(join(f.dir,'import.sqlite'));
+    assert.throws(()=>db.prepare('DELETE FROM import_resource_actions WHERE action_id=?')
+      .run(action.actionId),/append-only/);
+    db.close();
+  }finally{f.cleanup();}
+});
+
 test('consent is immutable, idempotent and visible only through seller-scoped queries', () => {
   const f = state();
   try {

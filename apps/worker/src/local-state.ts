@@ -76,6 +76,18 @@ CREATE TABLE IF NOT EXISTS capability_pause (
 CREATE TABLE IF NOT EXISTS cloud_capability_pause (
   capability_id TEXT PRIMARY KEY
 );
+CREATE TABLE IF NOT EXISTS worker_cloud_plane_state (
+  control_plane_id TEXT PRIMARY KEY,
+  revision INTEGER NOT NULL CHECK(revision >= 0),
+  paused INTEGER NOT NULL CHECK(paused IN (0,1)),
+  security_paused INTEGER NOT NULL CHECK(security_paused IN (0,1)),
+  directive_json TEXT NOT NULL,
+  capability_pauses_json TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS worker_cloud_plane_ack (
+  control_plane_id TEXT PRIMARY KEY,
+  acknowledged_revision INTEGER NOT NULL DEFAULT 0 CHECK(acknowledged_revision >= 0)
+);
 CREATE TABLE IF NOT EXISTS worker_connection_state (
   singleton INTEGER PRIMARY KEY CHECK(singleton=1),
   last_contact_at TEXT,
@@ -109,6 +121,15 @@ type StateRow = {
   pause_source: PauseSource | null;
   local_revision: number;
   acknowledged_revision: number;
+};
+
+type CloudPlaneRow = {
+  control_plane_id:string;
+  revision:number;
+  paused:number;
+  security_paused:number;
+  directive_json:string;
+  capability_pauses_json:string;
 };
 
 type AuditRow = {
@@ -148,7 +169,8 @@ function pathExistsNoFollow(path: string): boolean {
 
 /** Opens a seller-local SQLite file with the same ownership, mode and durability rules for every Worker store. */
 export function openPrivateWorkerSqlite(stateDir: string,
-  filename: 'worker.sqlite' | 'import.sqlite' | 'paired-seller.sqlite'): DatabaseSync {
+  filename: 'worker.sqlite' | 'import.sqlite' | 'paired-seller.sqlite' |
+    'resource-usage.sqlite' | 'control-plane-routes.sqlite'): DatabaseSync {
   const dir = resolve(stateDir);
   if (!pathExistsNoFollow(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
   assertPrivatePath(dir, true);
@@ -244,20 +266,30 @@ export class WorkerLocalState {
     const row = this.db.prepare('SELECT * FROM worker_pause_state WHERE singleton = 1').get() as StateRow;
     const localCapabilityPauses = (this.db.prepare('SELECT capability_id FROM capability_pause ORDER BY capability_id').all() as { capability_id: string }[]).map((item) => item.capability_id);
     const cloudCapabilityPauses = (this.db.prepare('SELECT capability_id FROM cloud_capability_pause ORDER BY capability_id').all() as { capability_id: string }[]).map((item) => item.capability_id);
+    const cloudPlanes=this.cloudPlanes();
+    const cloudAcks=this.db.prepare('SELECT acknowledged_revision FROM worker_cloud_plane_ack')
+      .all() as {acknowledged_revision:number}[];
     const connection = this.db.prepare('SELECT last_contact_at,advertised_capacity FROM worker_connection_state WHERE singleton=1').get() as {last_contact_at:string|null;advertised_capacity:number};
     return {
-      globalPaused: row.global_paused === 1 || row.cloud_paused === 1,
+      globalPaused: row.global_paused === 1 || row.cloud_paused === 1 ||
+        cloudPlanes.some((plane)=>plane.paused===1),
       localPaused: row.global_paused === 1,
-      cloudPaused: row.cloud_paused === 1,
-      cloudRevision:row.cloud_revision,
-      securityPaused: row.security_paused === 1,
+      cloudPaused: row.cloud_paused === 1 || cloudPlanes.some((plane)=>plane.paused===1),
+      cloudRevision:Math.max(row.cloud_revision,...cloudPlanes.map((plane)=>plane.revision)),
+      securityPaused: row.security_paused === 1 ||
+        cloudPlanes.some((plane)=>plane.security_paused===1),
       pausedAt: row.paused_at,
       pauseReason: row.pause_reason,
       pauseSource: row.pause_source,
       localRevision: row.local_revision,
-      acknowledgedRevision: row.acknowledged_revision,
-      cloudSyncPending: row.acknowledged_revision < row.local_revision,
-      capabilityPauses: [...new Set([...localCapabilityPauses, ...cloudCapabilityPauses])].sort(),
+      acknowledgedRevision: cloudAcks.length>0?
+        Math.min(...cloudAcks.map((item)=>item.acknowledged_revision)):
+        row.acknowledged_revision,
+      cloudSyncPending: cloudAcks.length>0?
+        cloudAcks.some((item)=>item.acknowledged_revision<row.local_revision):
+        row.acknowledged_revision<row.local_revision,
+      capabilityPauses: [...new Set([...localCapabilityPauses, ...cloudCapabilityPauses,
+        ...cloudPlanes.flatMap((plane)=>JSON.parse(plane.capability_pauses_json) as string[])])].sort(),
       localCapabilityPauses,
       lastCloudContactAt:connection.last_contact_at,
       reportedCapacity:connection.advertised_capacity,
@@ -283,15 +315,15 @@ export class WorkerLocalState {
     assertActor(actorId);
     const safeReason = assertReason(reason);
     const expected = this.readRow();
-    if (expected.security_paused === 1) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
-    if (expected.cloud_paused === 1) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
+    if (this.snapshot().securityPaused) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
+    if (this.snapshot().cloudPaused) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
     const readiness = await this.readiness.check();
     assertFreshReadiness(readiness);
     const now = new Date().toISOString();
     this.transaction(() => {
       const row = this.readRow();
-      if (row.security_paused === 1) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
-      if (row.cloud_paused === 1) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
+      if (this.snapshot().securityPaused) throw new WorkerStateError('SECURITY_PAUSE', 'A security pause blocks seller resume');
+      if (this.snapshot().cloudPaused) throw new WorkerStateError('NOT_READY', 'Web pause remains active');
       if (row.local_revision !== expected.local_revision) throw new WorkerStateError('NOT_READY', 'Pause state changed during readiness check');
       if (row.global_paused === 0) return;
       this.db.prepare('UPDATE worker_pause_state SET global_paused=0, paused_at=NULL, pause_reason=NULL, pause_source=NULL, local_revision=local_revision+1 WHERE singleton=1').run();
@@ -321,8 +353,8 @@ export class WorkerLocalState {
     assertActor(actorId);
     const safeReason = assertReason(reason);
     const current = this.readRow();
-    if (current.security_paused === 1 || current.global_paused === 1 || current.cloud_paused === 1 ||
-      this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId)) {
+    if (this.snapshot().securityPaused || this.snapshot().globalPaused ||
+      this.cloudCapabilityPaused(capabilityId)) {
       throw new WorkerStateError('SECURITY_PAUSE', 'Global or security pause blocks capability resume');
     }
     const readiness = await this.readiness.check();
@@ -330,8 +362,8 @@ export class WorkerLocalState {
     const now = new Date().toISOString();
     this.transaction(() => {
       const row = this.readRow();
-      if (row.security_paused === 1 || row.global_paused === 1 || row.cloud_paused === 1 ||
-        this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId))
+      if (this.snapshot().securityPaused || this.snapshot().globalPaused ||
+        this.cloudCapabilityPaused(capabilityId))
         throw new WorkerStateError('SECURITY_PAUSE', 'Global, web or security pause blocks capability resume');
       if (row.local_revision !== current.local_revision) throw new WorkerStateError('NOT_READY', 'Pause state changed during readiness check');
       const result = this.db.prepare('DELETE FROM capability_pause WHERE capability_id=?').run(capabilityId);
@@ -402,6 +434,83 @@ export class WorkerLocalState {
     return this.snapshot();
   }
 
+  /** Control-plane revisions are independent. A stale draining plane cannot clear
+   * the active plane's pause or security latch during a backend transition. */
+  applyCloudDirectiveForPlane(controlPlaneId:string,input:{readonly revision:number;
+    readonly paused:boolean;readonly capabilityPauses:readonly string[];
+    readonly securityPaused:boolean;readonly clearSecurityPause?:boolean|undefined}):PauseState{
+    if(!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(controlPlaneId)||
+      !Number.isSafeInteger(input.revision)||input.revision<0||
+      input.capabilityPauses.length>64||input.clearSecurityPause&&input.securityPaused)
+      throw new WorkerStateError('INVALID_ARGUMENT','Invalid control-plane pause directive');
+    for(const id of input.capabilityPauses)assertCapabilityId(id);
+    const capabilities=[...new Set(input.capabilityPauses)].sort();
+    const directive=JSON.stringify({revision:input.revision,paused:input.paused,
+      capabilityPauses:capabilities,securityPaused:input.securityPaused,
+      clearSecurityPause:input.clearSecurityPause===true});
+    this.transaction(()=>{
+      const prior=this.db.prepare('SELECT * FROM worker_cloud_plane_state WHERE control_plane_id=?')
+        .get(controlPlaneId) as CloudPlaneRow|undefined;
+      if(prior&&input.revision<prior.revision)return;
+      if(prior&&input.revision===prior.revision){
+        if(prior.directive_json!==directive)
+          throw new WorkerStateError('INVALID_ARGUMENT','Conflicting control-plane revision');
+        return;
+      }
+      const securityPaused=input.securityPaused||
+        (prior?.security_paused===1&&!input.clearSecurityPause);
+      this.db.prepare(`INSERT INTO worker_cloud_plane_state(control_plane_id,revision,
+        paused,security_paused,directive_json,capability_pauses_json) VALUES(?,?,?,?,?,?)
+        ON CONFLICT(control_plane_id) DO UPDATE SET revision=excluded.revision,
+        paused=excluded.paused,security_paused=excluded.security_paused,
+        directive_json=excluded.directive_json,
+        capability_pauses_json=excluded.capability_pauses_json`).run(controlPlaneId,
+          input.revision,Number(input.paused),Number(securityPaused),directive,
+          JSON.stringify(capabilities));
+    });
+    return this.snapshot();
+  }
+
+  /** Existing single-plane state is conservatively assigned to its former plane.
+   * During a two-plane cutover that plane is the one advertised as DRAINING. */
+  migrateLegacyCloudDirective(controlPlaneId:string):void{
+    if(!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(controlPlaneId))
+      throw new WorkerStateError('INVALID_ARGUMENT','Invalid control-plane ID');
+    this.transaction(()=>{
+      const row=this.readRow();
+      const capabilities=(this.db.prepare('SELECT capability_id FROM cloud_capability_pause ORDER BY capability_id')
+        .all() as {capability_id:string}[]).map((item)=>item.capability_id);
+      if(row.cloud_revision===0&&row.cloud_paused===0&&capabilities.length===0&&
+        !(row.security_paused===1&&row.security_pause_origin==='CLOUD'))return;
+      const existing=this.db.prepare('SELECT 1 FROM worker_cloud_plane_state WHERE control_plane_id=?')
+        .get(controlPlaneId);
+      if(existing)throw new WorkerStateError('INVALID_ARGUMENT','Legacy cloud state already mapped');
+      const securityPaused=row.security_paused===1&&row.security_pause_origin==='CLOUD';
+      const directive=JSON.stringify({revision:row.cloud_revision,paused:row.cloud_paused===1,
+        capabilityPauses:capabilities,securityPaused,clearSecurityPause:false});
+      this.db.prepare(`INSERT INTO worker_cloud_plane_state(control_plane_id,revision,
+        paused,security_paused,directive_json,capability_pauses_json) VALUES(?,?,?,?,?,?)`)
+        .run(controlPlaneId,row.cloud_revision,row.cloud_paused,Number(securityPaused),
+          directive,JSON.stringify(capabilities));
+      this.db.prepare('DELETE FROM cloud_capability_pause').run();
+      this.db.prepare(`UPDATE worker_pause_state SET cloud_paused=0,cloud_revision=0,
+        security_paused=CASE WHEN security_pause_origin='CLOUD' THEN 0 ELSE security_paused END,
+        security_pause_origin=CASE WHEN security_pause_origin='CLOUD' THEN NULL ELSE security_pause_origin END
+        WHERE singleton=1`).run();
+    });
+  }
+
+  private cloudPlanes():readonly CloudPlaneRow[]{
+    return this.db.prepare('SELECT * FROM worker_cloud_plane_state ORDER BY control_plane_id')
+      .all() as unknown as CloudPlaneRow[];
+  }
+
+  private cloudCapabilityPaused(capabilityId:string):boolean{
+    return this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?')
+      .get(capabilityId)!==undefined||this.cloudPlanes().some((plane)=>
+      (JSON.parse(plane.capability_pauses_json) as string[]).includes(capabilityId));
+  }
+
   /** Called only after the cloud has durably acknowledged this local revision. */
   acknowledgeCloudRevision(revision: number): PauseState {
     if (!Number.isSafeInteger(revision) || revision < 0 || revision > this.readRow().local_revision) {
@@ -409,6 +518,47 @@ export class WorkerLocalState {
     }
     this.db.prepare('UPDATE worker_pause_state SET acknowledged_revision=MAX(acknowledged_revision,?) WHERE singleton=1').run(revision);
     return this.snapshot();
+  }
+
+  registerControlPlane(controlPlaneId:string):void{
+    if(!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(controlPlaneId))
+      throw new WorkerStateError('INVALID_ARGUMENT','Invalid control-plane ID');
+    this.db.prepare(`INSERT INTO worker_cloud_plane_ack(control_plane_id,
+      acknowledged_revision) VALUES(?,0) ON CONFLICT DO NOTHING`).run(controlPlaneId);
+  }
+
+  acknowledgeCloudRevisionForPlane(controlPlaneId:string,revision:number):PauseState{
+    if(!Number.isSafeInteger(revision)||revision<0||revision>this.readRow().local_revision)
+      throw new WorkerStateError('INVALID_ARGUMENT','Invalid acknowledged revision');
+    const result=this.db.prepare(`UPDATE worker_cloud_plane_ack SET
+      acknowledged_revision=MAX(acknowledged_revision,?) WHERE control_plane_id=?`)
+      .run(revision,controlPlaneId);
+    if(result.changes!==1)throw new WorkerStateError('INVALID_ARGUMENT',
+      'Unknown control plane');
+    return this.snapshot();
+  }
+
+  /** A draining connection can close only after its pause and local-control
+   * state are reconciled. A security block is never silently discarded. */
+  canRetireControlPlane(controlPlaneId:string):boolean{
+    const plane=this.db.prepare('SELECT * FROM worker_cloud_plane_state WHERE control_plane_id=?')
+      .get(controlPlaneId) as CloudPlaneRow|undefined;
+    const ack=this.db.prepare('SELECT acknowledged_revision FROM worker_cloud_plane_ack WHERE control_plane_id=?')
+      .get(controlPlaneId) as {acknowledged_revision:number}|undefined;
+    return !!plane&&!!ack&&plane.paused!==1&&plane.security_paused!==1&&
+      (JSON.parse(plane.capability_pauses_json) as string[]).length===0&&
+      ack.acknowledged_revision>=this.readRow().local_revision;
+  }
+
+  retireControlPlane(controlPlaneId:string):boolean{
+    if(!this.canRetireControlPlane(controlPlaneId))return false;
+    this.transaction(()=>{
+      this.db.prepare('DELETE FROM worker_cloud_plane_state WHERE control_plane_id=?')
+        .run(controlPlaneId);
+      this.db.prepare('DELETE FROM worker_cloud_plane_ack WHERE control_plane_id=?')
+        .run(controlPlaneId);
+    });
+    return true;
   }
 
   recordCloudContact(advertisedCapacity=0):void{
@@ -422,7 +572,9 @@ export class WorkerLocalState {
   isUnpausedForNewJobOffer(capabilityId: string): boolean {
     assertCapabilityId(capabilityId);
     const row = this.readRow();
-    if (row.global_paused === 1 || row.cloud_paused === 1 || row.security_paused === 1) return false;
+    if (row.global_paused === 1 || row.cloud_paused === 1 || row.security_paused === 1 ||
+      this.cloudPlanes().some((plane)=>plane.paused===1||plane.security_paused===1||
+        (JSON.parse(plane.capability_pauses_json) as string[]).includes(capabilityId)))return false;
     return this.db.prepare('SELECT 1 FROM capability_pause WHERE capability_id=?').get(capabilityId) === undefined &&
       this.db.prepare('SELECT 1 FROM cloud_capability_pause WHERE capability_id=?').get(capabilityId) === undefined;
   }

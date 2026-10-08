@@ -20,7 +20,19 @@ export type DiscoveryIssue =
   | 'CONFIG_MISSING' | 'CONFIG_UNREADABLE' | 'CONFIG_INVALID' | 'CONFIG_INCLUDE_UNRESOLVED'
   | 'CONFIG_SHAPE_UNSUPPORTED' | 'ROOT_OUTSIDE_HOME' | 'ROOT_UNREADABLE' | 'ROOT_SYMLINK'
   | 'SKILL_UNREADABLE' | 'SKILL_INVALID' | 'SKILL_NAME_INVALID' | 'SKILL_COLLISION'
-  | 'SCAN_LIMIT' | 'INSTALL_ROOT_UNVERIFIED';
+  | 'SCAN_LIMIT' | 'INSTALL_ROOT_UNVERIFIED' | 'LOCAL_INFERENCE_UNDETERMINED';
+
+/** A configured local route is only a candidate. Detection grants no consent
+ * and says nothing about whether the model server is currently healthy. */
+export interface DiscoveredLocalInferenceCandidate {
+  readonly provider: string;
+  readonly model: string;
+  readonly endpoint: string;
+  readonly requiredService: 'local-model-server';
+  readonly estimatedHardware: 'unknown';
+  readonly availability: 'unknown';
+  readonly consent: 'not-granted';
+}
 
 export interface DiscoveredSkillCandidate {
   readonly name: string;
@@ -55,6 +67,7 @@ export interface LocalOpenClawDiscovery {
   readonly tools: readonly DiscoveredReference[];
   readonly plugins: readonly DiscoveredReference[];
   readonly models: readonly DiscoveredReference[];
+  readonly localInference: readonly DiscoveredLocalInferenceCandidate[];
   readonly issues: readonly DiscoveryIssue[];
   readonly completeness: 'file-backed-metadata-only';
 }
@@ -93,6 +106,35 @@ function references(values: Iterable<string>): DiscoveredReference[] {
   return [...new Set(values)].sort().map((item) => ({
     name: item, status: 'configured-reference', readiness: 'unknown', consent: 'not-granted',
   }));
+}
+
+function localInferenceCandidates(value: unknown, issues: Set<DiscoveryIssue>):
+  DiscoveredLocalInferenceCandidate[] {
+  const providers=record(record(value)?.providers);
+  if (!providers) return [];
+  const result:DiscoveredLocalInferenceCandidate[]=[];
+  if(Object.keys(providers).length>32){issues.add('LOCAL_INFERENCE_UNDETERMINED');return result;}
+  for(const [provider,raw] of Object.entries(providers)){
+    const config=record(raw);
+    if(!config||typeof config.baseUrl!=='string'||
+      !config.baseUrl.startsWith('http:'))continue;
+    let endpoint:URL;
+    try{endpoint=new URL(config.baseUrl);}
+    catch{issues.add('LOCAL_INFERENCE_UNDETERMINED');continue;}
+    if(!safeName(provider)||!['127.0.0.1','localhost','[::1]'].includes(endpoint.hostname)||
+      endpoint.protocol!=='http:'||!endpoint.port||endpoint.pathname!=='/v1'||
+      endpoint.username||endpoint.password||endpoint.search||endpoint.hash||
+      config.api!=='openai-completions'||!Array.isArray(config.models)||
+      config.models.length>128){issues.add('LOCAL_INFERENCE_UNDETERMINED');continue;}
+    for(const rawModel of config.models){
+      const model=safeName(record(rawModel)?.id);
+      if(!model){issues.add('LOCAL_INFERENCE_UNDETERMINED');continue;}
+      result.push({provider,model,endpoint:endpoint.href,
+        requiredService:'local-model-server',estimatedHardware:'unknown',
+        availability:'unknown',consent:'not-granted'});
+    }
+  }
+  return result.sort((a,b)=>a.provider.localeCompare(b.provider)||a.model.localeCompare(b.model));
 }
 
 function configuredPath(value: unknown, homeDir: string): string | undefined {
@@ -236,6 +278,7 @@ export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
     const pluginsConfig = record(parsed?.plugins);
     const defaults = record(agents?.defaults);
     const modelConfig = record(defaults?.model);
+    const localInference=localInferenceCandidates(record(parsed?.models),issues);
 
     const agentIds: string[] = [];
     const agentWorkspaces: string[] = [];
@@ -303,6 +346,7 @@ export class ReadOnlyOpenClawDiscovery implements ReadOnlyDiscoverySource {
       tools: references(toolNames),
       plugins: references(pluginNames),
       models: references(modelNames),
+      localInference,
       issues: [...issues].sort(),
       completeness: 'file-backed-metadata-only',
     };
